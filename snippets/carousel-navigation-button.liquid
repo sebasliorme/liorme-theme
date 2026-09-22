@@ -1,0 +1,40 @@
+{%- doc -%}
+  Renders a single carousel navigation button.
+
+  @param {string} type - The type of button (ie. 'previous' or 'next').
+  @param {string} [custom_class] - A custom class to be added to the button.
+  @param {string} [attributes] - Any attributes to be added to the button.
+{%- enddoc -%}
+
+{%- liquid
+  case type
+    when 'previous'
+      assign direction = 'back'
+      assign data_attribute = 'data-prev'
+    when 'next'
+      assign direction = 'forward'
+      assign data_attribute = 'data-next'
+  endcase
+
+  assign aria_label_string = 'general.accessibility.carousel_[[type]]' | replace: '[[type]]', type
+-%}
+
+<button
+  type="button"
+  class="
+    carousel__navigation-button
+    carousel__navigation-button--{{ direction }}
+    {% if custom_class != blank -%}
+      {{ custom_class }}
+    {%- endif %}
+    animation--controls
+  "
+  {{ data_attribute }}
+  {% if attributes != blank -%}
+    {{ attributes }}
+  {%- endif %}
+  aria-label="{{ aria_label_string | t }}"
+  js-carousel-navigation-button
+>
+  {%- render 'icon', icon: 'arrow-long' -%}
+</button>

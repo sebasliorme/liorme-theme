@@ -1,0 +1,55 @@
+{% render 'spacer-flexible-block', block: block %}
+
+{% schema %}
+{
+  "name": "t:blocks.content._spacer-flexible.name",
+  "tag": null,
+  "settings": [
+    {
+      "type": "select",
+      "id": "type",
+      "label": "t:blocks.content._spacer-flexible.settings.type.label",
+      "options": [
+        {
+          "value": "flexible",
+          "label": "t:blocks.content._spacer-flexible.settings.type.options.flexible"
+        },
+        {
+          "value": "fixed",
+          "label": "t:blocks.content._spacer-flexible.settings.type.options.fixed"
+        }
+      ],
+      "info": "t:blocks.content._spacer-flexible.settings.type.info"
+    },
+    {
+      "type": "range",
+      "id": "height",
+      "label": "t:blocks.content._spacer-flexible.settings.height.label",
+      "min": 4,
+      "max": 64,
+      "step": 4,
+      "unit": "px",
+      "default": 12,
+      "visible_if": "{{ block.settings.type == 'fixed' }}"
+    },
+    {
+      "type": "range",
+      "id": "mobile_height",
+      "label": "t:blocks.content._spacer-flexible.settings.mobile_height.label",
+      "min": 4,
+      "max": 64,
+      "step": 4,
+      "unit": "px",
+      "default": 12,
+      "visible_if": "{{ block.settings.type == 'fixed' }}"
+    }
+  ],
+  "blocks": [],
+  "presets": [
+    {
+      "name": "t:blocks.content._spacer-flexible.presets.name",
+      "blocks": []
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,86 @@
+{% doc %}
+  Renders the price for the products slider product.
+
+  @param {object} block_settings - The products slider product block's settings.
+{% enddoc %}
+
+{%- if block_settings.product == blank -%}
+  {{- 9999 | money_without_trailing_zeros | replace: '.00', '' -}}
+{%- else -%}
+  {% liquid
+    assign price_content_type = 'price'
+
+    if block_settings.product.available
+      if block_settings.product.price == 0 and block_settings.product.price_varies == false
+        if settings.zero_dollar_listing_price_display == 'replace'
+          assign price_content_type = 'custom'
+          assign custom_price_content = 'products.inventory.zero_price_custom_label' | t
+        elsif settings.zero_dollar_listing_price_display == 'hide'
+          assign price_content_type = 'hide'
+          assign custom_price_content = blank
+        endif
+      endif
+    else
+      if settings.sold_out_listing_price_display == 'hide'
+        assign price_content_type = 'hide'
+        assign custom_price_content = blank
+      elsif settings.sold_out_listing_price_display == 'replace'
+        assign price_content_type = 'custom'
+        assign custom_price_content = 'products.inventory.sold_out_price_custom_label' | t
+      endif
+    endif
+  %}
+
+  {%- if price_content_type == 'price' -%}
+    {%- if block_settings.product.compare_at_price > block_settings.product.price -%}
+      <p class="products-slider-product__price">
+        <span class="visually-hidden">{{ 'products.product.regular_price' | t }}</span>
+        <s class="t-subdued">{{ block_settings.product.compare_at_price | money_without_trailing_zeros | replace: '.00', '' }}</s>
+
+        {%- if block_settings.product.price_varies -%}
+          {%- assign sale_price = block_settings.product.price | money_without_trailing_zeros | replace: '.00', '' -%}
+
+          <span class="t-sale">
+            {{ 'products.product.on_sale_from_html' | t: price: sale_price }}
+          </span>
+        {%- else -%}
+          <span class="t-sale">{{ block_settings.product.price | money_without_trailing_zeros | replace: '.00', '' }}</span>
+        {%- endif -%}
+      </p>
+    {%- else -%}
+      {%- if block_settings.product.price_varies -%}
+        {%- assign price = block_settings.product.price | money_without_trailing_zeros | replace: '.00', '' -%}
+
+        <p class="products-slider-product__price">
+          {{ 'products.product.from_lowest_price_html' | t: lowest_price: price }}
+        </p>
+      {%- else -%}
+        <span class="products-slider-product__price">{{ block_settings.product.price | money_without_trailing_zeros | replace: '.00', '' }}</span>
+      {%- endif -%}
+    {%- endif -%}
+    {%- render 'unit-price', item: block_settings.product.variants.first -%}
+  {%- elsif price_content_type == 'custom' -%}
+    {%- if block_settings.product.price_varies and block_settings.product.price == 0 -%}
+      {%- assign price = block_settings.product.price | money_without_trailing_zeros | replace: '.00', '' -%}
+      {%- assign custom_price_content = 'products.inventory.zero_price_custom_label' | t -%}
+
+      <p class="products-slider-product__price">
+        {%- liquid
+          capture from_lowest_price_html
+            echo 'products.product.from_lowest_price_html' | t: lowest_price: custom_price_content
+          endcapture
+
+          if block_settings.product.compare_at_price > block_settings.product.price
+            echo '<span class="t-sale">[[flph]]</span>' | replace: '[[flph]]', from_lowest_price_html
+          else
+            echo from_lowest_price_html
+          endif
+        -%}
+      </p>
+    {%- else -%}
+      {%- if custom_price_content != blank -%}
+        <p class="products-slider-product__price">{{ custom_price_content }}</p>
+      {%- endif -%}
+    {%- endif -%}
+  {%- endif -%}
+{%- endif -%}

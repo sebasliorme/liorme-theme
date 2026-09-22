@@ -1,0 +1,116 @@
+{% render 'play-button-block',
+  block: block,
+  wrapper_class: 'section-blocks__video-button',
+  shopify_attributes: block.shopify_attributes
+%}
+
+{% schema %}
+{
+  "name": "t:blocks.content._video_player.name",
+  "tag": null,
+  "settings": [
+    {
+      "type": "radio",
+      "id": "video_source",
+      "label": "t:shared.settings.video_source.label",
+      "options": [
+        {
+          "value": "shopify",
+          "label": "t:shared.settings.video_source.options.shopify"
+        },
+        {
+          "value": "external",
+          "label": "t:shared.settings.video_source.options.external"
+        }
+      ],
+      "default": "external"
+    },
+    {
+      "type": "video",
+      "id": "video",
+      "label": "t:shared.settings.video.label",
+      "visible_if": "{{ block.settings.video_source == 'shopify' }}",
+      "info": "t:shared.settings.video.info"
+    },
+    {
+      "type": "video_url",
+      "id": "video_url",
+      "label": "t:shared.settings.external_video_url.label",
+      "accept": [
+        "youtube",
+        "vimeo"
+      ],
+      "default": "https://www.youtube.com/watch?v=_9VUPq3SxOc",
+      "visible_if": "{{ block.settings.video_source == 'external' }}"
+    },
+    {
+      "type": "header",
+      "content": "t:blocks.content._video_player.settings.play_button.header.content"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:blocks.content._video_player.settings.play_button.image.label",
+      "info": "t:blocks.content._video_player.settings.play_button.image.info",
+      "visible_if": "{{ block.settings.video_source == 'external' }}"
+    },
+    {
+      "type": "select",
+      "id": "aspect_ratio",
+      "label": "t:blocks.content._video_player.settings.play_button.aspect_ratio.label",
+      "options": [
+        {
+          "value": "natural",
+          "label": "t:shared.options.aspect_ratio.natural"
+        },
+        {
+          "value": "square",
+          "label": "t:shared.options.aspect_ratio.square"
+        },
+        {
+          "value": "portrait",
+          "label": "t:shared.options.aspect_ratio.portrait"
+        },
+        {
+          "value": "landscape",
+          "label": "t:shared.options.aspect_ratio.landscape"
+        }
+      ],
+      "default": "square"
+    },
+    {
+      "type": "text",
+      "id": "text",
+      "label": "t:blocks.content._video_player.settings.play_button.text.label",
+      "default": "t:blocks.content._video_player.settings.play_button.text.default"
+    },
+    {
+      "type": "select",
+      "id": "icon_style",
+      "label": "t:blocks.content._video_player.settings.play_button.icon_style.label",
+      "options": [
+        {
+          "value": "dark",
+          "label": "t:blocks.content._video_player.settings.play_button.icon_style.options.dark"
+        },
+        {
+          "value": "light",
+          "label": "t:blocks.content._video_player.settings.play_button.icon_style.options.light"
+        },
+        {
+          "value": "outline",
+          "label": "t:blocks.content._video_player.settings.play_button.icon_style.options.outline"
+        }
+      ],
+      "default": "outline"
+    }
+  ],
+  "blocks": [],
+  "presets": [
+    {
+      "name": "t:blocks.content._video_player.presets.name",
+      "blocks": []
+    }
+  ]
+}
+{% endschema %}

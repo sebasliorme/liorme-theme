@@ -1,0 +1,15 @@
+{%- doc -%}
+  Renders a flexible spacer block. This allows for vertically justified setups.
+
+  @param {object} block
+{%- enddoc -%}
+
+<div
+  class="section-blocks__spacer-flexible"
+  data-type="{{ block.settings.type }}"
+  style="
+    --height: {{ block.settings.height }}px;
+    --height-mobile: {{ block.settings.mobile_height }}px;
+  "
+  {{ block.shopify_attributes }}
+></div>

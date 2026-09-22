@@ -1,0 +1,127 @@
+{%- doc -%}
+  Renders an image with an optional placeholder.
+
+  @param {object} [image] - The image to be rendered.
+  @param {string} [wrapper_class] - A custom class to be applied to the image wrapper.
+  @param {string} [sizes] - A list of responsive image sizes (for the 'sizes' attribute). Don't use this if you're using 'sizes_px'.
+  @param {number} [sizes_px] - A width (in pixels) for the image. Don't use this if you're using 'sizes'.
+  @param {string} [aspect_ratio] - The aspect ratio of the image.
+  @param {string} [focal_point] - The source of the focal point of the image. The values are listed below.
+  @param {string} [custom_styles] - Custom style attributes to be applied to the image wrapper.
+  @param {boolean} [prioritize_loading] - Whether to add 'loading="lazy"' to the image.
+  @param {boolean} [no_lazy_load] - Whether to apply lazy load animations.
+  @param {boolean} [animate] - Whether the image should animate.
+  @param {boolean} [include_placeholder] - Whether a placeholder image should be rendered if no image is provided.
+  @param {string} [placeholder_name] - The name of the Shopify placeholder SVG to use.
+  @param {string} [placeholder_natural_fallback_ratio] - The aspect ratio to use for the placeholder if the aspect ratio is set to 'Natural'.
+  @param {string} [fallback_alt] - Alt text to use if the image doesn't have any.
+  @param {boolean} [no_crop] - Whether we should allow Shopify to serve a cropped image. If 'true', we load the full image and crop in CSS.
+  @param {string} [object_fit] - The 'object-fit' CSS property to use for the image.
+  @param {string} [src_set_type] - The kind of environment the image is being rendered in. The types are listed below. This helps with more performant srcset generation. If this parameter isn't specified, a comprehensive srcset range will be used.
+{%- enddoc -%}
+
+{%- liquid
+  comment
+    Focal point values:
+      - 'image_presentation': The focal point comes from the image itself.
+      - 'center'
+      - 'top'
+      - 'right'
+      - 'bottom'
+      - 'left'
+
+    srcset types:
+      - 'grid'
+      - 'full-width'
+      - 'thumbnail'
+  endcomment
+
+  # Sometimes we pass featured media from a product, so we need to ensure that we're getting an image.
+  #
+  # Preview images don't have focal point data, so we default to 'center'.
+  if image != image.preview_image and image.preview_image
+    assign image = image.preview_image
+    assign focal_point = 'center'
+  endif
+
+  if sizes_px
+    assign sizes = sizes_px | append: 'px'
+  endif
+
+  if focal_point != blank
+    if focal_point == 'image_presentation'
+      if image.presentation.focal_point == '50.0% 50.0%'
+        assign focal_point = 'center'
+        assign focal_alignment = 'center'
+      else
+        assign focal_alignment = image.presentation.focal_point
+      endif
+    else
+      assign focal_alignment = focal_point
+    endif
+  endif
+
+  capture image_class
+    echo 'image'
+
+    if wrapper_class != blank
+      echo ' '
+      echo wrapper_class
+    endif
+
+    if aspect_ratio != blank and aspect_ratio != 'natural'
+      echo ' aspect-ratio--[[ar]]' | replace: '[[ar]]', aspect_ratio
+    endif
+
+    if animate
+      echo ' image--animate'
+    endif
+
+    unless no_lazy_load
+      echo ' animation--lazy-load'
+    endunless
+  endcapture
+
+  capture image_styles
+    if custom_styles != blank
+      echo custom_styles
+    endif
+
+    if focal_alignment
+      echo '--focal-alignment: [[fa]];' | replace: '[[fa]]', focal_alignment
+    endif
+
+    if object_fit != blank and aspect_ratio != 'natural'
+      echo '--object-fit: [[of]];' | replace: '[[of]]', object_fit
+    endif
+  endcapture
+-%}
+
+{%- if image != blank -%}
+  <div
+    class="{{ image_class }}"
+    style="{{ image_styles }}"
+  >
+    {% render 'responsive-image',
+      image: image,
+      sizes: sizes,
+      prioritize_loading: prioritize_loading,
+      aspect_ratio: aspect_ratio,
+      focal_point: focal_point,
+      focal_alignment: focal_alignment,
+      no_crop: no_crop,
+      object_fit: object_fit,
+      fallback_alt: fallback_alt,
+      src_set_type: src_set_type
+    %}
+  </div>
+{%- elsif include_placeholder -%}
+  {%- assign natural_fallback = placeholder_natural_fallback_ratio | default: 'square' -%}
+
+  {%- render 'placeholder-image',
+    wrapper_class: wrapper_class,
+    placeholder_name: placeholder_name,
+    aspect_ratio: aspect_ratio,
+    natural_fallback_ratio: natural_fallback
+  -%}
+{%- endif -%}

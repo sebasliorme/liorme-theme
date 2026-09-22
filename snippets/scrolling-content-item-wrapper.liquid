@@ -1,0 +1,33 @@
+{% doc %}
+  Checks for a link, then wraps the block in the correct element type.
+
+  @param {object} block_content - The content to wrap.
+  @param {object} [link] - The link to wrap the content with.
+  @param {string} [aria_label] - The string to use for the aria-label.
+{% enddoc %}
+
+{%- if block_content != blank -%}
+  {%- liquid
+    capture tag
+      if link != blank
+        echo 'a'
+      else
+        echo 'div'
+      endif
+    endcapture
+
+    capture attributes
+      if link != blank
+        echo 'href="[[link]]"' | replace: '[[link]]', link
+
+        if aria_label != blank
+          echo ' aria-label="[[label]]"' | replace: '[[label]]', aria_label
+        endif
+      endif
+    endcapture
+  -%}
+
+  <{{ tag }} class="scrolling-content__item" {{ attributes }}>
+    {{- block_content -}}
+  </{{ tag }}>
+{%- endif -%}

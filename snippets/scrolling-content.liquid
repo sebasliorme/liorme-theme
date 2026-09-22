@@ -1,0 +1,69 @@
+{% doc %}
+  Renders blocks within a scrolling marquee.
+
+  @param {object} block_content - The block content to scroll.
+  @param {number} scroll_duration - The scroll duration, in seconds.
+  @param {string} scroll_direction - The scroll direction.
+  @param {number} gap - The gap to apply between blocks, in pixels.
+  @param {number} padding_top - The padding to apply to the top of the scroller, in pixels.
+  @param {number} padding_bottom - The padding to apply to the bottom of the scroller, in pixels.
+  @param {string} [color_scheme] - The color scheme to apply to the container.
+  @param {string} [text_font_choice] - The font family to apply to text blocks.
+  @param {string} [text_size_var_desktop] - The text size variable.
+  @param {string} [text_size_var_mobile] - The text size variable.
+  @param {boolean} [animate_section_blocks] - Whether to apply the animation class for section blocks.
+  @param {object} [shopify_attributes] - Shopify attributes to apply to the container.
+{% enddoc %}
+
+{% liquid
+  if text_size_var_desktop != blank or text_size_var_mobile != blank
+    assign use_text_size_vars = true
+  else
+    assign use_text_size_vars = false
+  endif
+
+  if color_scheme != blank
+    assign use_color_scheme_vars = true
+
+    capture color_scheme_vars
+      render 'color-scheme-to-vars', color_scheme: color_scheme, css_vars: 'background,background-gradient,text,lines-and-borders'
+    endcapture
+  else
+    assign use_color_scheme_vars = false
+  endif
+%}
+
+<scrolling-content
+  class="scrolling-content"
+  data-use-color-scheme-vars="{{ use_color_scheme_vars }}"
+  data-use-text-size-vars="{{ use_text_size_vars }}"
+  style="{{ color_scheme_vars }}"
+  {{ shopify_attributes }}
+>
+  <div
+    class="scrolling-content__marquee scrollbars-hidden"
+    data-play-scroll-animation="false"
+    data-text-font="{{ text_font_choice }}"
+    js-marquee
+    style="
+      --scroll-duration: {{ scroll_duration }}s;
+      --scroll-direction: {{ scroll_direction }};
+      --gap: {{ gap }}px;
+      --padding-top: {{ padding_top }}px;
+      --padding-bottom: {{ padding_bottom }}px;
+      {% if text_size_var_desktop != blank -%}
+        --text-size-desktop: var({{ text_size_var_desktop }});
+      {%- endif %}
+      {% if text_size_var_mobile != blank -%}
+        --text-size-mobile: var({{ text_size_var_mobile }});
+      {%- endif %}
+    "
+  >
+    <span
+      class="scrolling-content__content {%- if animate_section_blocks %} animation--section-blocks {%- endif %}"
+      js-marquee-content
+    >
+      {{ block_content }}
+    </span>
+  </div>
+</scrolling-content>

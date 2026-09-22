@@ -1,0 +1,103 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "main-article",
+      "blocks": {
+        "title": {
+          "type": "title",
+          "settings": {
+            "title_font_class": "fs-heading-display-3",
+            "show_tags": true,
+            "show_author": false,
+            "show_date": true
+          }
+        },
+        "featured_image": {
+          "type": "featured_image",
+          "settings": {
+            "block_width": "page-width",
+            "enable_full_width_on_mobile": false,
+            "image_aspect": "original",
+            "desktop_height": 40,
+            "mobile_height": 40,
+            "focal_point": "center"
+          }
+        },
+        "content": {
+          "type": "content",
+          "settings": {
+            "enable_corner_rounding": true
+          }
+        },
+        "social_share": {
+          "type": "social_sharing",
+          "settings": {
+            "share_text": "Share"
+          }
+        },
+        "pagination": {
+          "type": "pagination",
+          "settings": {}
+        }
+      },
+      "block_order": [
+        "title",
+        "featured_image",
+        "content",
+        "social_share",
+        "pagination"
+      ],
+      "settings": {
+        "content_width": "custom",
+        "custom_content_width": 700,
+        "section_width": "page-width",
+        "section_padding_top": 40,
+        "section_padding_bottom": 40,
+        "divider_style": "none",
+        "enable_full_width_divider": false,
+        "enable_animation": true
+      }
+    },
+    "blog-posts": {
+      "type": "blog-posts",
+      "settings": {
+        "header_alignment": "left",
+        "heading": "Featured stories",
+        "heading_font_class": "fs-heading-3-base",
+        "heading_tag": "h2",
+        "text": "",
+        "text_font_class": "fs-body-100",
+        "link": "",
+        "link_text": "View all posts",
+        "button_style": "btn--callout",
+        "display_type": "all",
+        "max_articles": 2,
+        "show_tags": true,
+        "show_author": true,
+        "show_date": true,
+        "show_excerpt": true,
+        "show_featured_image": true,
+        "aspect_ratio": "landscape",
+        "section_width": "page-width",
+        "section_padding_top": 40,
+        "section_padding_bottom": 40,
+        "divider_style": "solid",
+        "enable_full_width_divider": false,
+        "enable_animation": true
+      }
+    }
+  },
+  "order": [
+    "main",
+    "blog-posts"
+  ]
+}

@@ -1,0 +1,106 @@
+{%- doc -%}
+  Renders a sibling product swatch.
+
+  @param {string} context - Where the swatch is being rendered (ie. 'product-page', or 'product-item'). The markup varies based on the context.
+  @param {object} forloop_index - The current index of the sibling product loop.
+  @param {object} sibling_product - The current sibling product.
+  @param {string} sibling_label_name - The option name whose values should display as swatches. Is downcased and has newlines stripped.
+  @param {string} sibling_option_name - The current option value being rendered as a swatch.
+  @param {number} swatch_size - The width of the swatch.
+  @param {number} swatch_image_width - The width of the swatch image source.
+  @param {boolean} selected_value - Whether the current swatch is selected. Only applies to the 'product-page' context for variant selectors.
+  @param {string} custom_color_key_map - A list of custom color names for swatches.
+  @param {string} custom_color_value_map - A list of custom color values for swatches.
+{%- enddoc -%}
+
+{% liquid
+  assign file_extension = '.png'
+  assign sibling_swatch_use_product_image = settings.product_show_siblings_product_image
+
+  if context == 'product-item'
+    assign sibling_swatch_use_product_image = settings.product_listing_show_siblings_product_image
+  endif
+
+  capture swatch_html
+    assign downcased_sibling_value_name = sibling_option_name | strip | downcase
+    assign downcased_sibling_label_name = sibling_label_name | strip | downcase
+
+    for option in sibling_product.options_with_values
+      assign downcased_option_name = option.name | downcase
+
+      if downcased_option_name == downcased_sibling_label_name
+        for value in option.values
+          assign downcased_value_name = value.name | downcase
+
+          if downcased_value_name == downcased_sibling_value_name
+            assign sibling_value = value
+            break
+          endif
+        endfor
+      endif
+    endfor
+
+    if sibling_swatch_use_product_image and sibling_product.featured_media != blank
+      echo sibling_product.featured_media | image_url: width: swatch_image_width | image_tag: alt: sibling_option_name, loading: 'lazy', role: 'presentation'
+    else
+      if sibling_value.swatch and sibling_value.swatch.image
+        echo sibling_value.swatch.image | image_url: width: swatch_image_width | image_tag: alt: sibling_value, loading: 'lazy', role: 'presentation'
+      else
+        assign custom_swatch_image = downcased_sibling_value_name | handle | append: file_extension
+
+        if images[custom_swatch_image] != blank
+          echo images[custom_swatch_image] | image_url: width: swatch_image_width | image_tag: alt: downcased_sibling_value_name, loading: 'lazy', role: 'presentation'
+        endif
+
+        # Color
+        if sibling_value.swatch and sibling_value.swatch.color
+          assign background_color_value = sibling_value.swatch.color | downcase | replace: ' ', ''
+        elsif custom_color_key_map contains downcased_sibling_value_name
+          for color_name in custom_color_key_map
+            if color_name == downcased_sibling_value_name
+              assign background_color_value = custom_color_value_map[forloop.index0]
+              break
+            endif
+          endfor
+        else
+          assign background_color_value = sibling_product.metafields.stiletto.sibling_option_name | downcase | replace: ' ', ''
+        endif
+
+        assign swatch_background_style = 'background-color: [[bcv]];' | replace: '[[bcv]]', background_color_value
+      endif
+    endif
+  endcapture
+%}
+
+{%- case context -%}
+  {%- when 'product-item' -%}
+    <li
+      class="product-swatches-options__item product-swatches-options__item--swatch"
+      data-swatch-shape="{{ settings.swatch_shape }}"
+      style="{{ swatch_background_style }}"
+      aria-label="{{ sibling_label_name }} {{ sibling_option_name }}"
+    >
+      {{- swatch_html -}}
+    </li>
+  {%- else -%}
+    {%- if sibling_product != blank -%}
+      <a
+        href="{{ sibling_product.url }}"
+        data-shape="{{ settings.swatch_shape }}"
+        data-size="{{ swatch_size }}"
+        class="
+          product__color-swatch
+          product__color-swatch--sibling-product
+          {% if selected_value -%}
+            selected
+          {%- endif %}
+        "
+        style="{{ swatch_background_style }}"
+        data-sibling-swatch
+        data-sibling-cutline="{{ sibling_product.metafields.stiletto.sibling_option_name }}"
+        aria-label="{{ sibling_product.metafields.stiletto.sibling_option_name }}"
+      >
+        {{- swatch_html -}}
+      </a>
+    {%- endif -%}
+{%- endcase -%}

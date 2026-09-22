@@ -1,0 +1,30 @@
+{%- doc -%}
+  Renders a blog post section's (template section) tag navigation item.
+
+  @param {object} blog - The blog object.
+  @param {object} tag - The tag object.
+  @param {boolean} is_all - Whether the tag being rendered is 'All'.
+{%- enddoc -%}
+
+{%- liquid
+  assign is_all = is_all | default: false, allow_false: true
+
+  capture tag_value
+    echo blog.url
+
+    unless is_all
+      assign tag_handle = tag | handle
+
+      echo '/tagged/[[th]]' | replace: '[[th]]', tag_handle
+    endunless
+  endcapture
+-%}
+
+<option
+  value="{{ tag_value }}"
+  {% if current_tags contains tag or is_all and current_tags == blank -%}
+    selected="selected"
+  {%- endif -%}
+>
+  {{- tag -}}
+</option>

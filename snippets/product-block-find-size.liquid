@@ -1,0 +1,179 @@
+{%- doc -%}
+  Renders the "Find your size" block: a button (moved by find-your-size.js right under the size option of the
+  variant picker) and a side drawer with two tabs — a ring size finder and a size chart — that opens over a
+  dimmed page, like the site menu.
+
+  @param {object} prod - The product object. We use 'prod' to avoid collision with the global 'product' object.
+  @param {object} block - The block object.
+{%- enddoc -%}
+
+{%- liquid
+  assign name_list = block.settings.size_option_names | downcase | split: ','
+  assign size_option_position = 0
+  assign size_values = ''
+
+  for option in prod.options_with_values
+    assign option_name = option.name | downcase
+
+    for name_item in name_list
+      # a for-loop variable shadows a plain assign of the same name, so the stripped copy needs its own name
+      assign name_part = name_item | strip
+
+      if name_part != blank and option_name contains name_part
+        # only numeric sizes (ring sizes) can be matched by the finder
+        assign has_numeric_value = false
+
+        for value in option.values
+          assign numeric_value = value | plus: 0
+
+          if numeric_value > 0
+            assign has_numeric_value = true
+          endif
+        endfor
+
+        if has_numeric_value
+          assign size_option_position = option.position
+          assign size_values = option.values | join: '|'
+        endif
+      endif
+    endfor
+  endfor
+
+  assign offset = block.settings.circumference_offset | default: 40
+-%}
+
+{%- if size_option_position > 0 -%}
+  <div
+    class="find-size"
+    data-find-size
+    data-size-option="option{{ size_option_position }}"
+    {{ block.shopify_attributes }}
+  >
+    <button
+      type="button"
+      class="find-size__trigger"
+      data-find-size-open
+      aria-haspopup="dialog"
+      aria-controls="find-size-drawer-{{ block.id }}"
+    >
+      <svg class="find-size__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="1.5" y="8.5" width="17" height="7" rx="1" stroke="currentColor" stroke-width="1.2"/>
+        <path d="M5 8.5v3M8.5 8.5v2M12 8.5v3M15.5 8.5v2" stroke="currentColor" stroke-width="1.2"/>
+        <path d="M20 2.5c.25 1.7.9 2.35 2.6 2.6-1.7.25-2.35.9-2.6 2.6-.25-1.7-.9-2.35-2.6-2.6 1.7-.25 2.35-.9 2.6-2.6Z" fill="currentColor"/>
+      </svg>
+      <span>{{ block.settings.button_label | escape }}</span>
+    </button>
+  </div>
+
+  <div
+    class="find-size-drawer"
+    id="find-size-drawer-{{ block.id }}"
+    data-find-size-drawer="{{ block.id }}"
+    data-offset="{{ offset }}"
+    data-sizes="{{ size_values | escape }}"
+    data-option-index="option{{ size_option_position }}"
+    data-select-label="{{ block.settings.select_label | escape }}"
+    data-unit-label-circumference="{{ block.settings.circumference_label | escape }}"
+    role="dialog"
+    aria-modal="true"
+    aria-label="{{ block.settings.button_label | escape }}"
+    aria-hidden="true"
+    hidden
+  >
+    <div class="find-size-drawer__overlay" data-find-size-close></div>
+
+    <div class="find-size-drawer__panel">
+      <button type="button" class="find-size-drawer__close" data-find-size-close aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="1.3"/>
+        </svg>
+      </button>
+
+      <div class="find-size-drawer__tabs" role="tablist">
+        <button type="button" class="find-size-drawer__tab is-active" role="tab" aria-selected="true" data-fs-tab="find">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect x="1.5" y="8.5" width="17" height="7" rx="1" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M5 8.5v3M8.5 8.5v2M12 8.5v3M15.5 8.5v2" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M20 2.5c.25 1.7.9 2.35 2.6 2.6-1.7.25-2.35.9-2.6 2.6-.25-1.7-.9-2.35-2.6-2.6 1.7-.25 2.35-.9 2.6-2.6Z" fill="currentColor"/>
+          </svg>
+          <span>{{ block.settings.tab_find | escape }}</span>
+        </button>
+        <button type="button" class="find-size-drawer__tab" role="tab" aria-selected="false" data-fs-tab="chart">
+          <span>{{ block.settings.tab_chart | escape }}</span>
+        </button>
+      </div>
+
+      <div class="find-size-drawer__body">
+        <div class="find-size-drawer__pane" data-fs-pane="find">
+          <div data-fs-step="1">
+            <p class="find-size-drawer__step">1/2</p>
+            <h2 class="find-size-drawer__title">{{ block.settings.title | escape }}</h2>
+            <p class="find-size-drawer__text">{{ block.settings.text | escape }}</p>
+
+            <div class="find-size-drawer__radios">
+              <label class="find-size-drawer__radio">
+                <input type="radio" name="fs-mode-{{ block.id }}" value="circumference" checked data-fs-mode>
+                <span>{{ block.settings.circumference_label | escape }}</span>
+              </label>
+              <label class="find-size-drawer__radio">
+                <input type="radio" name="fs-mode-{{ block.id }}" value="diameter" data-fs-mode>
+                <span>{{ block.settings.diameter_label | escape }}</span>
+              </label>
+            </div>
+
+            <div class="find-size-drawer__field">
+              <input
+                type="text"
+                inputmode="decimal"
+                autocomplete="off"
+                class="find-size-drawer__input"
+                placeholder="{{ block.settings.circumference_label | escape }}"
+                aria-label="{{ block.settings.circumference_label | escape }}"
+                data-fs-value
+              >
+              <span class="find-size-drawer__units">
+                <button type="button" class="is-active" data-fs-unit="mm">mm</button>
+                <button type="button" data-fs-unit="in">in</button>
+              </span>
+            </div>
+            <p class="find-size-drawer__error" data-fs-error hidden></p>
+          </div>
+
+          <div data-fs-step="2" hidden>
+            <p class="find-size-drawer__step">2/2</p>
+            <h2 class="find-size-drawer__title">{{ block.settings.result_title | escape }}</h2>
+            <p class="find-size-drawer__result-size" data-fs-result-size></p>
+            <p class="find-size-drawer__text" data-fs-result-text></p>
+            <button type="button" class="find-size-drawer__link" data-fs-back>{{ block.settings.back_label | escape }}</button>
+          </div>
+        </div>
+
+        <div class="find-size-drawer__pane" data-fs-pane="chart" hidden>
+          <table class="find-size-drawer__table">
+            <thead>
+              <tr>
+                <th>{{ block.settings.chart_size_label | escape }}</th>
+                <th>{{ block.settings.chart_circumference_label | escape }} (mm)</th>
+                <th>{{ block.settings.chart_diameter_label | escape }} (mm)</th>
+                <th>{{ block.settings.chart_circumference_label | escape }} (in)</th>
+              </tr>
+            </thead>
+            <tbody data-fs-chart></tbody>
+          </table>
+        </div>
+
+        {%- if block.settings.footnote != blank -%}
+          <p class="find-size-drawer__footnote">{{ block.settings.footnote | escape }}</p>
+        {%- endif -%}
+      </div>
+
+      <div class="find-size-drawer__footer">
+        <button type="button" class="find-size-drawer__cta" data-fs-cta disabled>
+          {{- block.settings.continue_label | escape -}}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ 'find-your-size.js' | asset_url }}" defer></script>
+{%- endif -%}

@@ -1,0 +1,54 @@
+{% render 'button-block',
+  link: block.settings.link,
+  label: block.settings.link_text,
+  button_style: block.settings.button_style,
+  wrapper_class: 'section-blocks__button',
+  shopify_attributes: block.shopify_attributes
+%}
+
+{% schema %}
+{
+  "name": "t:blocks.content._button.name",
+  "tag": null,
+  "settings": [
+    {
+      "type": "url",
+      "id": "link",
+      "label": "t:shared.settings.button_link.label"
+    },
+    {
+      "type": "text",
+      "id": "link_text",
+      "label": "t:shared.settings.button_link_text.label",
+      "default": "t:blocks.content._button.settings.link_text.default"
+    },
+    {
+      "type": "select",
+      "id": "button_style",
+      "label": "t:shared.settings.button_style.label",
+      "options": [
+        {
+          "value": "btn--primary",
+          "label": "t:shared.settings.button_style.options.solid"
+        },
+        {
+          "value": "btn--secondary",
+          "label": "t:shared.settings.button_style.options.outline"
+        },
+        {
+          "value": "btn--callout",
+          "label": "t:shared.settings.button_style.options.text"
+        }
+      ],
+      "default": "btn--primary"
+    }
+  ],
+  "blocks": [],
+  "presets": [
+    {
+      "name": "t:blocks.content._button.presets.name",
+      "blocks": []
+    }
+  ]
+}
+{% endschema %}

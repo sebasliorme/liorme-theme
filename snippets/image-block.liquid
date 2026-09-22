@@ -1,0 +1,59 @@
+{%- doc -%}
+  Renders a standard image display for image blocks. Used in multiple sections.
+
+  @param {object} image - The image.
+  @param {number} width - The image width.
+  @param {number} mobile_width - The image width on mobile.
+  @param {string} break_to_mobile_at - A number (represented as a string) that notes the screen width pixel value where we should break to mobile.
+  @param {string} [wrapper_class] - A class to be applied to the image container.
+  @param {string} align - The horizontal alignment of the image.
+  @param {string} [align_mobile] - The horizontal alignment of the image on mobile.
+  @param {boolean} [full_width] - Whether the image is full-width.
+  @param {boolean} enable_corner_rounding - Whether corner rounding should apply.
+  @param {string} shopify_attributes - Block attributes from 'block.shopify_attributes'.
+{%- enddoc -%}
+
+{%- liquid
+  capture sizes
+    echo '(min-width: [[btma]]px) [[w]]px, [[mw]]px' | replace: '[[btma]]', break_to_mobile_at | replace: '[[w]]', width | replace: '[[mw]]', mobile_width
+  endcapture
+
+  assign align_mobile = align_mobile | default: align
+  assign full_width = full_width | default: false, allow_false: true
+
+  capture image_block_class
+    echo 'image-block'
+    echo ' image-block--justify-[[a]]' | replace: '[[a]]', align
+    echo ' image-block--justify-mobile-[[am]]' | replace: '[[am]]', align_mobile
+    echo ' image-block--break-to-mobile-at-[[btma]]' | replace: '[[btma]]', break_to_mobile_at
+
+    if full_width
+      echo ' image-block--full-width'
+    endif
+
+    echo ' image-block--enable-corner-rounding-[[ecr]]' | replace: '[[ecr]]', enable_corner_rounding
+
+    if wrapper_class != blank
+      echo ' '
+      echo wrapper_class
+    endif
+  endcapture
+-%}
+
+<div
+  class="{{ image_block_class }}"
+  style="
+    --image-block-max-width: {{ width }}px;
+    --image-block-max-width-mobile: {{ mobile_width }}px;
+  "
+  {{ shopify_attributes }}
+>
+  <div class="image-block__inner">
+    {%- render 'image',
+      image: image,
+      sizes: sizes,
+      include_placeholder: true,
+      placeholder_natural_fallback_ratio: 'landscape'
+    -%}
+  </div>
+</div>

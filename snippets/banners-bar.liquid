@@ -1,0 +1,125 @@
+{% doc %}
+  Renders a banner 'bar' section.
+
+  @param {object} section - The section object.
+  @param {string} section_type - The handleized string to use for the class, data-section-type, and animation class.
+  @param {string} additional_content - Content to append to the banner content.
+{% enddoc %}
+
+<div
+  class="
+    section
+    section--divider-{{ section.settings.divider_style }}
+    section--divider-full-width-{{ section.settings.enable_full_width_divider }}
+    section--enable-mobile-padding-{{ section.settings.enable_padding_on_mobile }}
+    {{ section_type }}
+    sales-banner
+    sales-banner--bar
+    {% if section.settings.background_type == 'image' -%}sales-banner--has-image{%- endif %}
+    {% if settings.enable_section_animations and section.settings.enable_animation -%}
+      animation
+      animation--{{ section_type }}
+    {%- endif -%}
+  "
+  style="
+    {%- render 'color-scheme-to-vars',
+      color_scheme: section.settings.color_scheme,
+      css_vars:  'background,background-gradient,lines-and-borders'
+    -%}
+    {%- render 'section-padding-vars' -%}
+    --overlay-opacity: {{ section.settings.overlay_opacity | divided_by: 100.0 }};
+    --min-height: {{ section.settings.min_height }}px;
+    --min-height-mobile: {{ section.settings.min_height_mobile }}px;
+  "
+  data-section-id="{{ section.id }}"
+  data-section-type="{{ section_type }}"
+>
+  {%- liquid
+    if section.settings.background_type == 'image'
+      assign background_color_scheme = section.settings.overlay_color_scheme
+    else
+      assign background_color_scheme = section.settings.background_color_scheme
+    endif
+  -%}
+
+  <div
+    class="
+      sales-banner__inner
+      section-inner
+      section-inner--width-{{ section.settings.section_width }}
+      section-inner--mobile-full-width-{{ section.settings.enable_full_width_on_mobile }}
+    "
+    style="{%- render 'color-scheme-to-vars', color_scheme: background_color_scheme, output_placeholder_colors: false -%}"
+  >
+    {%- if section.settings.background_type == 'image' -%}
+      {%- liquid
+        if section.settings.full_width
+          assign image_sizes = '100vw'
+        else
+          assign image_sizes = '(min-width: 1400px) 1400px, calc(100vw - calc(2 * 3.3vw))'
+        endif
+      -%}
+
+      {%- if section.settings.mobile_image != blank -%}
+        {%- render 'image',
+          wrapper_class: 'sales-banner__image sales-banner__image--mobile',
+          image: section.settings.mobile_image,
+          focal_point: section.settings.mobile_focal_point,
+          sizes: image_sizes
+        -%}
+      {%- endif -%}
+
+      {%- render 'image',
+        wrapper_class: 'sales-banner__image',
+        image: section.settings.image,
+        focal_point: section.settings.focal_point,
+        sizes: image_sizes,
+        include_placeholder: true,
+        placeholder_name: 'lifestyle-1'
+      -%}
+    {%- endif -%}
+
+    <div class="sales-banner__overlay"></div>
+
+    <div class="sales-banner__content">
+      <div class="sales-banner__bar">
+        {%- if section.settings.heading != blank -%}
+          <div class="sales-banner__bar-item sales-banner__bar-item--heading">
+            <{{ section.settings.heading_tag }} class="ff-heading {{ section.settings.heading_font_class }}">
+              {{- section.settings.heading -}}
+            </{{ section.settings.heading_tag }}>
+          </div>
+        {%- endif -%}
+
+        {%- if section.settings.text != blank
+          or additional_content != blank
+          or section.settings.link_text != blank
+          and section.settings.link != blank
+        -%}
+          <div class="sales-banner__bar-item sales-banner__bar-item--text animation animation--bar-divider">
+            {%- if section.settings.text != blank -%}
+              <div class="sales-banner__bar-text {{ section.settings.text_font_class }} rte">
+                {{ section.settings.text }}
+              </div>
+            {%- endif -%}
+
+            {%- if section.settings.link_text -%}
+              {%- render 'button-block',
+                link: section.settings.link,
+                label: section.settings.link_text,
+                buttons_can_inline: true,
+                is_small: true,
+                button_style: section.settings.button_style,
+                wrapper_class: 'sales-banner__button'
+              -%}
+            {%- endif -%}
+
+            {%- if additional_content != blank -%}
+              {{ additional_content }}
+            {%- endif -%}
+          </div>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</div>

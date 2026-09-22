@@ -1,0 +1,86 @@
+{%- doc -%}
+  Renders the sale, sold out, and custom badges for product items and the product page overview "header".
+
+  @param {object} prod - The product object. We use 'prod' to avoid collision with the global 'product' object.
+  @param {boolean} show_sale_badge - Whether to show the sale badge.
+  @param {boolean} show_custom_badges - Whether to show custom badges.
+  @param {boolean} show_sold_out_badge - Whether to show the sold out badge. If true, no other badges will show.
+{%- enddoc -%}
+
+{%- # whitespace: normal -%}
+{%- capture badge_structure -%}
+  <div class="product-badge product-badge--[[type]]">[[content]]</div>
+{%- endcapture -%}
+
+{%- liquid
+  unless show_sold_out_badge and prod.available != true
+    # Sale badge
+    if show_sale_badge and prod.compare_at_price > prod.price
+      capture sale_badge_content
+        render 'get-display-discount', prod: prod, format: settings.sale_badge_format
+      endcapture
+
+      capture badges
+        echo badge_structure | replace: '[[type]]', 'sale' | replace: '[[content]]', sale_badge_content
+      endcapture
+    endif
+
+    # Custom badges
+    if show_custom_badges
+      assign custom_badges_translations = shop.metaobjects.custom_badges.custom_badges_translations
+
+      for i in (1..4)
+        capture setting_id_prefix
+          echo 'custom_product_badge_group_[[i]]' | replace: '[[i]]', i
+        endcapture
+
+        capture tag_setting_id
+          echo '[[sip]]_tag_names' | replace: '[[sip]]', setting_id_prefix
+        endcapture
+
+        if settings[tag_setting_id] != blank
+          assign badge_tags = settings[tag_setting_id] | split: ','
+
+          for badge_tag in badge_tags
+            assign stripped_badge_tag = badge_tag | strip
+            assign formatted_badge_tag = stripped_badge_tag | downcase
+
+            for product_tag in prod.tags
+              assign formatted_product_tag = product_tag | downcase
+
+              if formatted_badge_tag == formatted_product_tag
+                assign translation_key = formatted_badge_tag | replace: ' ', '_'
+                assign badge_text = custom_badges_translations[translation_key] | default: stripped_badge_tag
+                assign badge_type = 'custom-[[i]]' | replace: '[[i]]', i
+
+                capture badges
+                  echo badges
+                  echo badge_structure | replace: '[[type]]', badge_type | replace: '[[content]]', badge_text
+                endcapture
+              endif
+            endfor
+          endfor
+        endif
+      endfor
+    endif
+  endunless
+
+  # Sold-out badge
+  if show_sold_out_badge and prod.available != true
+    assign sold_out_text = 'products.product.sold_out' | t
+
+    capture badges
+      echo badge_structure | replace: '[[type]]', 'sold-out' | replace: '[[content]]', sold_out_text
+    endcapture
+  endif
+-%}
+
+<div
+  class="
+    product-badges
+    product-badges--position-{{ settings.product_listing_badge_position | split: '_' | first }}
+    product-badges--position-{{ settings.product_listing_badge_position | split: '_' | last }}
+  "
+>
+  {{ badges }}
+</div>

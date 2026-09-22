@@ -1,0 +1,68 @@
+{%- doc -%}
+  Renders the carousel navigation.
+
+  @param {string} [placement] - Where the navigation is placed (ie. 'header' or 'slider').
+  @param {string} [wrapper_class] - A class to be applied to the wrapper.
+  @param {string} [attributes] - Any attributes to be applied to the wrapper.
+{%- enddoc -%}
+
+{%- liquid
+  assign placement = placement | default: 'header'
+
+  if placement == 'header'
+    assign icon_name = 'arrow-long'
+  else
+    assign icon_name = 'arrow-short'
+  endif
+
+  capture buttons_class
+    echo 'carousel__navigation-buttons'
+
+    if placement == 'slider'
+      echo ' over-slider'
+    endif
+
+    if wrapper_class != blank
+      echo ' '
+      echo wrapper_class
+    endif
+  endcapture
+
+  capture button_class
+    echo 'carousel__navigation-button'
+    echo ' carousel__navigation-button--[[direction]]'
+
+    if placement == 'slider'
+      echo ' button-shape--[[snbs]]' | replace: '[[snbs]]', settings.slider_navigation_button_shape
+      echo ' button-color--[[snc]]' | replace: '[[snc]]', settings.slider_navigation_color
+    endif
+  endcapture
+-%}
+
+<div
+  class="{{ buttons_class }}"
+  {% if attributes != blank -%}
+    {{ attributes }}
+  {%- endif %}
+  js-carousel-navigation-buttons
+>
+  <button
+    type="button"
+    class="{{ button_class | replace: '[[direction]]', 'back'}}"
+    data-prev
+    js-carousel-navigation-button
+    aria-label="{{ 'general.accessibility.carousel_previous' | t }}"
+  >
+    {%- render 'icon', icon: icon_name -%}
+  </button>
+
+  <button
+    type="button"
+    class="{{ button_class | replace: '[[direction]]', 'forward'}}"
+    data-next
+    js-carousel-navigation-button
+    aria-label="{{ 'general.accessibility.carousel_next' | t }}"
+  >
+    {%- render 'icon', icon: icon_name -%}
+  </button>
+</div>

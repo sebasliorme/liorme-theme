@@ -1,0 +1,18 @@
+{%- doc -%}
+  Renders a tag item for the 'Title' block of the article page.
+
+  @param {object} blog - The blog object.
+  @param {object} tag - The tag object.
+  @param {string} tag_el - The HTML element type for the item.
+{%- enddoc -%}
+
+<li class="article-tags__item">
+  <{{ tag_el }}
+    {% if blog -%}
+      href="{{ blog.url }}/tagged/{{ tag | handleize }}"
+    {%- endif %}
+    class="article-tags__tag fs-body-50"
+  >
+    {{- tag -}}
+  </{{ tag_el }}>
+</li>

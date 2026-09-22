@@ -1,0 +1,59 @@
+{%- doc -%}
+  Renders a gallery item for the 'Gallery carousel' section.
+
+  @param {object} block - The block object.
+  @param {string} aspect_ratio - The item's aspect ratio.
+  @param {string} label_size - The item's label size (ie. 'small', 'regular', or 'large').
+  @param {string} label_style - The item's label style (ie. 'overlay', or 'beneath').
+  @param {string} overlay_text_background_style - The overlay background style (ie. 'solid', or 'gradient').
+  @param {object} overlay_color_scheme - The overlay color scheme.
+  @param {string} image_sizes - A list of responsive image sizes (for the 'sizes' attribute).
+{%- enddoc -%}
+
+{%- assign overlay_background = overlay_color_scheme.settings.background -%}
+
+{% capture item_label %}
+  <div class="gallery-item__label {{ label_size }} ff-body">
+    {%- if block.settings.title != blank -%}
+      <h4 class="gallery-item__title fs-heading-5-base ff-heading">{{ block.settings.title }}</h4>
+    {% endif %}
+
+    {{- block.settings.text -}}
+  </div>
+{% endcapture %}
+
+<div
+  class="
+    gallery-item
+    gallery-item--label-{{ label_style }}
+    gallery-item--label-background-{{ overlay_text_background_style }}
+    animation--item
+    {{ block.shopify_attributes }}
+  "
+  {% if label_style == 'overlay' -%}
+    style="
+      {%- render 'color-scheme-to-vars', color_scheme: overlay_color_scheme, output_placeholder_colors: false -%}
+      --label-gradient-start: {{ overlay_background | color_modify: 'alpha', 0.4 }};
+      --label-gradient-mid: {{ overlay_background | color_modify: 'alpha', 0.2 }};
+      --label-gradient-end: {{ overlay_background | color_modify: 'alpha', 0 }};
+    "
+  {%- endif -%}
+>
+  <div class="gallery-item__image-wrapper hover">
+    {%- render 'image',
+      image: block.settings.image,
+      wrapper_class: 'gallery-item__image',
+      aspect_ratio: aspect_ratio,
+      focal_point: block.settings.focal_point,
+      include_placeholder: true,
+      sizes: image_sizes,
+      src_set_type: 'grid'
+    -%}
+
+    {%- if label_style == 'overlay' -%}
+      {{- item_label -}}
+    {%- endif -%}
+  </div>
+
+  {{- item_label -}}
+</div>

@@ -1,0 +1,15 @@
+{%- doc -%}
+  Renders the resutls count for collection/search "filter bar".
+
+  @param {number} results_count - The number of results.
+{%- enddoc -%}
+
+{%- liquid
+  if results_count == 1
+    echo 'filters.one_result_html' | t: value: results_count
+  elsif results_count > 1
+    echo 'filters.many_results_html' | t: value: results_count
+  else
+    echo 'filters.no_results' | t
+  endif
+-%}

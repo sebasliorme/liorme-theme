@@ -1,0 +1,23 @@
+{% render 'section-block-accent', accent: block.settings.text, shopify_attributes: block.shopify_attributes %}
+
+{% schema %}
+{
+  "name": "t:blocks.content._accent.name",
+  "tag": null,
+  "settings": [
+    {
+      "type": "text",
+      "id": "text",
+      "label": "t:blocks.content._accent.settings.accent.label",
+      "default": "t:blocks.content._accent.settings.accent.default"
+    }
+  ],
+  "blocks": [],
+  "presets": [
+    {
+      "name": "t:blocks.content._accent.presets.name",
+      "blocks": []
+    }
+  ]
+}
+{% endschema %}

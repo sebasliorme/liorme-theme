@@ -1,0 +1,57 @@
+{% render 'image-block',
+  image: block.settings.image,
+  width: block.settings.image_size,
+  mobile_width: block.settings.image_size_mobile,
+  break_to_mobile_at: '720',
+  enable_corner_rounding: block.settings.enable_corner_rounding,
+  wrapper_class: 'section-blocks__image',
+  shopify_attributes: block.shopify_attributes
+%}
+
+{% schema %}
+{
+  "name": "t:blocks.content._image.name",
+  "tag": null,
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:blocks.content._image.settings.image.label"
+    },
+    {
+      "type": "range",
+      "id": "image_size",
+      "label": "t:blocks.content._image.settings.image_size.label",
+      "min": 50,
+      "max": 750,
+      "step": 10,
+      "unit": "px",
+      "default": 200
+    },
+    {
+      "type": "range",
+      "id": "image_size_mobile",
+      "label": "t:blocks.content._image.settings.image_size_mobile.label",
+      "min": 50,
+      "max": 350,
+      "step": 10,
+      "unit": "px",
+      "default": 200
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_corner_rounding",
+      "label": "t:shared.settings.enable_corner_rounding.label",
+      "default": true,
+      "info": "t:shared.settings.enable_corner_rounding.info"
+    }
+  ],
+  "blocks": [],
+  "presets": [
+    {
+      "name": "t:blocks.content._image.presets.name",
+      "blocks": []
+    }
+  ]
+}
+{% endschema %}

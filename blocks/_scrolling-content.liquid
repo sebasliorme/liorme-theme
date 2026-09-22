@@ -1,0 +1,344 @@
+{% # whitespace: normal %}
+{%- capture block_content -%}
+  {% content_for 'blocks' %}
+{%- endcapture -%}
+
+{%- render 'scrolling-content',
+  block_content: block_content,
+  scroll_duration: block.settings.scrolling_effect_duration,
+  scroll_direction: block.settings.scrolling_effect_direction,
+  gap: block.settings.layout_gap,
+  padding_top: block.settings.layout_padding_top,
+  padding_bottom: block.settings.layout_padding_bottom,
+  text_font_choice: block.settings.text_font_choice,
+  text_size_var_desktop: block.settings.text_size_desktop,
+  text_size_var_mobile: block.settings.text_size_mobile,
+  shopify_attributes: block.shopify_attributes
+-%}
+
+{% schema %}
+{
+  "name": "t:blocks._scrolling_content.name",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "t:blocks._scrolling_content.settings.layout.header.content"
+    },
+    {
+      "type": "range",
+      "id": "layout_gap",
+      "label": "t:blocks._scrolling_content.settings.layout.gap.label",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 50
+    },
+    {
+      "type": "range",
+      "id": "layout_padding_top",
+      "label": "t:blocks._scrolling_content.settings.layout.top_padding.label",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "layout_padding_bottom",
+      "label": "t:blocks._scrolling_content.settings.layout.bottom_padding.label",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 10
+    },
+    {
+      "type": "header",
+      "content": "t:blocks._scrolling_content.settings.scrolling_effect.header.content"
+    },
+    {
+      "type": "range",
+      "id": "scrolling_effect_duration",
+      "label": "t:blocks._scrolling_content.settings.scrolling_effect.duration.label",
+      "min": 1,
+      "max": 100,
+      "step": 1,
+      "unit": "s",
+      "default": 10
+    },
+    {
+      "type": "select",
+      "id": "scrolling_effect_direction",
+      "label": "t:blocks._scrolling_content.settings.scrolling_effect.direction.label",
+      "options": [
+        {
+          "value": "normal",
+          "label": "t:blocks._scrolling_content.settings.scrolling_effect.direction.options.normal"
+        },
+        {
+          "value": "reverse",
+          "label": "t:blocks._scrolling_content.settings.scrolling_effect.direction.options.reverse"
+        }
+      ]
+    },
+    {
+      "type": "header",
+      "content": "t:blocks._scrolling_content.settings.text.header.content"
+    },
+    {
+      "type": "select",
+      "id": "text_font_choice",
+      "label": "t:shared.settings.font_choice.label",
+      "options": [
+        {
+          "value": "ff-heading",
+          "label": "t:shared.settings.font_choice.options.heading"
+        },
+        {
+          "value": "ff-body",
+          "label": "t:shared.settings.font_choice.options.body"
+        }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "text_size_desktop",
+      "label": "t:shared.settings.heading_and_text_font_class.label",
+      "options": [
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.heading",
+          "value": "--font-size-heading-6-base",
+          "label": "t:shared.settings.heading_and_text_font_class.options.xx_small_h6"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.heading",
+          "value": "--font-size-heading-5-base",
+          "label": "t:shared.settings.heading_and_text_font_class.options.x_small_h5"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.heading",
+          "value": "--font-size-heading-4-base",
+          "label": "t:shared.settings.heading_and_text_font_class.options.small_h4"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.heading",
+          "value": "--font-size-heading-3-base",
+          "label": "t:shared.settings.heading_and_text_font_class.options.medium_h3"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.heading",
+          "value": "--font-size-heading-2-base",
+          "label": "t:shared.settings.heading_and_text_font_class.options.large_h2"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.heading",
+          "value": "--font-size-heading-1-base",
+          "label": "t:shared.settings.heading_and_text_font_class.options.x_large_h1"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.display",
+          "value": "--font-size-heading-display-3",
+          "label": "t:shared.settings.heading_and_text_font_class.options.display_regular"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.display",
+          "value": "--font-size-heading-display-2",
+          "label": "t:shared.settings.heading_and_text_font_class.options.display_large"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.display",
+          "value": "--font-size-heading-display-1",
+          "label": "t:shared.settings.heading_and_text_font_class.options.display_x_large"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.body",
+          "value": "--font-size-body-25",
+          "label": "t:shared.settings.heading_and_text_font_class.options.xx_small"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.body",
+          "value": "--font-size-body-50",
+          "label": "t:shared.settings.heading_and_text_font_class.options.x_small"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.body",
+          "value": "--font-size-body-75",
+          "label": "t:shared.settings.heading_and_text_font_class.options.small"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.body",
+          "value": "--font-size-body-100",
+          "label": "t:shared.settings.heading_and_text_font_class.options.regular"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.body",
+          "value": "--font-size-body-150",
+          "label": "t:shared.settings.heading_and_text_font_class.options.large"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.body",
+          "value": "--font-size-body-200",
+          "label": "t:shared.settings.heading_and_text_font_class.options.x_large"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.body",
+          "value": "--font-size-body-250",
+          "label": "t:shared.settings.heading_and_text_font_class.options.2x_large"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.body",
+          "value": "--font-size-body-300",
+          "label": "t:shared.settings.heading_and_text_font_class.options.3x_large"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.body",
+          "value": "--font-size-body-350",
+          "label": "t:shared.settings.heading_and_text_font_class.options.4x_large"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.body",
+          "value": "--font-size-body-400",
+          "label": "t:shared.settings.heading_and_text_font_class.options.5x_large"
+        }
+      ],
+      "default": "--font-size-heading-3-base"
+    },
+    {
+      "type": "select",
+      "id": "text_size_mobile",
+      "label": "t:blocks._scrolling_content.settings.text.mobile_text_size.label",
+      "options": [
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.heading",
+          "value": "--font-size-heading-6-base",
+          "label": "t:shared.settings.heading_and_text_font_class.options.xx_small_h6"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.heading",
+          "value": "--font-size-heading-5-base",
+          "label": "t:shared.settings.heading_and_text_font_class.options.x_small_h5"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.heading",
+          "value": "--font-size-heading-4-base",
+          "label": "t:shared.settings.heading_and_text_font_class.options.small_h4"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.heading",
+          "value": "--font-size-heading-3-base",
+          "label": "t:shared.settings.heading_and_text_font_class.options.medium_h3"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.heading",
+          "value": "--font-size-heading-2-base",
+          "label": "t:shared.settings.heading_and_text_font_class.options.large_h2"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.heading",
+          "value": "--font-size-heading-1-base",
+          "label": "t:shared.settings.heading_and_text_font_class.options.x_large_h1"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.display",
+          "value": "--font-size-heading-display-3",
+          "label": "t:shared.settings.heading_and_text_font_class.options.display_regular"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.display",
+          "value": "--font-size-heading-display-2",
+          "label": "t:shared.settings.heading_and_text_font_class.options.display_large"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.display",
+          "value": "--font-size-heading-display-1",
+          "label": "t:shared.settings.heading_and_text_font_class.options.display_x_large"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.body",
+          "value": "--font-size-body-25",
+          "label": "t:shared.settings.heading_and_text_font_class.options.xx_small"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.body",
+          "value": "--font-size-body-50",
+          "label": "t:shared.settings.heading_and_text_font_class.options.x_small"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.body",
+          "value": "--font-size-body-75",
+          "label": "t:shared.settings.heading_and_text_font_class.options.small"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.body",
+          "value": "--font-size-body-100",
+          "label": "t:shared.settings.heading_and_text_font_class.options.regular"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.body",
+          "value": "--font-size-body-150",
+          "label": "t:shared.settings.heading_and_text_font_class.options.large"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.body",
+          "value": "--font-size-body-200",
+          "label": "t:shared.settings.heading_and_text_font_class.options.x_large"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.body",
+          "value": "--font-size-body-250",
+          "label": "t:shared.settings.heading_and_text_font_class.options.2x_large"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.body",
+          "value": "--font-size-body-300",
+          "label": "t:shared.settings.heading_and_text_font_class.options.3x_large"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.body",
+          "value": "--font-size-body-350",
+          "label": "t:shared.settings.heading_and_text_font_class.options.4x_large"
+        },
+        {
+          "group": "t:shared.settings.heading_and_text_font_class.groups.body",
+          "value": "--font-size-body-400",
+          "label": "t:shared.settings.heading_and_text_font_class.options.5x_large"
+        }
+      ],
+      "default": "--font-size-heading-5-base"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "@app"
+    },
+    {
+      "type": "_scrolling-content-text"
+    },
+    {
+      "type": "_scrolling-content-image"
+    },
+    {
+      "type": "_scrolling-content-icon"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:blocks._scrolling_content.presets.name",
+      "blocks": [
+        {
+          "type": "_scrolling-content-text"
+        },
+        {
+          "type": "_scrolling-content-image"
+        },
+        {
+          "type": "_scrolling-content-icon"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

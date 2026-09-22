@@ -1,0 +1,88 @@
+{%- doc -%}
+  Renders accordion content.
+
+  This can either be for the dedicated "Collapsible row" block, or for turning other blocks
+  into a collapsible row. Because of this, parameters that are passed in are context dependent.
+
+  @param {object} [block] - The block object.
+  @param {string} heading - The accordion heading.
+  @param {string} content - The accordion content.
+  @param {boolean} [expand_by_default] - Whether the accordion should be expanded by default.
+  @param {string} [classes] - Classes to be applied to the container.
+  @param {boolean} [disable_rte] - Whether RTE styles should be disabled. Used for complementary product block.
+  @param {string} [label_font] - The font family class for the label.
+  @param {string} [label_size] - The font size class for the label.
+{%- enddoc -%}
+
+{%- liquid
+  if block.settings.expand_by_default or expand_by_default
+    assign open = true
+  else
+    assign open = false
+  endif
+
+  assign label_font = label_font | default: 'ff-heading'
+  assign label_size = label_size | default: 'fs-heading-5-base'
+
+  if block.settings.custom_liquid != blank
+    assign content = block.settings.custom_liquid
+  elsif block.settings.page_for_content and block.settings.page_for_content.content != blank
+    assign content = block.settings.page_for_content.content
+  endif
+-%}
+
+{% if content != blank or request.design_mode %}
+  <div class="accordion {{ classes -}}" {{ block.shopify_attributes }}>
+    <div
+      class="accordion__inner"
+      data-open="{% if open %}true{% else %}false{% endif %}"
+      {{ block.shopify_attributes }}
+    >
+      <button
+        class="accordion__label"
+        aria-expanded="{% if open %}true{% else %}false{% endif %}"
+        aria-controls="{{ block.id }}"
+      >
+        <div class="accordion__label-heading-and-icon">
+          {%- liquid
+            if block.settings.custom_icon_image != blank
+              render 'image', wrapper_class: 'accordion__label-icon', image: block.settings.custom_icon_image, sizes: '25px'
+            elsif block.settings.icon != blank and block.settings.icon != 'none'
+              render 'icon-editorial', class: 'accordion__label-icon', icon: block.settings.icon
+            endif
+
+            if block.settings.heading_tag
+              assign heading_tag = block.settings.heading_tag
+            elsif block.settings.title_tag
+              assign heading_tag = block.settings.title_tag
+            else
+              assign heading_tag = 'h3'
+            endif
+          -%}
+
+          <{{ heading_tag }} class="{{ label_font }} {{ label_size }}">
+            {{- heading -}}
+          </{{ heading_tag }}>
+        </div>
+
+        <div class="accordion__label-icons">
+          {%- render 'icon', icon: 'plus' -%}
+          {%- render 'icon', icon: 'minus' -%}
+        </div>
+      </button>
+
+      {%- assign font_class = block.settings.text_font_class | default: 'fs-body-100' -%}
+
+      <div
+        id="accordion-content-{{ block.id }}"
+        class="accordion__content {{ font_class }} {%- unless disable_rte %} rte non-page-rte{%- endunless -%}"
+        aria-hidden="{% if open %}false{% else %}true{% endif %}"
+        {% unless open -%}
+          style="display: none"
+        {%- endunless -%}
+      >
+        {{- content -}}
+      </div>
+    </div>
+  </div>
+{%- endif -%}

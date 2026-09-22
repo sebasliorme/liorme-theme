@@ -1,0 +1,2700 @@
+{%- liquid
+  # Pagination
+  if section.settings.pagination == 'paginated'
+    assign paginated = true
+  else
+    assign paginated = false
+  endif
+
+  assign per_page = section.settings.rows | times: section.settings.columns_desktop
+
+  # Filter bar
+  if section.settings.show_item_count or section.settings.show_sort or section.settings.show_filters
+    assign filter_bar_enabled = true
+  else
+    assign filter_bar_enabled = false
+  endif
+
+  # Active filter count
+  assign active_filter_count = 0
+
+  for filter in collection.filters
+    if filter.active_values.size > 0
+      for active_value in filter.active_values
+        assign active_filter_count = active_filter_count | plus: 1
+      endfor
+    elsif filter.type == 'price_range'
+      if filter.min_value.value > 0
+        assign active_filter_count = active_filter_count | plus: 1
+      endif
+
+      if filter.max_value.value < filter.range_max
+        assign active_filter_count = active_filter_count | plus: 1
+      endif
+    endif
+  endfor
+
+  # Swatches and chips
+  assign swatch_options = settings.swatch_options | downcase | split: ', '
+  assign chip_options = settings.chip_options | downcase | split: ', '
+
+  capture custom_swatch_color_maps
+    render 'get-custom-swatch-color-maps'
+  endcapture
+
+  assign custom_color_key_map = custom_swatch_color_maps | split: ' | ' | first | split: ','
+  assign custom_color_value_map = custom_swatch_color_maps | split: ' | ' | last | split: ','
+-%}
+
+<section
+  class="
+    section
+    section--divider-{{ section.settings.divider_style }}
+    section--divider-full-width-{{ section.settings.enable_full_width_divider }}
+    section--includes-product-items
+    collection
+    collection--pagination-{{ section.settings.pagination }}
+    {% if filter_bar_enabled -%}
+      collection--has-filter-bar
+    {%- endif %}
+    {% if section.settings.color_scheme.settings.background_gradient != blank -%}
+      collection--has-background-gradient
+    {%- endif %}
+    {% if settings.enable_section_animations and section.settings.enable_animation -%}
+      animation
+      animation--collection
+    {%- endif -%}
+  "
+  style="
+    {%- render 'color-scheme-to-vars', color_scheme: section.settings.color_scheme -%}
+    {%- render 'section-padding-vars' -%}
+    --collection-columns-desktop: {{ section.settings.columns_desktop }};
+    --collection-columns-mobile: {{ section.settings.columns_mobile }};
+    {%- if section.settings.remove_gap %}
+    --collection-card-gap-desktop: 0px;
+    --collection-card-gap-mobile: 0px;
+    {%- else %}
+    --collection-card-gap-desktop: {{ section.settings.card_gap | default: 0 }}px;
+    --collection-card-gap-mobile: {{ section.settings.card_gap_mobile | default: 0 }}px;
+    {%- endif %}
+  "
+  data-section-id="{{ section.id }}"
+  data-section-type="collection"
+  data-section-width="{{ section.settings.section_width }}"
+  data-layout-type="grid"
+  data-pagination-type="{{ section.settings.pagination }}"
+  data-collection-item-count="{{ collection.all_products_count }}"
+  data-collection-items-per-page="{{ per_page }}"
+  data-collection-columns-desktop="{{ section.settings.columns_desktop }}"
+  data-collection-columns-mobile="{{ section.settings.columns_mobile }}"
+  data-enable-sticky-filter-sidebar="{{ section.settings.enable_sticky_filter_sidebar }}"
+>
+  <style>
+    /* Prevent overflow: hidden from breaking CSS Grid position: sticky */
+    #shopify-section-{{ section.id }},
+    #shopify-section-{{ section.id }} .collection,
+    #shopify-section-{{ section.id }} .collection__window,
+    #shopify-section-{{ section.id }} .collection__content,
+    #shopify-section-{{ section.id }} .collection__main-area {
+      overflow: visible !important;
+    }
+
+    #shopify-section-{{ section.id }} .collection__products {
+      gap: var(--collection-card-gap-mobile);
+      position: relative;
+      align-items: start; /* Essential for grid sticky positioning */
+    }
+
+    {%- if section.settings.remove_gap %}
+    /* "Quitar la separación": cards and slides touch each other (the option beats the Product Gap sliders and the theme) */
+    #shopify-section-{{ section.id }} .collection__products {
+      --collection-card-gap-desktop: 0px;
+      --collection-card-gap-mobile: 0px;
+      gap: 0 !important;
+      row-gap: 0 !important;
+      column-gap: 0 !important;
+    }
+    {%- endif %}
+
+    #shopify-section-{{ section.id }} .product-item__swatch-count {
+      display: none;
+    }
+
+    {%- comment -%}
+      The always-visible dividers between product cards were removed on request.
+      The only border left is the hover outline below: a full 1px black box on
+      the hovered card itself (top, right, bottom AND left, all drawn on its own
+      overlay — nothing borrowed from a neighbour), nothing at rest.
+    {%- endcomment -%}
+      #shopify-section-{{ section.id }} .collection__products .product-item::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid transparent;
+        pointer-events: none;
+        z-index: 6;
+        transition: border-color var(--duration-fast) var(--easing);
+      }
+      #shopify-section-{{ section.id }} .collection__products .product-item:hover::after {
+        border-color: #111111;
+      }
+
+    {%- if section.settings.enable_filter_bar_border -%}
+      #shopify-section-{{ section.id }} .custom-subnav-bar {
+        border-bottom: 1px solid {{ section.settings.filter_bar_border_color }};
+      }
+      /* The line under the filter bar is there only once the page has been scrolled and the bar is stuck
+         (the theme puts .sticky-header-active on <html> from the first pixel of scroll). At the top of the page
+         it stays transparent, keeping its 1px so nothing moves. */
+      #shopify-section-{{ section.id }} .filter-bar {
+        border-bottom: 1px solid transparent;
+        transition: border-color 0.2s ease;
+      }
+      html.sticky-header-active #shopify-section-{{ section.id }} .filter-bar {
+        border-bottom-color: {{ section.settings.filter_bar_border_color }};
+      }
+      #shopify-section-{{ section.id }} .filter-bar__sort-group {
+        border-left: 1px solid {{ section.settings.filter_bar_border_color }};
+      }
+    {%- endif -%}
+
+    @media screen and (min-width: 750px) {
+      #shopify-section-{{ section.id }} .collection__products {
+        gap: var(--collection-card-gap-desktop);
+      }
+    }
+
+    {%- if section.settings.enable_custom_section_padding -%}
+      #shopify-section-{{ section.id }} {
+        overflow-x: clip !important;
+      }
+
+      [data-section-id="{{ section.id }}"] {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+      }
+
+      #shopify-section-{{ section.id }} .collection__main-area {
+        max-width: none !important;
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        box-sizing: border-box !important;
+      }
+
+      #shopify-section-{{ section.id }} .filter-bar {
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        box-sizing: border-box !important;
+      }
+
+      #shopify-section-{{ section.id }} .filter-bar__inner,
+      #shopify-section-{{ section.id }} .filter-bar__filters,
+      #shopify-section-{{ section.id }} .filter-bar__active-filters {
+        max-width: none !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+      }
+
+      #shopify-section-{{ section.id }} .mobile-filters {
+        box-sizing: border-box !important;
+      }
+
+      #shopify-section-{{ section.id }} .collection__main-area {
+        padding-left: {{ section.settings.section_padding_left_mobile }}px !important;
+        padding-right: {{ section.settings.section_padding_right_mobile }}px !important;
+      }
+
+      /* Filter bar / mobile filters use a fixed 16/28px instead of the grid's
+         own section_padding_left/right setting above, so they stay lined up
+         with the header and collection title regardless of whatever margin
+         is configured for the product grid itself. */
+      #shopify-section-{{ section.id }} .filter-bar,
+      #shopify-section-{{ section.id }} .mobile-filters {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+      }
+
+      @media screen and (min-width: 720px) {
+        #shopify-section-{{ section.id }} .collection__main-area {
+          padding-left: {{ section.settings.section_padding_left }}px !important;
+          padding-right: {{ section.settings.section_padding_right }}px !important;
+        }
+
+        #shopify-section-{{ section.id }} .filter-bar,
+        #shopify-section-{{ section.id }} .mobile-filters {
+          padding-left: 28px !important;
+          padding-right: 28px !important;
+        }
+      }
+    {%- endif -%}
+
+    {%- liquid
+      # Height / width of a product card's photo (the size of the photos of the slides is worked out from it)
+      case section.settings.product_aspect_ratio
+        when 'square'
+          assign product_slide_row_ratio = 1
+        when 'portrait'
+          assign product_slide_row_ratio = 1.5
+        when 'landscape'
+          assign product_slide_row_ratio = 0.6667
+        when 'landscape_alt'
+          assign product_slide_row_ratio = 0.8
+        when 'landscape_wide_alt'
+          assign product_slide_row_ratio = 0.5625
+        else
+          assign product_slide_row_ratio = 1.25
+      endcase
+
+      # Height / width of one cell of a mosaic slide, and the selector prefix of this section for the tile CSS
+      assign mosaic_tile_ratio = section.settings.mosaic_tile_ratio | default: '1.5' | plus: 0.0
+      assign tile_scope = '#shopify-section-' | append: section.id
+    -%}
+
+    /* --- Editorial slides --- */
+    #shopify-section-{{ section.id }} .collection-editorial-slide {
+      position: relative;
+      height: 100%;
+      min-height: 100%;
+      grid-column: var(--editorial-slide-column-start, 1) / span var(--editorial-slide-column-span, 2);
+      grid-row: var(--editorial-slide-row-start, 1) / span var(--editorial-slide-row-span, 2);
+    }
+
+    #shopify-section-{{ section.id }} .collection-editorial-slide__sticky {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 350px;
+      border-radius: var(--corner-radius-cards-and-images);
+      overflow: hidden;
+      background-color: var(--color-placeholder-background);
+      color: #fff;
+      box-sizing: border-box;
+    }
+
+    #shopify-section-{{ section.id }} .collection-editorial-slide__link {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+    }
+
+    #shopify-section-{{ section.id }} .collection-editorial-slide__media {
+      position: absolute;
+      inset: 0;
+    }
+
+    #shopify-section-{{ section.id }} .collection-editorial-slide__image {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: var(--editorial-slide-focal, center);
+    }
+
+    #shopify-section-{{ section.id }} .collection-editorial-slide__image--mobile {
+      display: none;
+    }
+
+    #shopify-section-{{ section.id }} .collection-editorial-slide__overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0) 45%);
+    }
+
+    #shopify-section-{{ section.id }} .collection-editorial-slide__text-container {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: flex-end;
+      height: 100%;
+      padding: var(--spacing-6);
+    }
+
+    #shopify-section-{{ section.id }} .collection-editorial-slide__heading + .collection-editorial-slide__text,
+    #shopify-section-{{ section.id }} .collection-editorial-slide__text + .collection-editorial-slide__button {
+      margin-top: var(--spacing-2);
+    }
+
+    /* Formats (1:1, 4:5, etc.): the slide's own image ratio drives its height
+       instead of stretching to fill whatever the grid row auto-sizes to.
+       Skipped entirely for "natural" (unchanged, existing behavior) and
+       overridden by the full-height !important rules below when that's on. */
+    #shopify-section-{{ section.id }} .collection-editorial-slide__sticky[data-aspect-ratio="square"] {
+      height: auto;
+      min-height: 0;
+      aspect-ratio: 1;
+    }
+
+    #shopify-section-{{ section.id }} .collection-editorial-slide__sticky[data-aspect-ratio="portrait"] {
+      height: auto;
+      min-height: 0;
+      aspect-ratio: 2 / 3;
+    }
+
+    #shopify-section-{{ section.id }} .collection-editorial-slide__sticky[data-aspect-ratio="portrait_alt"] {
+      height: auto;
+      min-height: 0;
+      aspect-ratio: 4 / 5;
+    }
+
+    #shopify-section-{{ section.id }} .collection-editorial-slide__sticky[data-aspect-ratio="landscape"] {
+      height: auto;
+      min-height: 0;
+      aspect-ratio: 3 / 2;
+    }
+
+    #shopify-section-{{ section.id }} .collection-editorial-slide__sticky[data-aspect-ratio="landscape_alt"] {
+      height: auto;
+      min-height: 0;
+      aspect-ratio: 5 / 4;
+    }
+
+    #shopify-section-{{ section.id }} .collection-editorial-slide__sticky[data-aspect-ratio="landscape_wide_alt"] {
+      height: auto;
+      min-height: 0;
+      aspect-ratio: 16 / 9;
+    }
+
+    /* Fixed/Static Sticky behavior for Multi-row Editorial Slide */
+    @media screen and (min-width: 720px) {
+      /* Where a sticky slide stops: below the header AND the sticky category / filter bar (measured by the
+         script at the end of this section into --collection-bar-height), plus 20px. Without the bar it
+         used to stop under it and lose its top 74px. */
+      #shopify-section-{{ section.id }} {
+        --editorial-slide-sticky-top: calc(var(--header-desktop-sticky-height, var(--height-header, 0px)) + var(--collection-bar-height, 0px) + 20px);
+      }
+
+      #shopify-section-{{ section.id }} .collection-editorial-slide__sticky[data-sticky="true"] {
+        position: -webkit-sticky !important;
+        position: sticky !important;
+        top: var(--editorial-slide-sticky-top) !important;
+        z-index: 4 !important;
+        transition: transform 300ms cubic-bezier(0.33, 0, 0, 1);
+      }
+
+      /* When the header slides away the sticky bar moves up with a transform (see .collection-sticky-bar
+         below); the slide does the same by the same distance, so the two stay together. A transform never
+         touches layout, unlike changing the sticky offset while scrolling. */
+      html.header-hidden #shopify-section-{{ section.id }} .collection-editorial-slide__sticky[data-sticky="true"] {
+        transform: translateY(calc(-1 * (var(--header-desktop-sticky-height, var(--height-header, 0px)) + 1px)));
+      }
+
+      /* When 100vh mode is enabled, lock height to screen viewport */
+      #shopify-section-{{ section.id }} .collection-editorial-slide__sticky[data-sticky="true"][data-full-vh="true"][data-aspect-ratio="natural"] {
+        height: calc(100vh - var(--editorial-slide-sticky-top) - 20px) !important;
+        max-height: 100% !important; /* Constrains sticky box within grid row limits */
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        #shopify-section-{{ section.id }} .collection-editorial-slide__sticky[data-sticky="true"] {
+          transition: none;
+        }
+      }
+    }
+
+    /* --- Mosaic slides inside the product grid (Miu Miu collection page style) --- */
+    /* A mosaic slide is a cell of the grid: 1 to 6 columns by 1 to 4 rows of the shape chosen in the section
+       ("Forma de los slides de mosaico"), so it lines up with the product cards next to it. The ::before spacer
+       gives it that height (rows x the shape of a cell / columns of its own width) so a row that holds nothing
+       but slides does not collapse to 0; a percentage padding, not `aspect-ratio`, which pushed the grid's
+       columns apart. `stretch` makes the slide fill its grid area when the rows are taller (cards have text
+       under the photo). */
+    #shopify-section-{{ section.id }} .collection-editorial-slide--cell {
+      align-self: stretch;
+      height: auto;
+      min-height: 0;
+      min-width: 0;
+    }
+
+    #shopify-section-{{ section.id }} .collection-editorial-slide--cell::before {
+      content: '';
+      display: block;
+      padding-top: calc(100% * var(--editorial-slide-shape, calc({{ mosaic_tile_ratio }} * var(--editorial-slide-row-span, 1) / var(--editorial-slide-column-span, 1))));
+    }
+
+    #shopify-section-{{ section.id }} .collection-editorial-slide--cell .collection-mosaic__tile {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* "Sin separación con el slide de su derecha": the slide grows over the gap on its right, so it touches its
+       neighbour (photo + panel banner). Never on a slide that touches the right edge of the page. */
+    #shopify-section-{{ section.id }} .collection-editorial-slide--eat-next {
+      margin-right: calc(-1 * var(--collection-card-gap-desktop, 1px));
+    }
+
+    /* the look of the slide itself (photo, tag, title, text, link): shared with the "Mosaico de slides" section */
+    {%- render 'collection-mosaic-tile-css', scope: tile_scope %}
+
+    @media screen and (max-width: 719px) {
+      #shopify-section-{{ section.id }} {
+        overflow-x: clip !important;
+      }
+
+      #shopify-section-{{ section.id }} .collection-editorial-slide {
+        grid-column: 1 / -1;
+        grid-row: span 1;
+      }
+
+      #shopify-section-{{ section.id }} .collection-editorial-slide--no-padding-mobile {
+        width: 100vw;
+        margin-left: calc(50% - 50vw);
+        margin-right: calc(50% - 50vw);
+      }
+
+      #shopify-section-{{ section.id }} .collection-editorial-slide__sticky {
+        height: 60vh;
+        min-height: 0;
+      }
+
+      #shopify-section-{{ section.id }} .collection-editorial-slide--no-padding-mobile .collection-editorial-slide__sticky {
+        border-radius: 0;
+      }
+
+      #shopify-section-{{ section.id }} .collection-editorial-slide__image--desktop {
+        display: none;
+      }
+
+      #shopify-section-{{ section.id }} .collection-editorial-slide--cell {
+        grid-column: span var(--editorial-slide-mobile-span, 1);
+        grid-row: span 1;
+        width: auto;
+        margin-left: 0;
+        margin-right: 0;
+      }
+
+      #shopify-section-{{ section.id }} .collection-editorial-slide--cell::before {
+        padding-top: calc(100% * var(--editorial-slide-shape, calc({{ mosaic_tile_ratio }} * var(--editorial-slide-row-span, 1) / var(--editorial-slide-mobile-span, 1))));
+      }
+
+      #shopify-section-{{ section.id }} .collection-editorial-slide--eat-next {
+        margin-right: calc(-1 * var(--collection-card-gap-mobile, 1px));
+      }
+
+      #shopify-section-{{ section.id }} .collection-editorial-slide--eat-next-row {
+        margin-right: 0;
+        margin-bottom: calc(-1 * var(--collection-card-gap-mobile, 1px));
+      }
+
+      #shopify-section-{{ section.id }} .collection-editorial-slide__image--mobile {
+        display: block;
+      }
+
+      #shopify-section-{{ section.id }} .collection-editorial-slide__image {
+        object-position: var(--editorial-slide-focal-mobile, center);
+      }
+    }
+
+    /* Sticks the category bar + filter/sort row right below the header. The
+       sticky clamp itself (`top`) stays at the constant var(--height-header)
+       — never recalculated mid-scroll, which is what earlier caused a
+       shake when this used a toggled `top`/`padding-top` instead (changing
+       either forces the browser to recompute this box's own reserved flow
+       height and/or its sticky-clamp geometry while the page is actively
+       scrolling). Moving it to sit flush at true top:0 once the header
+       hides is instead done with `transform` alone — exactly the same
+       technique header.liquid already uses for the header's own slide,
+       which is compositor-only and never touches layout, so it can't
+       reproduce that bug. It's safe to apply unconditionally here (not
+       gated behind "is this actually stuck yet") because theme.js only
+       ever flags html.header-hidden once scroll has already passed
+       var(--height-header) — by definition after this bar has engaged its
+       sticky clamp — so there's no not-yet-stuck state where an extra
+       -height-header shift would wrongly double up with its natural flow
+       position and leave a gap under the header instead. */
+    #shopify-section-{{ section.id }} .collection-sticky-bar {
+      position: sticky;
+      top: var(--height-header, 0px);
+      z-index: 50;
+      background-color: var(--color-background, #fff);
+      transform: translateY(0);
+      transition: transform 300ms cubic-bezier(0.33, 0, 0, 1);
+    }
+    html.header-hidden #shopify-section-{{ section.id }} .collection-sticky-bar {
+      transform: translateY(calc(-1 * var(--height-header, 0px)));
+    }
+    /* Desktop: the header sticks with a negative top (--header-desktop-sticky-position)
+       and its upper row collapses once is-sticky, so its LAYOUT height
+       (--height-header: 85px at rest, 97px stuck) is no longer what shows
+       on screen — the visible bottom edge stays at --header-desktop-sticky-height
+       (84px). Positioning this bar off --height-header left a 12px gap under the
+       header whenever it came back on scroll up; the visible height keeps them flush.
+       Mobile has no such offset, so it keeps --height-header above. */
+    @media (min-width: 960px) {
+      #shopify-section-{{ section.id }} .collection-sticky-bar {
+        top: var(--header-desktop-sticky-height, var(--height-header, 0px));
+      }
+      /* Same distance as the header's own slide-out (header.liquid: visible height + 1px)
+         so the two stay glued while they move. */
+      html.header-hidden #shopify-section-{{ section.id }} .collection-sticky-bar {
+        transform: translateY(calc(-1 * (var(--header-desktop-sticky-height, var(--height-header, 0px)) + 1px)));
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #shopify-section-{{ section.id }} .collection-sticky-bar {
+        transition: none;
+      }
+    }
+
+    /* --- Custom Sub-navigation Bar --- */
+    .custom-subnav-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 1.5vw;
+      margin-bottom: 0;
+      width: 100%;
+      border-bottom: none;
+      box-sizing: border-box;
+    }
+
+    .custom-subnav-bar__collections {
+      display: flex;
+      align-items: center;
+      flex-wrap: nowrap;
+      gap: 25px;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .custom-subnav-bar__collections::-webkit-scrollbar {
+      display: none;
+    }
+
+    .custom-subnav-link {
+      font-size: 0.8rem;
+      font-weight: 400;
+      color: #111111;
+      text-decoration: none;
+      letter-spacing: 0.08em;
+      text-transform: capitalize;
+      white-space: nowrap;
+      transition: opacity 0.25s ease;
+    }
+
+    .custom-subnav-link:hover {
+      opacity: 0.6;
+    }
+
+    .custom-subnav-link.is-active {
+      font-weight: 500;
+      opacity: 1;
+      text-transform: uppercase;
+    }
+
+    .custom-subnav-bar__filter {
+      display: flex;
+      align-items: center;
+      margin-left: auto;
+      padding-left: 20px;
+      background: #ffffff;
+      z-index: 2;
+    }
+
+    .custom-filter-trigger-btn {
+      background: none;
+      border: none;
+      font-size: 13px;
+      font-weight: 500;
+      color: #111111;
+      cursor: pointer;
+      letter-spacing: 0.08em;
+      padding: 0;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    /* --- Standardizing Filter Drawer Overrides --- */
+    .filter-drawer, [data-drawer="filter"], #FilterDrawer {
+      position: fixed !important;
+      top: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      left: auto !important;
+      width: 100% !important;
+      max-width: 420px !important;
+      background: #ffffff !important;
+      z-index: 1000000 !important;
+      transform: translateX(100%) !important;
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+      display: flex !important;
+      flex-direction: column !important;
+      visibility: visible !important;
+      box-shadow: -5px 0 25px rgba(0,0,0,0.15) !important;
+    }
+
+    .filter-drawer.is-open, [data-drawer="filter"].is-open, #FilterDrawer.is-open {
+      transform: translateX(0) !important;
+    }
+
+    .filter-drawer__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      border-bottom: 1px solid #D8D8D8;
+    }
+
+    .filter-drawer__title {
+      font-size: 12px;
+      font-weight: 500;
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .filter-drawer__close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .filter-drawer__close svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .filter-drawer__content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .filter-drawer__form {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .filter-drawer__footer {
+      padding: 20px;
+      border-top: 1px solid #D8D8D8;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: #ffffff;
+    }
+
+    .btn.btn--primary::before {
+      background: #111111 !important;
+    }
+
+    .filter-group--drawer-accordion {
+      padding-bottom: 0px !important;
+      margin-bottom: 0px !important;
+      width: 100% !important;
+      border-bottom: 1px solid #F5F5F3;
+      display: block;
+    }
+
+    .filter-group__header-accordion {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      list-style: none;
+      padding: 15px 0;
+      user-select: none;
+    }
+
+    .filter-group__header-accordion::-webkit-details-marker {
+      display: none;
+    }
+
+    .filter-group__drawer-title {
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .filter-group__header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .filter-group__label-count {
+      background: #111111;
+      color: #ffffff;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 10px;
+    }
+
+    .accordion-icon {
+      display: flex;
+      align-items: center;
+    }
+
+    .accordion-icon svg {
+      width: 12px;
+      height: 12px;
+      transform: rotate(0deg);
+      transition: transform 0.25s ease;
+    }
+
+    .filter-group--drawer-accordion[open] .accordion-icon svg {
+      transform: rotate(180deg);
+    }
+
+    .filter-group__values-drawer {
+      padding-top: 15px;
+      padding-bottom: 15px;
+    }
+
+    .filter-group__values-drawer .filter-group__list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .filter-item {
+      margin-bottom: 12px;
+    }
+
+    .filter-item__content {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .filter-item__checkbox {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .filter-drawer__price-range-input-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .filter-drawer__price-range-input {
+      display: flex;
+      align-items: center;
+      border: 1px solid #D8D8D8;
+      padding: 8px 12px;
+      border-radius: 4px;
+      flex: 1;
+    }
+
+    .filter-drawer__price-range-currency {
+      margin-right: 5px;
+      font-size: 13px;
+    }
+
+    .filter-drawer__price-range-input input {
+      border: none;
+      outline: none;
+      width: 100%;
+      font-size: 13px;
+    }
+
+    .filter-drawer__price-range-separator {
+      font-size: 14px;
+    }
+
+    .custom-filter-drawer-overlay {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      background: rgba(0, 0, 0, 0.4) !important;
+      z-index: 999999 !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      transition: opacity 0.3s ease, visibility 0.3s ease !important;
+    }
+
+    .custom-filter-drawer-overlay.is-visible {
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+
+    html.filter-drawer-open,
+    body.filter-drawer-open {
+      overflow: hidden !important;
+    }
+
+    #shopify-section-{{ section.id }} .filter-bar__filters,
+    #shopify-section-{{ section.id }} .filter-bar__inner-filters,
+    #shopify-section-{{ section.id }} .filter-bar__collapse {
+      display: none !important;
+    }
+
+    {%- if section.settings.enable_custom_subnav -%}
+      #shopify-section-{{ section.id }} .mobile-filters {
+        display: none !important;
+      }
+
+      /* The theme itself ships .filter-bar as display:none below its own
+         720px breakpoint (mobile normally uses .mobile-filters instead,
+         which we keep hidden above in favor of the #FilterDrawer accordion
+         everywhere) — override that native default so it renders as a
+         normal block at every width here too. */
+      #shopify-section-{{ section.id }} .filter-bar {
+        display: block !important;
+      }
+
+      /* The theme's native filter-bar renders as its own second row below
+         the category bar ("FILTRO | ORDENAR") at every width, matching the
+         reference layout on mobile too — so row 1's own FILTRAR button
+         (.custom-subnav-bar__filter) stays hidden everywhere, keeping a
+         single filter trigger visible, never both at once. */
+      #shopify-section-{{ section.id }} .custom-subnav-bar__filter {
+        display: none !important;
+      }
+
+      #shopify-section-{{ section.id }} .filter-bar__button--filters .icon-chevron-small {
+        display: none;
+      }
+
+      /* With the icon and chevron hidden, FILTRO's only remaining content
+         is its text span — flexbox centers that span's own line box, but
+         the font's default line-height leaves uneven leading above/below
+         the actual glyphs, so the text sits visibly off-center within the
+         button. Tightening the line-height to 1 removes that extra leading
+         so the glyphs themselves land on the row's true vertical center. */
+      #shopify-section-{{ section.id }} .filter-bar__button--filters .filter-bar__button-text {
+        line-height: 1;
+      }
+
+      #shopify-section-{{ section.id }} .filter-bar__button--filters,
+      #shopify-section-{{ section.id }} .filter-bar__button--sort {
+        font-size: 0.8rem;
+      }
+
+      /* Both .filter-bar__button--filters and .filter-bar__sort-group have
+         their own margin-left: auto from the theme's base CSS. With two
+         auto margins on the same flex row, the leftover space splits
+         between them instead of collapsing — that's what pushed FILTRO to
+         the middle instead of sitting right next to ORDENAR. Canceling the
+         sort-group's own auto margin leaves only one (on the filters
+         button), which pushes the whole pair together as a single group
+         against the right edge; the existing border-left/padding-left
+         already provide the gap between them. */
+      #shopify-section-{{ section.id }} .filter-bar__sort-group {
+        margin-left: 0;
+      }
+
+      /* Mobile: instead of grouping tight against the right edge like
+         desktop, FILTRO and ORDENAR each take half the row, each centered
+         within its own half — matching the reference layout at that width.
+         The divider between them (.filter-bar__sort-group's own
+         border-left) is deliberately NOT put at a flat 50/50 split: the
+         2-column product grid below has its own divider sitting at its
+         column boundary, which — because of its card_gap_mobile column
+         gap — actually lands at 50% minus half that gap, not true 50%.
+         Splitting these two flex items the same way lines this divider up
+         with the grid's, instead of sitting a few px off from every other
+         vertical line on the page. */
+      @media screen and (max-width: 749px) {
+        #shopify-section-{{ section.id }} .filter-bar__inner {
+          justify-content: space-between;
+        }
+        #shopify-section-{{ section.id }} .filter-bar__button--filters {
+          flex: 1 1 calc(50% - (var(--collection-card-gap-mobile, 0px) / 2));
+          justify-content: center;
+          align-items: center;
+          margin-left: 0;
+          margin-right: 0;
+        }
+        #shopify-section-{{ section.id }} .filter-bar__sort-group {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex: 1 1 calc(50% + (var(--collection-card-gap-mobile, 0px) / 2));
+          padding-left: 12px;
+        }
+        /* The theme's own .filter-bar__button--sort still carries its base
+           margin-left: auto — inside a justify-content:center parent, an
+           auto margin still wins the leftover space over the parent's own
+           centering, pushing the button to the right instead. */
+        #shopify-section-{{ section.id }} .filter-bar__button--sort {
+          margin-left: 0;
+        }
+      }
+    {%- endif -%}
+
+    /* Solid, non-transparent sticky filter bar (no glass/blur effect) */
+    #shopify-section-{{ section.id }} .filter-bar.filter-bar--sticky,
+    #shopify-section-{{ section.id }} .custom-subnav-bar.is-sticky,
+    #shopify-section-{{ section.id }} .custom-subnav-bar {
+      background-color: var(--color-background, #fff) !important;
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+    }
+
+    @media screen and (max-width: 749px) {
+      .custom-subnav-bar {
+        padding: 12px 15px;
+        margin-bottom: 0;
+        gap: 15px;
+      }
+      .custom-subnav-bar__collections {
+        gap: 16px;
+        flex: 1;
+      }
+      .custom-filter-trigger-btn {
+        font-size: 11px;
+      }
+    }
+
+    .collection__load-more-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 0;
+      gap: 20px;
+    }
+    .collection__load-more-progress {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      width: 200px;
+    }
+    .collection__load-more-count {
+      margin: 0;
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+    .collection__load-more-bar {
+      width: 100%;
+      height: 1px;
+      background-color: #D8D8D8;
+    }
+    .collection__load-more-bar-fill {
+      height: 100%;
+      background-color: #111111;
+      transition: width 0.3s ease;
+    }
+    .collection__infinite-trigger .btn {
+      width: auto;
+      min-width: 150px;
+      height: 44px;
+      padding: 12px 15px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background-color: transparent;
+      color: #111111;
+      border-color: #111111;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    .collection__infinite-trigger .btn:hover {
+      background-color: #111111 !important;
+      color: #ffffff !important;
+      border-color: #111111 !important;
+    }
+  </style>
+
+  <div class="collection__inner">
+    {%- if collection.all_products_count > 0 -%}
+      <script type="application/json" data-tags>
+        {%- liquid
+          if collection.all_tags.size > 0
+            echo '['
+
+            for tag in collection.all_tags
+              assign escaped_tag = tag | escape
+              assign tag_handle = tag | handle
+
+              echo '{ "label": "[[et]], "handle": "[[th]]"}' | replace: '[[et]]', escaped_tag | replace: '[[th]]', tag_handle
+
+              unless forloop.last
+                echo ', '
+              endunless
+            endfor
+
+            echo ']'
+          else
+            echo '[]'
+          endif
+        -%}
+      </script>
+
+      {%- liquid
+        assign editorial_blocks = section.blocks | where: 'type', 'editorial_slide'
+        assign mosaic_slide_blocks = section.blocks | where: 'type', 'mosaic_slide'
+        assign editorial_entries = blank
+
+        if section.settings.use_collection_slides
+          assign editorial_entries = collection.metafields.custom.editorial_slides.value
+        endif
+      -%}
+
+      {%- paginate collection.products by per_page -%}
+        <div class="collection__container">
+          <div class="collection__content">
+
+            <div class="collection-sticky-bar">
+              {%- comment -%} Custom Navigation & Filter Header Bar {%- endcomment -%}
+              {%- if section.settings.enable_custom_subnav -%}
+                <div class="custom-subnav-bar section-inner section-inner--width-{{ section.settings.section_width }}">
+                  <div class="custom-subnav-bar__collections">
+                    {%- if section.settings.subnav_collections != blank -%}
+                      {%- comment -%} Current collection always renders first, so it's the one closest to the logo/left edge; the rest keep their configured order. {%- endcomment -%}
+                      {%- for sub_collection in section.settings.subnav_collections -%}
+                        {%- if collection.handle == sub_collection.handle -%}
+                          <a href="{{ sub_collection.url }}" class="custom-subnav-link is-active">
+                            {% render 'liorme-title-case', text: sub_collection.title %}
+                          </a>
+                        {%- endif -%}
+                      {%- endfor -%}
+                      {%- for sub_collection in section.settings.subnav_collections -%}
+                        {%- unless collection.handle == sub_collection.handle -%}
+                          <a href="{{ sub_collection.url }}" class="custom-subnav-link">
+                            {% render 'liorme-title-case', text: sub_collection.title %}
+                          </a>
+                        {%- endunless -%}
+                      {%- endfor -%}
+                    {%- else -%}
+                      <span class="custom-subnav-link is-active">{% render 'liorme-title-case', text: collection.title %}</span>
+                    {%- endif -%}
+                  </div>
+                  <div class="custom-subnav-bar__filter">
+                    <button type="button" class="custom-filter-trigger-btn js-custom-filter-btn">
+                      FILTRAR
+                    </button>
+                  </div>
+                </div>
+              {%- endif -%}
+
+              {%- render 'filter-bar',
+                resource: collection,
+                show_item_count: section.settings.show_item_count,
+                show_sort: section.settings.show_sort,
+                show_filters: section.settings.show_filters,
+                enable_sticky_filter_bar: section.settings.enable_sticky_filter_bar,
+                collapse_filter_bar: section.settings.collapse_filter_bar,
+                filter_location: section.settings.desktop_filter_location,
+                active_filter_count: active_filter_count,
+                show_swatch_filters: section.settings.show_swatch_filters,
+                swatch_options: swatch_options,
+                custom_color_key_map: custom_color_key_map,
+                custom_color_value_map: custom_color_value_map,
+                show_chip_filters: section.settings.show_chip_filters,
+                chip_options: chip_options,
+                chip_layout: section.settings.chip_layout
+              -%}
+            </div>
+
+            {%- render 'mobile-filters',
+              resource: collection,
+              show_sort: section.settings.show_sort,
+              show_filters: section.settings.show_filters,
+              enable_sticky_filter_bar: section.settings.enable_sticky_filter_bar
+            -%}
+
+            {%- liquid
+              assign coll_plain_description = collection.description | strip_html | strip
+            -%}
+            {%- comment -%}
+              Explicit request: a collection without a description shows no title strip. The title is still
+              rendered as a visually hidden <h1> below, because it is the page's only <h1> (search engines
+              and screen readers use it).
+            {%- endcomment -%}
+            {%- if coll_plain_description != blank -%}
+              <style>
+                #shopify-section-{{ section.id }} .collection-header-inline {
+                  padding: 30px 5%;
+                }
+                #shopify-section-{{ section.id }} .collection-header-inline .collection-title {
+                  font-size: var(--type-collection-title, 24px);
+                  line-height: 1.1;
+                  letter-spacing: -0.015em;
+                  margin: 0 0 15px 0;
+                  font-weight: 400;
+                  text-transform: none;
+                }
+                #shopify-section-{{ section.id }} .collection-header-inline .collection-footer-h2 {
+                  font-size: 12px;
+                  line-height: 1.5;
+                  margin: 0;
+                  max-width: 50%;
+                  color: #6F6F6F;
+                }
+                @media screen and (max-width: 749px) {
+                  #shopify-section-{{ section.id }} .collection-header-inline .collection-footer-h2 {
+                    max-width: 100%;
+                  }
+                }
+              </style>
+              <div class="collection-header-inline">
+                {%- if collection.title != blank -%}
+                  <h1 class="collection-title">{% render 'liorme-title-case', text: collection.title %}</h1>
+                {%- endif -%}
+                <div class="collection-footer-h2">{{ coll_plain_description }}</div>
+              </div>
+            {%- elsif collection.title != blank -%}
+              <h1 class="visually-hidden">{{ collection.title }}</h1>
+            {%- endif -%}
+
+            <div class="collection__main-area section-inner section-inner--width-{{ section.settings.section_width }}">
+              {%- if section.settings.desktop_filter_location == 'sidebar' -%}
+                {%- render 'filter-sidebar',
+                  resource: collection,
+                  show_filters: section.settings.show_filters,
+                  collapse_filter_bar: section.settings.collapse_filter_bar,
+                  collapse_filter_groups: section.settings.collapse_filter_groups_desktop,
+                  show_swatch_filters: section.settings.show_swatch_filters,
+                  swatch_options: swatch_options,
+                  custom_color_key_map: custom_color_key_map,
+                  custom_color_value_map: custom_color_value_map,
+                  show_chip_filters: section.settings.show_chip_filters,
+                  chip_options: chip_options,
+                  chip_layout: section.settings.chip_layout
+                -%}
+              {%- endif -%}
+
+              <div class="collection__window">
+                <div class="collection__loading" data-loading>
+                  {%- render 'loader' -%}
+                </div>
+
+                <div
+                  id="root"
+                  class="animation--collection-items"
+                  data-partial
+                  data-collection-products-count="{{ collection.products_count }}"
+                >
+                  <div
+                    class="
+                      collection__products
+                      collection__infinite-container
+                      {% if collection.products_count == 0 -%}
+                        collection__products--no-products
+                      {%- endif -%}
+                    "
+                  >
+                    {%- for product in collection.products -%}
+                      {%- liquid
+                        # Each infinite-scroll page is its own paginated render, so forloop.index0 restarts at
+                        # 0 on every page instead of counting continuously across all products loaded so far.
+                        # Offsetting by the current page's starting index gives a true global position, which
+                        # is what a slide's "Start row" refers to (each slide is placed once, on its page).
+                        assign page_offset = paginate.current_page | minus: 1 | times: per_page
+                        assign global_product_index = forloop.index0 | plus: page_offset
+                      -%}
+
+                      {%- comment -%}
+                        Editorial slides. When the collection has entries in its `custom.editorial_slides`
+                        metafield they are its slides (the section blocks then only give the layout of each
+                        slot, in order); otherwise the section blocks are the slides, as before.
+                      {%- endcomment -%}
+                      {%- if editorial_entries.size > 0 -%}
+                        {%- for entry in editorial_entries -%}
+                          {%- render 'collection-editorial-slide',
+                            entry: entry,
+                            block: editorial_blocks[forloop.index0],
+                            slot_index: forloop.index0,
+                            columns: section.settings.columns_desktop,
+                            columns_mobile: section.settings.columns_mobile,
+                            photo_ratio: product_slide_row_ratio,
+                            global_product_index: global_product_index,
+                            current_page: paginate.current_page,
+                            fallback_label: collection.title,
+                            show_entry_text: section.settings.show_collection_slide_text
+                          -%}
+                        {%- endfor -%}
+                      {%- else -%}
+                        {%- for block in editorial_blocks -%}
+                          {%- render 'collection-editorial-slide',
+                            entry: blank,
+                            block: block,
+                            slot_index: forloop.index0,
+                            columns: section.settings.columns_desktop,
+                            columns_mobile: section.settings.columns_mobile,
+                            photo_ratio: product_slide_row_ratio,
+                            global_product_index: global_product_index,
+                            current_page: paginate.current_page,
+                            fallback_label: collection.title
+                          -%}
+                        {%- endfor -%}
+                      {%- endif -%}
+
+                      {%- comment -%}
+                        Mosaic slides (tiles that sit among the product cards, Miu Miu style): they always come from
+                        the section blocks. A slide is drawn before the product that starts its row; the check is
+                        made here so the snippet is only rendered where a slide belongs.
+                      {%- endcomment -%}
+                      {%- for block in mosaic_slide_blocks -%}
+                        {%- liquid
+                          assign mosaic_row = block.settings.row_start | at_least: 1
+                          assign mosaic_at = mosaic_row | minus: 1 | times: section.settings.columns_desktop
+                        -%}
+
+                        {%- if mosaic_at == global_product_index -%}
+                          {%- render 'collection-editorial-slide',
+                            entry: blank,
+                            block: block,
+                            slot_index: forloop.index0,
+                            columns: section.settings.columns_desktop,
+                            columns_mobile: section.settings.columns_mobile,
+                            photo_ratio: product_slide_row_ratio,
+                            tile_ratio: mosaic_tile_ratio,
+                            global_product_index: global_product_index,
+                            current_page: paginate.current_page,
+                            fallback_label: collection.title
+                          -%}
+                        {%- endif -%}
+                      {%- endfor -%}
+
+                      {%- liquid
+                        if forloop.index <= 4
+                          assign is_above_fold_product = true
+                        else
+                          assign is_above_fold_product = false
+                        endif
+                      -%}
+
+                      {%- liquid
+                        # Real card width for the 'sizes' attribute. With custom side padding the grid is
+                        # edge to edge (100vw minus that padding and the gaps between cards), not the
+                        # page-width estimate product-item assumes by default; an under-estimate makes
+                        # the browser download a smaller file than the card needs and stretch it (blurry).
+                        assign card_image_sizes = blank
+
+                        if section.settings.enable_custom_section_padding
+                          assign cols_d = section.settings.columns_desktop | plus: 0
+                          assign cols_m = section.settings.columns_mobile | plus: 0
+                          assign pad_d = section.settings.section_padding_left | plus: section.settings.section_padding_right
+                          assign pad_m = section.settings.section_padding_left_mobile | plus: section.settings.section_padding_right_mobile
+                          assign gaps_d = cols_d | minus: 1 | times: section.settings.card_gap
+                          assign gaps_m = cols_m | minus: 1 | times: section.settings.card_gap_mobile
+                          assign space_d = pad_d | plus: gaps_d
+                          assign space_m = pad_m | plus: gaps_m
+
+                          capture card_image_sizes
+                            echo '(max-width: 720px) calc((100vw - [[sm]]px) / [[cm]]), calc((100vw - [[sd]]px) / [[cd]])' | replace: '[[sm]]', space_m | replace: '[[cm]]', cols_m | replace: '[[sd]]', space_d | replace: '[[cd]]', cols_d
+                          endcapture
+                        endif
+                      -%}
+
+                      {%- render 'product-item',
+                        prod: product,
+                        product_columns_desktop: section.settings.columns_desktop,
+                        product_columns_mobile: section.settings.columns_mobile,
+                        aspect_ratio: section.settings.product_aspect_ratio | default: 'portrait_alt',
+                        has_grid_reveal: true,
+                        custom_color_key_map: custom_color_key_map,
+                        custom_color_value_map: custom_color_value_map,
+                        prioritize_loading: is_above_fold_product,
+                        image_sizes: card_image_sizes
+                      -%}
+                    {%- else -%}
+                      <div class="collection__empty">
+                        <div>{{ 'collections.general.no_products' | t }}</div>
+
+                        <button type="button" class="btn btn--text-link" data-clear-all-filters>
+                          {{- 'filters.clear_filters' | t -}}
+                        </button>
+                      </div>
+                    {% endfor %}
+
+                    {%- comment -%}
+                      Mosaic slides whose row is below the last product (a short collection: the slide is drawn
+                      before the product that starts its row, and that product does not exist). They are drawn
+                      after the last product, on the last page only; their row and column still place them.
+                    {%- endcomment -%}
+                    {%- if paginate.items > 0 and paginate.current_page == paginate.pages -%}
+                      {%- for block in mosaic_slide_blocks -%}
+                        {%- liquid
+                          assign mosaic_row = block.settings.row_start | at_least: 1
+                          assign mosaic_at = mosaic_row | minus: 1 | times: section.settings.columns_desktop
+                        -%}
+
+                        {%- if mosaic_at >= paginate.items -%}
+                          {%- render 'collection-editorial-slide',
+                            entry: blank,
+                            block: block,
+                            slot_index: forloop.index0,
+                            columns: section.settings.columns_desktop,
+                            columns_mobile: section.settings.columns_mobile,
+                            photo_ratio: product_slide_row_ratio,
+                            tile_ratio: mosaic_tile_ratio,
+                            global_product_index: mosaic_at,
+                            current_page: paginate.current_page,
+                            fallback_label: collection.title
+                          -%}
+                        {%- endif -%}
+                      {%- endfor -%}
+                    {%- endif -%}
+                  </div>
+
+                  {%- unless paginated -%}
+                    <div class="collection__load-more-wrap">
+                      {%- liquid
+                        assign clg_items_shown = paginate.current_page | times: paginate.page_size
+                        if clg_items_shown > paginate.items
+                          assign clg_items_shown = paginate.items
+                        endif
+                        assign clg_progress_percent = clg_items_shown | times: 100.0 | divided_by: paginate.items
+                      -%}
+                      <div class="collection__load-more-progress">
+                        <p class="collection__load-more-count" data-total-items="{{ paginate.items }}">{{ clg_items_shown }} DE {{ paginate.items }}</p>
+                        <div class="collection__load-more-bar">
+                          <div class="collection__load-more-bar-fill" style="width: {{ clg_progress_percent }}%;"></div>
+                        </div>
+                        {%- comment -%}
+                          The theme's own collection.js writes its native "Viewing X of Y"
+                          count into [data-pagination-item-count] after every infinite-scroll
+                          page load. This section never had that element, so that write threw
+                          (null.innerHTML) and silently aborted the rest of the callback —
+                          including the call that re-arms the scroll listener for the next
+                          page. A real, if invisible, target stops the throw without fighting
+                          the visible counter above (kept in sync separately, see the
+                          MutationObserver below).
+                        {%- endcomment -%}
+                        <span data-pagination-item-count style="display:none;" aria-hidden="true"></span>
+                      </div>
+
+                      <div class="collection__infinite-trigger">
+                        {%- if paginate.next -%}
+                          {%- comment -%}
+                            Explicit request ("scroll normal", trabado): each infinite-scroll page was fetching
+                            the FULL page (~425KB - header, footer, filters, everything) just to get 16 more
+                            product cards, measured taking 600-650ms to fetch+parse alone on a throttled phone,
+                            with several of those stacking up during a single scroll gesture. Appending
+                            section_id asks Shopify to render just this section instead of the whole page
+                            (~237KB, confirmed ~230ms less parse+read time) - lighter, though still not tiny,
+                            since this section's own markup (filters, mosaic slides, embedded styles) repeats
+                            every page too.
+                          {%- endcomment -%}
+                          <a
+                            href="{{ paginate.next.url }}&section_id={{ section.id }}"
+                            class="btn btn--secondary no-transition"
+                            data-click-to-load
+                          >
+                            {{- 'general.pagination.load_more' | t -}}
+                          </a>
+                        {%- endif -%}
+                      </div>
+                    </div>
+                  {%- endunless -%}
+
+                  {%- if paginated -%}
+                    <div>
+                      {%- liquid
+                        if paginate.pages > 1
+                          render 'pagination', paginate: paginate, type: 'general.pagination.products', show_item_count: true
+                        else
+                          render 'pagination', paginate: paginate, type: 'general.pagination.products', display_paginate_item_count_only: true
+                        endif
+                      -%}
+                    </div>
+                  {%- endif -%}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {%- endpaginate -%}
+
+      {%- comment -%} Integrated Custom Accordion Filter Drawer {%- endcomment -%}
+      <div id="FilterDrawer" class="filter-drawer" data-drawer="filter" aria-hidden="true">
+        <div class="filter-drawer__header">
+          <h3 class="filter-drawer__title">{{ 'filters.title' | t | default: 'Filters' }}</h3>
+          <button type="button" class="filter-drawer__close js-close-drawer" data-action="close-drawer" aria-label="Close">
+            <svg aria-hidden="true" focusable="false" role="presentation" class="icon icon-close" viewBox="0 0 16 16"><path d="M14 2L2 14M2 2l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+
+        <div class="filter-drawer__content">
+          <form action="{{ collection.url }}" method="get" class="filter-drawer__form" data-filter-form>
+            {%- if collection.terms -%}
+              <input type="hidden" name="q" value="{{ collection.terms | escape }}">
+              <input name="options[prefix]" type="hidden" value="last">
+            {%- endif -%}
+            
+            <input type="hidden" name="sort_by" value="{{ collection.sort_by | default: collection.default_sort_by }}">
+
+            <div class="filter-drawer__filters-inner">
+              {%- for filter in collection.filters -%}
+                {%- liquid
+                  if filter.active_values
+                    assign group_active_filters = filter.active_values | map: 'label' | join: ', '
+                  else
+                    assign group_active_filters = blank
+                  endif
+
+                  assign group_active_count = 0
+
+                  if filter.type == 'list' or filter.type == 'boolean'
+                    for active_value in filter.active_values
+                      assign group_active_count = group_active_count | plus: 1
+                    endfor
+                  endif
+
+                  assign max_price_amount = filter.range_max | money | strip_html | escape
+                  assign price_range_changed = false
+
+                  if filter.type == 'price_range'
+                    if filter.max_value.value or filter.min_value.value
+                      assign price_range_changed = true
+                    endif
+                  endif
+                -%}
+
+                <details 
+                  class="filter-group filter-group--drawer-accordion" 
+                  data-filter-group 
+                  {% if group_active_count > 0 or price_range_changed %}open{% endif %}
+                >
+                  <summary class="filter-group__header-accordion">
+                    <span class="filter-group__drawer-title">{{ filter.label }}</span>
+                    <div class="filter-group__header-right">
+                      {%- if group_active_count > 0 -%}
+                        <span class="filter-group__label-count">{{ group_active_count }}</span>
+                      {%- endif -%}
+                      <span class="accordion-icon">
+                        <svg class="icon icon-chevron-down" viewBox="0 0 16 16" fill="none"><path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      </span>
+                    </div>
+                  </summary>
+
+                  <div class="filter-group__values-drawer">
+                    {%- case filter.type -%}
+                      {%- when 'boolean', 'list' -%}
+                        {%- liquid
+                          assign group_name = filter.label | downcase
+                          assign has_swatches = false
+                          assign has_chips = false
+                          assign list_modifiers = ''
+
+                          if filter.presentation == 'swatch' or swatch_options contains group_name and section.settings.show_swatch_filters == true
+                            assign has_swatches = true
+                            assign list_modifiers = list_modifiers | append: ' has-swatch'
+                          elsif chip_options contains group_name and section.settings.show_chip_filters == true
+                            assign has_chips = true
+                            assign list_modifiers = list_modifiers | append: ' filter-drawer__list--chips'
+                          endif
+                        -%}
+
+                        <ul class="filter-group__list {{ list_modifiers }}" {% if has_chips %}data-layout="{{ section.settings.chip_layout }}"{% endif %}>
+                          {%- for filter_value in filter.values -%}
+                            <li class="filter-item">
+                              <label class="filter-item__content" for="Filter-{{ filter.label | escape }}-{{ forloop.index }}">
+                                <input
+                                  type="checkbox"
+                                  name="{{ filter_value.param_name }}"
+                                  value="{{ filter_value.value | escape }}"
+                                  id="Filter-{{ filter.label | escape }}-{{ forloop.index }}"
+                                  class="filter-item__checkbox"
+                                  {% if filter_value.active %}checked{% endif %}
+                                  {% if filter_value.count == 0 and filter_value.active == false %}disabled{% endif %}
+                                >
+                                <span class="filter-item__label">
+                                  {{ filter_value.label }} ({{ filter_value.count }})
+                                </span>
+                              </label>
+                            </li>
+                          {%- endfor -%}
+                        </ul>
+
+                      {%- when 'price_range' -%}
+                        <div class="filter-drawer__price-range">
+                          <div class="filter-drawer__price-range-input-wrapper">
+                            <div class="filter-drawer__price-range-input">
+                              <span class="filter-drawer__price-range-currency">{{ cart.currency.symbol }}</span>
+                              <input
+                                class="input"
+                                type="number"
+                                name="{{ filter.min_value.param_name }}"
+                                {% if filter.min_value.value -%}
+                                  value="{{ filter.min_value.value | divided_by: 100.00 }}"
+                                {%- endif %}
+                                placeholder="0"
+                                min="0"
+                                max="{{ filter.range_max | divided_by: 100.00 | ceil }}"
+                              >
+                            </div>
+                            <span class="filter-drawer__price-range-separator">&ndash;</span>
+                            <div class="filter-drawer__price-range-input">
+                              <span class="filter-drawer__price-range-currency">{{ cart.currency.symbol }}</span>
+                              <input
+                                class="input"
+                                type="number"
+                                name="{{ filter.max_value.param_name }}"
+                                {% if filter.max_value.value -%}
+                                  value="{{ filter.max_value.value | divided_by: 100.00 }}"
+                                {%- endif %}
+                                placeholder="{{ filter.range_max | divided_by: 100.00 | ceil }}"
+                                min="0"
+                                max="{{ filter.range_max | divided_by: 100.00 | ceil }}"
+                              >
+                            </div>
+                          </div>
+                        </div>
+                    {%- endcase -%}
+                  </div>
+                </details>
+              {%- endfor -%}
+            </div>
+
+            <div class="filter-drawer__footer">
+              <button type="submit" class="btn btn--primary filter-drawer__apply">
+                {{ 'filters.apply' | t | default: 'Apply Filters' }}
+              </button>
+              <a href="{{ collection.url }}?sort_by={{ collection.sort_by }}" class="btn btn--secondary filter-drawer__clear">
+                {{ 'filters.clear_all' | t | default: 'Clear All' }}
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    {%- else -%}
+      <div class="collection__empty ta-c">
+        <p class="fs-body-100 fs-body-200-ns">{{ 'collections.general.no_matches' | t }}</p>
+        <a class="btn btn--text-link" href="{{ routes.all_products_collection_url }}">{{ 'general.404.link' | t }}</a>
+      </div>
+    {%- endif -%}
+  </div>
+</section>
+
+<script>
+  // Height of the sticky category / filter bar, for where a sticky editorial slide stops
+  // (--editorial-slide-sticky-top in this section's CSS).
+  (function () {
+    var section = document.getElementById('shopify-section-{{ section.id }}');
+    var bar = section && section.querySelector('.collection-sticky-bar');
+    if (!bar) return;
+
+    function measure() {
+      section.style.setProperty('--collection-bar-height', bar.offsetHeight + 'px');
+    }
+
+    measure();
+    if (window.ResizeObserver) new ResizeObserver(measure).observe(bar);
+    window.addEventListener('resize', measure);
+  })();
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const drawer = document.querySelector('.filter-drawer, #FilterDrawer, [data-drawer="filter"]');
+    
+    if (drawer && drawer.parentNode !== document.body) {
+      document.body.appendChild(drawer);
+    }
+    
+    let overlay = document.querySelector('.custom-filter-drawer-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.className = 'custom-filter-drawer-overlay';
+      document.body.appendChild(overlay);
+    }
+
+    function openDrawer(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      if (drawer) {
+        drawer.classList.add('is-open');
+        drawer.setAttribute('aria-hidden', 'false');
+        document.documentElement.classList.add('filter-drawer-open');
+        if (overlay) overlay.classList.add('is-visible');
+      }
+    }
+
+    function closeDrawer(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      if (drawer) {
+        drawer.classList.remove('is-open');
+        drawer.setAttribute('aria-hidden', 'true');
+        document.documentElement.classList.remove('filter-drawer-open');
+        if (overlay) overlay.classList.remove('is-visible');
+      }
+    }
+
+    document.addEventListener('click', function(e) {
+      const trigger = e.target.closest('.js-custom-filter-btn, .filter-bar__button, .filter-bar__button--filters, .filter-bar__filter-trigger, .mobile-filters__trigger, [aria-controls="FilterDrawer"]');
+      if (trigger) {
+        e.preventDefault();
+        e.stopPropagation();
+        openDrawer();
+      }
+
+      const closeTrigger = e.target.closest('.filter-drawer__close, [data-action="close-drawer"], .js-close-drawer, .custom-filter-drawer-overlay');
+      if (closeTrigger) {
+        closeDrawer(e);
+      }
+    }, true);
+
+    if (overlay) {
+      overlay.addEventListener('click', closeDrawer);
+    }
+  });
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // The custom "X DE Y" counter + progress bar are hand-built (not the
+    // theme's native [data-pagination-item-count] element), so the theme's
+    // own infinite-scroll JS has no way to refresh them after an AJAX page
+    // loads more products in — it only swaps the "Cargar más" link itself.
+    // Watch the actual product grid instead: whenever more product-items get
+    // appended, recompute the count/bar straight from what's really in the DOM.
+    const infiniteContainer = document.querySelector('.collection__infinite-container');
+    const countEl = document.querySelector('.collection__load-more-count');
+    const barFillEl = document.querySelector('.collection__load-more-bar-fill');
+
+    if (!infiniteContainer || !countEl) return;
+
+    const totalItems = parseInt(countEl.getAttribute('data-total-items'), 10);
+    if (!totalItems) return;
+
+    function refreshCount() {
+      const shown = infiniteContainer.querySelectorAll('.product-item').length;
+      const clamped = Math.min(shown, totalItems);
+      countEl.textContent = clamped + ' DE ' + totalItems;
+      if (barFillEl) {
+        barFillEl.style.width = ((clamped / totalItems) * 100) + '%';
+      }
+    }
+
+    new MutationObserver(refreshCount).observe(infiniteContainer, { childList: true });
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Grid editorial",
+  "class": "collection-section",
+  "max_blocks": 40,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Custom Sub-Navigation Bar"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_custom_subnav",
+      "label": "Enable Custom Collection Sub-Navigation Bar",
+      "default": true
+    },
+    {
+      "type": "collection_list",
+      "id": "subnav_collections",
+      "label": "Select Collections for Bar",
+      "limit": 10
+    },
+    {
+      "type": "header",
+      "content": "Product Grid Settings"
+    },
+    {
+      "type": "select",
+      "id": "columns_desktop",
+      "label": "Desktop Columns",
+      "options": [
+        { "value": "2", "label": "2" },
+        { "value": "3", "label": "3" },
+        { "value": "4", "label": "4" },
+        { "value": "5", "label": "5" }
+      ],
+      "default": "4"
+    },
+    {
+      "type": "select",
+      "id": "columns_mobile",
+      "label": "Mobile Columns",
+      "options": [
+        { "value": "1", "label": "1" },
+        { "value": "2", "label": "2" }
+      ],
+      "default": "2"
+    },
+    {
+      "type": "select",
+      "id": "rows",
+      "label": "Rows per page",
+      "options": [
+        { "value": "3", "label": "3" },
+        { "value": "4", "label": "4" },
+        { "value": "5", "label": "5" },
+        { "value": "6", "label": "6" },
+        { "value": "7", "label": "7" },
+        { "value": "8", "label": "8" },
+        { "value": "9", "label": "9" },
+        { "value": "10", "label": "10" }
+      ],
+      "default": "4"
+    },
+    {
+      "type": "checkbox",
+      "id": "remove_gap",
+      "label": "Quitar la separación entre tarjetas y slides",
+      "info": "Pone la separación (gap) en 0 px, en escritorio y en móvil: las tarjetas de producto y los slides quedan pegados, sin la línea blanca de 1 px. Si está activada, ignora «Product Gap».",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "card_gap",
+      "label": "Product Gap (Desktop)",
+      "min": 0,
+      "max": 40,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "card_gap_mobile",
+      "label": "Product Gap (Mobile)",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "select",
+      "id": "product_aspect_ratio",
+      "label": "t:settings_schema.product_listing.settings.images.product_listing_aspect_ratio.label",
+      "info": "Solo afecta las tarjetas de producto de esta sección (no cambia la Configuración del tema).",
+      "options": [
+        { "value": "square", "label": "t:shared.options.aspect_ratio.square" },
+        { "value": "portrait_alt", "label": "t:shared.options.aspect_ratio.portrait_alt" }
+      ],
+      "default": "portrait_alt"
+    },
+    {
+      "type": "select",
+      "id": "mosaic_tile_ratio",
+      "label": "Forma de los slides de mosaico",
+      "info": "Un slide de mosaico de 1 columna × 1 fila tiene esta forma; los más grandes son varias celdas juntas. Los slides de mosaico se añaden como bloques («Slide de mosaico») y van entre los productos.",
+      "options": [
+        { "value": "1.5", "label": "Vertical 2:3 (como Miu Miu)" },
+        { "value": "1.25", "label": "Vertical 4:5 (como las tarjetas)" },
+        { "value": "1", "label": "Cuadrada 1:1" },
+        { "value": "0.6667", "label": "Horizontal 3:2" }
+      ],
+      "default": "1.5"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_filter_bar_border",
+      "label": "Agregar borde a la barra de filtro",
+      "default": true
+    },
+    {
+      "type": "color",
+      "id": "filter_bar_border_color",
+      "label": "Color del borde de la barra de filtro",
+      "default": "#111111",
+      "visible_if": "{{ section.settings.enable_filter_bar_border }}"
+    },
+    {
+      "type": "header",
+      "content": "Section Side Padding"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_custom_section_padding",
+      "label": "Enable Custom Padding",
+      "default": false
+    },
+    {
+      "type": "paragraph",
+      "content": "Desktop Settings (above 720px)"
+    },
+    {
+      "type": "range",
+      "id": "section_padding_left",
+      "label": "Padding Left (Desktop)",
+      "min": 0,
+      "max": 150,
+      "step": 2,
+      "unit": "px",
+      "default": 16,
+      "visible_if": "{{ section.settings.enable_custom_section_padding }}"
+    },
+    {
+      "type": "range",
+      "id": "section_padding_right",
+      "label": "Padding Right (Desktop)",
+      "min": 0,
+      "max": 150,
+      "step": 2,
+      "unit": "px",
+      "default": 16,
+      "visible_if": "{{ section.settings.enable_custom_section_padding }}"
+    },
+    {
+      "type": "paragraph",
+      "content": "Mobile Settings (up to 719px)"
+    },
+    {
+      "type": "range",
+      "id": "section_padding_left_mobile",
+      "label": "Padding Left (Mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 2,
+      "unit": "px",
+      "default": 16,
+      "visible_if": "{{ section.settings.enable_custom_section_padding }}"
+    },
+    {
+      "type": "range",
+      "id": "section_padding_right_mobile",
+      "label": "Padding Right (Mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 2,
+      "unit": "px",
+      "default": 16,
+      "visible_if": "{{ section.settings.enable_custom_section_padding }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_item_count",
+      "label": "Show item count",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Filtering & Sorting Settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_sort",
+      "label": "Show sort options",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_filters",
+      "label": "Show filters",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_sticky_filter_bar",
+      "label": "Enable sticky filter bar",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "desktop_filter_location",
+      "label": "Desktop Filter Location",
+      "options": [
+        { "value": "filter_bar", "label": "Filter Bar" },
+        { "value": "sidebar", "label": "Sidebar" }
+      ]
+    },
+    {
+      "type": "checkbox",
+      "id": "collapse_filter_bar",
+      "label": "Collapse filter bar",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_sticky_filter_sidebar",
+      "label": "Enable sticky filter sidebar",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "collapse_filter_groups_desktop",
+      "label": "Collapse filter groups (Desktop)",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "collapse_filter_groups_mobile",
+      "label": "Collapse filter groups (Mobile)",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_swatch_filters",
+      "label": "Show swatch filters",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_chip_filters",
+      "label": "Show chip filters",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "chip_layout",
+      "label": "Chip layout",
+      "options": [
+        { "value": "3col", "label": "3 columns" },
+        { "value": "2col", "label": "2 columns" },
+        { "value": "natural", "label": "Natural" }
+      ]
+    },
+    {
+      "type": "header",
+      "content": "Pagination"
+    },
+    {
+      "type": "select",
+      "id": "pagination",
+      "label": "Pagination type",
+      "options": [
+        { "value": "infinite", "label": "Infinite scroll" },
+        { "value": "click", "label": "Click to load" },
+        { "value": "paginated", "label": "Standard pagination" }
+      ],
+      "default": "paginated"
+    },
+    {
+      "type": "header",
+      "content": "Section Styles"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "Section width",
+      "options": [
+        { "value": "page-width", "label": "Page width" },
+        { "value": "full-width-padded", "label": "Full width padded" }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "range",
+      "id": "section_padding_top",
+      "label": "Padding Top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "section_padding_bottom",
+      "label": "Padding Bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "select",
+      "id": "divider_style",
+      "label": "Divider style",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "solid", "label": "Solid" }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_full_width_divider",
+      "label": "Enable full width divider",
+      "visible_if": "{{ section.settings.enable_full_width_divider }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_animation",
+      "label": "Enable entry animations",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "use_collection_slides",
+      "label": "Usar los slides del metacampo de cada colección",
+      "info": "Si la colección tiene entradas en el metacampo \"Editorial slides\" (custom.editorial_slides), esas son sus slides (imagen, título, texto, botón y enlace). Los bloques de abajo solo dan la posición de cada uno, en orden. Si la colección no tiene, se muestran los bloques como antes.",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_collection_slide_text",
+      "label": "Mostrar título, texto y botón de esos slides",
+      "info": "Apagado: solo se usa la imagen (y el enlace) de cada entrada del metacampo. Actívalo cuando hayas revisado los textos de las entradas en Contenido → Metaobjetos.",
+      "default": false
+    }
+  ],
+  "blocks": [
+    {
+      "type": "editorial_slide",
+      "name": "Editorial slide",
+      "settings": [
+        {
+          "type": "header",
+          "content": "Dónde se muestra"
+        },
+        {
+          "type": "collection_list",
+          "id": "show_in_collections",
+          "label": "Colecciones donde se muestra",
+          "info": "Elige una o varias. Vacío = sale en todas las colecciones que usan esta plantilla. Si la colección tiene entradas en «Editorial slides», este bloque solo da la posición de su entrada, y solo en las colecciones elegidas.",
+          "limit": 12
+        },
+        {
+          "type": "header",
+          "content": "Size"
+        },
+        {
+          "type": "range",
+          "id": "row_span",
+          "label": "Row span",
+          "min": 1,
+          "max": 10,
+          "step": 1,
+          "default": 2
+        },
+        {
+          "type": "range",
+          "id": "column_span",
+          "label": "Column span",
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "default": 2
+        },
+        {
+          "type": "select",
+          "id": "aspect_ratio",
+          "label": "t:sections.shared.media_with_text.settings.image.aspect_ratio.label",
+          "info": "Si elegís un formato distinto de \"Original\", se ignora \"Enable Screen Full Height\" para este slide.",
+          "options": [
+            { "value": "natural", "label": "t:shared.options.aspect_ratio.natural" },
+            { "value": "square", "label": "t:shared.options.aspect_ratio.square" },
+            { "value": "portrait", "label": "t:shared.options.aspect_ratio.portrait" },
+            { "value": "portrait_alt", "label": "t:shared.options.aspect_ratio.portrait_alt" },
+            { "value": "landscape", "label": "t:shared.options.aspect_ratio.landscape" },
+            { "value": "landscape_alt", "label": "t:shared.options.aspect_ratio.landscape_alt" },
+            { "value": "landscape_wide_alt", "label": "t:shared.options.aspect_ratio.landscape_wide_alt" }
+          ],
+          "default": "natural"
+        },
+        {
+          "type": "header",
+          "content": "Vertical Position"
+        },
+        {
+          "type": "range",
+          "id": "row_start",
+          "label": "Start row",
+          "info": "Los productos se cargan por páginas (filas × columnas). Un slide con fila de inicio mayor que las filas por página aparece al cargar más productos.",
+          "min": 1,
+          "max": 30,
+          "step": 1,
+          "default": 1
+        },
+        {
+          "type": "header",
+          "content": "Horizontal Position"
+        },
+        {
+          "type": "select",
+          "id": "horizontal_position",
+          "label": "Horizontal position",
+          "options": [
+            { "value": "left", "label": "Left" },
+            { "value": "right", "label": "Right" },
+            { "value": "custom", "label": "Custom" }
+          ],
+          "default": "left"
+        },
+        {
+          "type": "range",
+          "id": "column_start",
+          "label": "Start column",
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "default": 1,
+          "visible_if": "{{ block.settings.horizontal_position == 'custom' }}"
+        },
+        {
+          "type": "checkbox",
+          "id": "enable_sticky",
+          "label": "Enable sticky scroll",
+          "default": true
+        },
+        {
+          "type": "checkbox",
+          "id": "enable_full_height",
+          "label": "Enable Screen Full Height (100vh Sticky)",
+          "default": true,
+          "info": "Keeps slide fixed at screen size while scrolling through its spanned rows."
+        },
+        {
+          "type": "checkbox",
+          "id": "enable_mobile_padding",
+          "label": "Enable mobile side padding",
+          "default": false
+        },
+        {
+          "type": "header",
+          "content": "Content"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image (Desktop)"
+        },
+        {
+          "type": "image_picker",
+          "id": "image_mobile",
+          "label": "Image (Mobile)"
+        },
+        {
+          "type": "header",
+          "content": "Punto focal de la imagen"
+        },
+        {
+          "type": "select",
+          "id": "focal_point",
+          "label": "t:shared.settings.focal_point.image.default.label",
+          "options": [
+            { "value": "image_presentation", "label": "t:shared.options.focal_point.image_presentation" },
+            { "value": "center", "label": "t:shared.options.focal_point.center" },
+            { "value": "top", "label": "t:shared.options.focal_point.top" },
+            { "value": "bottom", "label": "t:shared.options.focal_point.bottom" },
+            { "value": "left", "label": "t:shared.options.focal_point.left" },
+            { "value": "right", "label": "t:shared.options.focal_point.right" },
+            { "value": "custom", "label": "Personalizado (usa los deslizadores)" }
+          ],
+          "default": "image_presentation"
+        },
+        {
+          "type": "range",
+          "id": "focal_x",
+          "label": "Punto focal: posición horizontal",
+          "info": "Solo con «Personalizado». 0 % es el borde izquierdo de la foto y 100 % el derecho.",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": "%",
+          "default": 50
+        },
+        {
+          "type": "range",
+          "id": "focal_y",
+          "label": "Punto focal: posición vertical",
+          "info": "Solo con «Personalizado». 0 % es el borde superior de la foto y 100 % el inferior.",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": "%",
+          "default": 50
+        },
+        {
+          "type": "select",
+          "id": "mobile_focal_point",
+          "label": "t:shared.settings.focal_point.image.mobile.label",
+          "options": [
+            { "value": "image_presentation", "label": "t:shared.options.focal_point.image_presentation" },
+            { "value": "center", "label": "t:shared.options.focal_point.center" },
+            { "value": "top", "label": "t:shared.options.focal_point.top" },
+            { "value": "bottom", "label": "t:shared.options.focal_point.bottom" },
+            { "value": "left", "label": "t:shared.options.focal_point.left" },
+            { "value": "right", "label": "t:shared.options.focal_point.right" },
+            { "value": "custom", "label": "Personalizado (usa los deslizadores)" }
+          ],
+          "default": "image_presentation"
+        },
+        {
+          "type": "range",
+          "id": "mobile_focal_x",
+          "label": "Punto focal móvil: posición horizontal",
+          "info": "Solo con «Personalizado». 0 % es el borde izquierdo de la foto y 100 % el derecho.",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": "%",
+          "default": 50
+        },
+        {
+          "type": "range",
+          "id": "mobile_focal_y",
+          "label": "Punto focal móvil: posición vertical",
+          "info": "Solo con «Personalizado». 0 % es el borde superior de la foto y 100 % el inferior.",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": "%",
+          "default": 50
+        },
+        {
+          "type": "header",
+          "content": "Texto y enlace"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Title"
+        },
+        {
+          "type": "textarea",
+          "id": "text",
+          "label": "Text"
+        },
+        {
+          "type": "text",
+          "id": "button_label",
+          "label": "Button label"
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Link"
+        }
+      ]
+    }
+,
+    {
+      "type": "mosaic_slide",
+      "name": "Slide de mosaico",
+      "settings": [
+        {
+          "type": "header",
+          "content": "Dónde se muestra"
+        },
+        {
+          "type": "collection_list",
+          "id": "show_in_collections",
+          "label": "Colecciones donde se muestra este slide",
+          "info": "Elige una o varias. Vacío = sale en todas las colecciones que usan esta plantilla. Así un solo Grid editorial puede llevar slides distintos por colección.",
+          "limit": 12
+        },
+        {
+          "type": "header",
+          "content": "Tamaño y posición"
+        },
+        {
+          "type": "range",
+          "id": "column_span",
+          "label": "Columnas que ocupa",
+          "min": 1,
+          "max": 6,
+          "step": 1,
+          "default": 1
+        },
+        {
+          "type": "range",
+          "id": "row_span",
+          "label": "Filas que ocupa",
+          "min": 1,
+          "max": 4,
+          "step": 1,
+          "default": 1
+        },
+        {
+          "type": "select",
+          "id": "aspect_ratio",
+          "label": "Forma del slide",
+          "info": "Según las filas: alto = filas × la forma de una celda (ajuste de la sección). Con una forma (cuadrado, 4:5...) el slide tiene esa proporción sea cual sea su ancho, como el banner «Eyewear» de Miu Miu, que es cuadrado. Con una forma, deja «Filas que ocupa» en 1.",
+          "options": [
+            { "value": "natural", "label": "Según las filas" },
+            { "value": "square", "label": "t:shared.options.aspect_ratio.square" },
+            { "value": "portrait_alt", "label": "t:shared.options.aspect_ratio.portrait_alt" },
+            { "value": "portrait", "label": "t:shared.options.aspect_ratio.portrait" },
+            { "value": "landscape_alt", "label": "t:shared.options.aspect_ratio.landscape_alt" },
+            { "value": "landscape", "label": "t:shared.options.aspect_ratio.landscape" },
+            { "value": "landscape_wide_alt", "label": "t:shared.options.aspect_ratio.landscape_wide_alt" }
+          ],
+          "default": "natural"
+        },
+        {
+          "type": "range",
+          "id": "row_start",
+          "label": "Fila donde empieza",
+          "info": "Fila de la cuadrícula donde empieza el slide (1 = la de arriba del todo). Los productos se cargan por páginas (filas × columnas): un slide con una fila mayor que las filas por página aparece al cargar más productos.",
+          "min": 1,
+          "max": 30,
+          "step": 1,
+          "default": 2
+        },
+        {
+          "type": "select",
+          "id": "horizontal_position",
+          "label": "Lado",
+          "info": "Automática: el primer hueco libre de su fila, de izquierda a derecha, en el orden de la lista. Izquierda o Derecha: queda pegado a ese borde, sea cual sea su ancho, y los demás se acomodan alrededor. Si abajo pones una columna, manda la columna. Solo en escritorio; en móvil el slide va en su fila, entre los productos.",
+          "options": [
+            { "value": "auto", "label": "Automática" },
+            { "value": "left", "label": "Izquierda" },
+            { "value": "right", "label": "Derecha" }
+          ],
+          "default": "auto"
+        },
+        {
+          "type": "range",
+          "id": "column_start",
+          "label": "Columna donde empieza",
+          "info": "0 = según el Lado de arriba. De 1 a 6: el slide empieza en esa columna (1 = la de la izquierda) y esta opción manda sobre el Lado. Solo en escritorio.",
+          "min": 0,
+          "max": 6,
+          "step": 1,
+          "default": 0
+        },
+        {
+          "type": "checkbox",
+          "id": "no_gap_next",
+          "label": "Sin separación con el slide de su derecha",
+          "info": "Pega este slide al que tiene a su derecha, sin la línea de 1 px. Sirve para hacer un banner de foto + panel como el de «Eyewear» de Miu Miu: márcala en el slide de la izquierda. En móvil, si el slide ocupa toda la fila, se pega al de abajo. No la marques en un slide que toca el borde derecho de la página.",
+          "default": false
+        },
+        {
+          "type": "header",
+          "content": "Imagen"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Imagen"
+        },
+        {
+          "type": "image_picker",
+          "id": "image_mobile",
+          "label": "Imagen en móvil (opcional)"
+        },
+        {
+          "type": "select",
+          "id": "focal_point",
+          "label": "t:shared.settings.focal_point.image.default.label",
+          "info": "Qué parte de la foto se queda a la vista cuando el slide la recorta. «De la imagen» usa el punto focal guardado en la propia imagen (centro si no tiene).",
+          "options": [
+            {
+              "value": "image_presentation",
+              "label": "t:shared.options.focal_point.image_presentation"
+            },
+            {
+              "value": "center",
+              "label": "t:shared.options.focal_point.center"
+            },
+            {
+              "value": "top",
+              "label": "t:shared.options.focal_point.top"
+            },
+            {
+              "value": "bottom",
+              "label": "t:shared.options.focal_point.bottom"
+            },
+            {
+              "value": "left",
+              "label": "t:shared.options.focal_point.left"
+            },
+            {
+              "value": "right",
+              "label": "t:shared.options.focal_point.right"
+            },
+            {
+              "value": "custom",
+              "label": "Personalizado (usa los deslizadores)"
+            }
+          ],
+          "default": "image_presentation"
+        },
+        {
+          "type": "range",
+          "id": "focal_x",
+          "label": "Punto focal: posición horizontal",
+          "info": "Solo con «Personalizado». 0 % es el borde izquierdo de la foto y 100 % el derecho.",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": "%",
+          "default": 50
+        },
+        {
+          "type": "range",
+          "id": "focal_y",
+          "label": "Punto focal: posición vertical",
+          "info": "Solo con «Personalizado». 0 % es el borde superior de la foto y 100 % el inferior.",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": "%",
+          "default": 50
+        },
+        {
+          "type": "select",
+          "id": "mobile_focal_point",
+          "label": "t:shared.settings.focal_point.image.mobile.label",
+          "info": "Qué parte de la foto se queda a la vista cuando el slide la recorta. «De la imagen» usa el punto focal guardado en la propia imagen (centro si no tiene).",
+          "options": [
+            {
+              "value": "image_presentation",
+              "label": "t:shared.options.focal_point.image_presentation"
+            },
+            {
+              "value": "center",
+              "label": "t:shared.options.focal_point.center"
+            },
+            {
+              "value": "top",
+              "label": "t:shared.options.focal_point.top"
+            },
+            {
+              "value": "bottom",
+              "label": "t:shared.options.focal_point.bottom"
+            },
+            {
+              "value": "left",
+              "label": "t:shared.options.focal_point.left"
+            },
+            {
+              "value": "right",
+              "label": "t:shared.options.focal_point.right"
+            },
+            {
+              "value": "custom",
+              "label": "Personalizado (usa los deslizadores)"
+            }
+          ],
+          "default": "image_presentation"
+        },
+        {
+          "type": "range",
+          "id": "mobile_focal_x",
+          "label": "Punto focal móvil: posición horizontal",
+          "info": "Solo con «Personalizado». 0 % es el borde izquierdo de la foto y 100 % el derecho.",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": "%",
+          "default": 50
+        },
+        {
+          "type": "range",
+          "id": "mobile_focal_y",
+          "label": "Punto focal móvil: posición vertical",
+          "info": "Solo con «Personalizado». 0 % es el borde superior de la foto y 100 % el inferior.",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": "%",
+          "default": 50
+        },
+        {
+          "type": "header",
+          "content": "Color"
+        },
+        {
+          "type": "color",
+          "id": "background_color",
+          "label": "Color de fondo",
+          "info": "Sin imagen, el slide es un panel de este color (como el de «Eyewear»)."
+        },
+        {
+          "type": "header",
+          "content": "Etiqueta"
+        },
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Etiqueta",
+          "info": "Texto pequeño arriba a la izquierda, por ejemplo «From the runway»."
+        },
+        {
+          "type": "select",
+          "id": "label_color",
+          "label": "Color de la etiqueta",
+          "options": [
+            {
+              "value": "dark",
+              "label": "Oscuro"
+            },
+            {
+              "value": "light",
+              "label": "Claro"
+            }
+          ],
+          "default": "dark"
+        },
+        {
+          "type": "header",
+          "content": "Texto"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Título"
+        },
+        {
+          "type": "textarea",
+          "id": "text",
+          "label": "Texto"
+        },
+        {
+          "type": "text",
+          "id": "button_label",
+          "label": "Texto del enlace",
+          "info": "Por ejemplo «Shop». Se muestra subrayado y solo si el slide tiene enlace."
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Enlace",
+          "info": "Todo el slide es un enlace a esta dirección."
+        },
+        {
+          "type": "select",
+          "id": "text_position",
+          "label": "Dónde va el texto",
+          "options": [
+            {
+              "value": "top_left",
+              "label": "Arriba a la izquierda"
+            },
+            {
+              "value": "center_left",
+              "label": "Centro, a la izquierda"
+            },
+            {
+              "value": "bottom_left",
+              "label": "Abajo a la izquierda"
+            },
+            {
+              "value": "center",
+              "label": "Centrado"
+            }
+          ],
+          "default": "top_left"
+        },
+        {
+          "type": "select",
+          "id": "text_color",
+          "label": "Color del texto",
+          "options": [
+            {
+              "value": "white",
+              "label": "Blanco"
+            },
+            {
+              "value": "black",
+              "label": "Negro"
+            }
+          ],
+          "default": "white"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Grid editorial"
+    }
+  ]
+}
+{% endschema %}
+
+{% comment %}Collection product cards: reference spacing, type and swatches, 2026-09-22.{% endcomment %}
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500&display=swap">
+<style>
+  #shopify-section-{{ section.id }} .collection__products {
+    --collection-card-gap-desktop: 1px;
+    --collection-card-gap-mobile: 1px;
+    gap: 1px !important;
+  }
+  #shopify-section-{{ section.id }} .collection__products .product-item {
+    background: #fff;
+    border-radius: 0;
+  }
+  #shopify-section-{{ section.id }} .product-item__meta {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #fff;
+  }
+  #shopify-section-{{ section.id }} .product-item__text {
+    padding: 16px 16px 32px !important;
+    text-align: left !important;
+    color: #000;
+  }
+  #shopify-section-{{ section.id }} .product-item__product-title,
+  #shopify-section-{{ section.id }} .product-item__product-title a {
+    font-family: "Work Sans", sans-serif !important;
+    font-size: 12px !important;
+    font-weight: 400 !important;
+    line-height: 16px !important;
+    letter-spacing: normal !important;
+    text-transform: none !important;
+    color: #000 !important;
+    padding: 0 !important;
+    white-space: normal !important;
+    -webkit-line-clamp: unset !important;
+    overflow: visible !important;
+  }
+  #shopify-section-{{ section.id }} .product-item__product-title {
+    margin: 0 0 8px !important;
+  }
+  #shopify-section-{{ section.id }} .product-item__price {
+    font-family: "Work Sans", sans-serif !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    line-height: 16px !important;
+    letter-spacing: normal !important;
+    color: #000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  #shopify-section-{{ section.id }} .product-item__variant-info {
+    margin: 8px 0 0 !important;
+  }
+  #shopify-section-{{ section.id }} .product-swatches-options__list {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 4px !important;
+    height: 12px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  #shopify-section-{{ section.id }} .product-swatches-options__item--swatch {
+    width: 8px !important;
+    height: 8px !important;
+    min-width: 8px !important;
+    border-radius: 50% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  #shopify-section-{{ section.id }} .product-badges {
+    top: 8px !important;
+    left: 8px !important;
+  }
+  #shopify-section-{{ section.id }} .product-badges * {
+    font-family: "Work Sans", sans-serif !important;
+    font-size: 11px !important;
+    line-height: 14px !important;
+    font-weight: 400 !important;
+  }
+</style>
+
+<style>
+  #shopify-section-{{ section.id }} .collection__products .product-item::after { border: 0 !important; }
+  #shopify-section-{{ section.id }} .product-item-size-picker,
+  #shopify-section-{{ section.id }} .product-item__quick-view--hoverless { display: none !important; }
+</style>

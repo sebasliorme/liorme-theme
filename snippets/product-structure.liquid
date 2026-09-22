@@ -1,0 +1,272 @@
+{%- doc -%}
+  Renders the general product structure for the product page, featured product, and quick view.
+
+  @param {string} source - Where the product structure is being rendered (ie. 'main', 'featured', or 'quick').
+  @param {object} prod - The product object. We use 'prod' to avoid collision with the global 'product' object.
+  @param {object} [current_variant] - The currently selected variant of the product.
+  @param {string} section_id - The parent section's ID.
+  @param {object} blocks - The section blocks.
+  @param {string} gallery_style - The media gallery style (ie. 'grid', 'list', or 'thumbnails').
+  @param {string} gallery_style_mobile - The mobile media gallery style (ie. 'carousel', 'grid', 'list', or 'thumbnails').
+  @param {object} featured_media - The featured (default selected) media.
+  @param {string} aspect_ratio - The aspect ratio of the media.
+  @param {string} desktop_image_sizes - A list of responsive image sizes (for the 'sizes' attribute).
+  @param {boolean} enable_product_lightbox - Whether the lightbox is enabled.
+  @param {boolean} enable_video_looping - Whether videos should loop.
+  @param {string} gallery_overflow - The gallery overflow mode.
+  @param {boolean} [full_height_photos] - Whether each desktop photo takes the full window height (100vh).
+  @param {number} [media_limit] - The number of media items to show before truncating.
+  @param {number} [media_limit_mobile] - The number of media items on mobile to show before truncating.
+  @param {number} [media_show_limit] - The number of media items, plus 1, to show before truncating. We need this because the first hidden row peeks a little.
+  @param {number} [media_show_limit_mobile] - The number of media items on mobile, plus 1, to show before truncating. We need this because the first hidden row peeks a little.
+  @param {boolean} [over_media_show_limit] - Whether there's more media than the media limit. Applies to 'grid' and 'list' styles.
+  @param {boolean} [over_media_show_limit_mobile] - Whether there's more media than the media limit on mobile. Applies to 'grid' and 'list' styles.
+  @param {string} [overflow_gallery_aspect_ratio] - The aspect ratio of the gallery overflow.
+  @param {string} [overflow_gallery_aspect_ratio_mobile] - The aspect ratio of the gallery overflow on mobile.
+  @param {number} [transition_multiplier] - The gallery overflow transition multiplier.
+  @param {number} [transition_multiplier_mobile] - The gallery overflow transition multiplier on mobile.
+  @param {number} [initial_variant_media_position] - The index of the first media item associated with the current variant in the broader media list.
+  @param {number} [next_variant_media_index] - The index of the first media item associated with the next variant grouping in the broader media list. This value, minus 1, gives us the index of the last media for the current variant.
+  @param {string} price_content_type - The price content type (ie. 'price', 'hide', or 'custom').
+  @param {string} custom_price_content - The content to display when 'price_content_type' is 'custom'.
+  @param {string} custom_color_key_map - A list of custom color names for swatches.
+  @param {string} custom_color_value_map - A list of custom color values for swatches.
+  @param {boolean} enable_gift_card_recipient - Whether the gift card recipient form is enabled.
+  @param {boolean} [auto_collapse_rows] - Whether accordions within the same group should auto-close as others open.
+{%- enddoc -%}
+
+<div
+  class="product__top product__primary"
+  data-zero-price-display="{{ settings.zero_dollar_product_price_display }}"
+  data-zero-price-custom-content="{{ 'products.inventory.zero_price_custom_label' | t }}"
+  data-sold-out-price-display="{{ settings.sold_out_product_price_display }}"
+  data-sold-out-price-custom-content="{{ 'products.inventory.sold_out_price_custom_label' | t }}"
+  data-price-display-type="{{ price_content_type }}"
+  data-initial-position="{{ initial_variant_media_position }}"
+  data-next-index="{{ next_variant_media_index }}"
+>
+  {%- # Left column blocks -%}
+  {%- capture left_side_blocks -%}
+    {%- assign auto_collapse_rows = auto_collapse_rows | default: false, allow_false: true -%}
+
+    {%- case source -%}
+      {%- when 'main' -%}
+        {%- render 'product-blocks',
+          blocks: blocks,
+          prod: prod,
+          column: 'left',
+          price_content_type: price_content_type,
+          custom_price_content: custom_price_content,
+          custom_color_key_map: custom_color_key_map,
+          custom_color_value_map: custom_color_value_map,
+          auto_collapse_rows: auto_collapse_rows
+        -%}
+
+      {%- when 'featured' -%}
+        {%- render 'product-blocks',
+          prod: prod,
+          blocks: blocks,
+          is_featured: true,
+          column: 'left',
+          current_variant: current_variant,
+          featured_media: featured_media,
+          price_content_type: price_content_type,
+          custom_price_content: custom_price_content,
+          custom_color_key_map: custom_color_key_map,
+          custom_color_value_map: custom_color_value_map
+        -%}
+    {%- endcase -%}
+  {%- endcapture -%}
+
+  {%- # Left column -%}
+  <div class="product__primary-left">
+    {%- # Mobile media -%}
+    {%- case source -%}
+      {%- when 'main' -%}
+        {%- render 'product-media',
+          prod: prod,
+          breakpoint: 'mobile',
+          gallery_style: gallery_style_mobile,
+          featured_media: featured_media,
+          aspect_ratio: aspect_ratio,
+          image_sizes: '100vw',
+          enable_product_lightbox: enable_product_lightbox,
+          enable_video_looping: enable_video_looping,
+          gallery_overflow: gallery_overflow,
+          media_limit: media_limit_mobile,
+          media_show_limit: media_show_limit_mobile,
+          over_media_show_limit: over_media_show_limit_mobile,
+          overflow_gallery_aspect_ratio: overflow_gallery_aspect_ratio_mobile,
+          transition_multiplier: transition_multiplier_mobile,
+          initial_variant_media_position: initial_variant_media_position,
+          next_variant_media_index: next_variant_media_index
+        -%}
+      {%- when 'featured' -%}
+        {%- render 'product-media',
+          prod: prod,
+          breakpoint: 'mobile',
+          gallery_style: 'carousel',
+          featured_media: featured_media,
+          aspect_ratio: aspect_ratio,
+          image_sizes: '100vw',
+          enable_product_lightbox: enable_product_lightbox,
+          enable_video_looping: enable_video_looping,
+          initial_variant_media_position: initial_variant_media_position,
+          next_variant_media_index: next_variant_media_index
+        -%}
+    {%- endcase -%}
+
+    {%- # Desktop media -%}
+    {%- case source -%}
+      {%- when 'main' -%}
+        {%- render 'product-media',
+          prod: prod,
+          breakpoint: 'desktop',
+          gallery_style: gallery_style,
+          featured_media: featured_media,
+          aspect_ratio: aspect_ratio,
+          image_sizes: desktop_image_sizes,
+          full_height_photos: full_height_photos,
+          enable_product_lightbox: enable_product_lightbox,
+          enable_video_looping: enable_video_looping,
+          gallery_overflow: gallery_overflow,
+          media_limit: media_limit,
+          media_show_limit: media_show_limit,
+          over_media_show_limit: over_media_show_limit,
+          overflow_gallery_aspect_ratio: overflow_gallery_aspect_ratio,
+          transition_multiplier: transition_multiplier,
+          initial_variant_media_position: initial_variant_media_position,
+          next_variant_media_index: next_variant_media_index
+        -%}
+
+      {%- when 'featured' -%}
+        {%- render 'product-media',
+          prod: prod,
+          breakpoint: 'desktop',
+          gallery_style: 'thumbnails',
+          featured_media: featured_media,
+          aspect_ratio: aspect_ratio,
+          image_sizes: desktop_image_sizes,
+          enable_product_lightbox: enable_product_lightbox,
+          enable_video_looping: enable_video_looping,
+          initial_variant_media_position: initial_variant_media_position,
+          next_variant_media_index: next_variant_media_index
+        -%}
+    {%- endcase -%}
+
+    {%- # Model button -%}
+    {%- assign first_3d_model = prod.media | where: 'media_type', 'model' | first -%}
+
+    {% if first_3d_model -%}
+      <button
+        aria-label="{{ 'products.product.view_in_space_label' | t }}"
+        class="product__view-in-space btn btn--primary btn--full"
+        data-in-your-space
+        data-shopify-xr
+        data-shopify-model3d-id="{{ first_3d_model.id }}"
+        data-shopify-title="{{ prod.title | escape }}"
+        data-shopify-xr-hidden
+      >
+        <span class="fs-body-75">
+          {% render 'icon', icon: '3d' %}
+          <span class="product__view-in-space-text">{{ 'products.product.view_in_space' | t }}</span>
+        </span>
+      </button>
+    {%- endif %}
+
+    {%- unless left_side_blocks == blank -%}
+      <div class="left-side-blocks for-desktop">
+        {{- left_side_blocks -}}
+      </div>
+    {%- endunless -%}
+  </div>
+
+  {%- # Right column -%}
+  <div class="product__details product__primary-right">
+    <div class="product__meta" data-sticky-container>
+      {%- # Right column blocks -%}
+      {%- case source -%}
+        {%- when 'main' -%}
+          {%- render 'product-blocks',
+            blocks: blocks,
+            prod: prod,
+            column: 'right',
+            current_variant: current_variant,
+            featured_media: featured_media,
+            aspect_ratio: aspect_ratio,
+            price_content_type: price_content_type,
+            custom_price_content: custom_price_content,
+            custom_color_key_map: custom_color_key_map,
+            custom_color_value_map: custom_color_value_map,
+            enable_gift_card_recipient: enable_gift_card_recipient,
+            auto_collapse_rows: auto_collapse_rows
+          -%}
+
+        {%- when 'featured' -%}
+          {%- render 'product-blocks',
+            blocks: blocks,
+            prod: prod,
+            is_featured: true,
+            column: 'right',
+            current_variant: current_variant,
+            featured_media: featured_media,
+            aspect_ratio: aspect_ratio,
+            price_content_type: price_content_type,
+            custom_price_content: custom_price_content,
+            custom_color_key_map: custom_color_key_map,
+            custom_color_value_map: custom_color_value_map,
+            enable_gift_card_recipient: enable_gift_card_recipient
+          -%}
+      {%- endcase -%}
+
+      {% liquid
+        # Render a dummy product form if buy buttons are absent
+        assign buy_button_block = blocks | where: 'type', 'buy_buttons'
+
+        if buy_button_block == blank
+          render 'product-form', section_id: section_id, prod: prod, current_variant: current_variant, hidden: true
+        endif
+      -%}
+
+      {%- # Live region for announcing updated price and availability to screen readers -%}
+      <p
+        class="visually-hidden"
+        data-product-status
+        aria-live="polite"
+        role="status"
+      ></p>
+
+      {%-
+        # Live region for announcing that the product form has been submitted and the
+        # product is in the process being added to the cart.
+      -%}
+      <p
+        class="visually-hidden"
+        data-loader-status
+        aria-live="assertive"
+        role="alert"
+        aria-hidden="true"
+      >
+        {{- 'products.product.loader_label' | t -}}
+      </p>
+
+      {%- liquid
+        # If we're on the main product page, output a shell for the Shopify product review accordion (hidden by default).
+        if source == 'main'
+          assign review_title = 'products.product.reviews' | t
+
+          render 'product-block-accordion', classes: 'product-reviews hidden', heading: review_title, small_text: true
+        endif
+      -%}
+    </div>
+  </div>
+</div>
+
+{%- # Mobile left-column blocks -%}
+<div class="product__bottom">
+  {%- unless left_side_blocks == blank -%}
+    <div class="left-side-blocks for-mobile">
+      {{- left_side_blocks -}}
+    </div>
+  {%- endunless -%}
+</div>

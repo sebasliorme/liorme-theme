@@ -1,0 +1,40 @@
+{%- doc -%}
+  Renders a blog post section's (template section) tag navigation item.
+
+  @param {object} blog - The blog object.
+  @param {object} tag - The tag object.
+  @param {boolean} is_all - Whether the tag being rendered is 'All'.
+{%- enddoc -%}
+
+{%- liquid
+  assign is_all = is_all | default: false, allow_false: true
+
+  capture tag_link
+    echo blog.url
+
+    unless is_all
+      assign tag_handle = tag | handle
+
+      echo '/tagged/[[th]]' | replace: '[[th]]', tag_handle
+    endunless
+  endcapture
+
+  capture tag_class
+    echo 'blog__nav-link'
+
+    if current_tags contains tag or is_all and current_tags == blank
+      echo ' blog__nav-link--active'
+    endif
+
+    echo ' ff-heading fs-body-150'
+  endcapture
+-%}
+
+<li class="blog__nav-item">
+  <a
+    href="{{ tag_link }}"
+    class="{{ tag_class }}"
+  >
+    {{- tag -}}
+  </a>
+</li>

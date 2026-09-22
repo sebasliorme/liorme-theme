@@ -1,0 +1,51 @@
+{%- doc -%}
+  Renders the promotional carousel card shown below the drawer menu's
+  first-level category list (Miu Miu-style: autoplay image/video slides,
+  prev/next arrows, dot pagination, caption). Mirrors sections/slideshow.liquid's
+  Swiper scaffold, trimmed to this component's own snippets/classes so it
+  stays independent of the real slideshow section.
+
+  @param {object} blocks - section.blocks, filtered here by type so the
+    merchant's drag order between promo_carousel_slide / promo_carousel_video
+    blocks is preserved (a pre-filtered-and-concatenated array would lose
+    that ordering — see the render call in sections/header.liquid).
+{%- enddoc -%}
+
+{%- liquid
+  assign promo_blocks = blocks | where: 'type', 'promo_carousel_slide'
+  assign promo_video_blocks = blocks | where: 'type', 'promo_carousel_video'
+  assign promo_count = promo_blocks.size | plus: promo_video_blocks.size
+-%}
+
+{%- if promo_count > 0 -%}
+  {%- if promo_video_blocks.size > 0 -%}
+    <script src="{{ 'drawer-menu-lazy-video.js' | asset_url }}" defer></script>
+  {%- endif -%}
+  <div class="drawer-menu-promo" data-drawer-promo-carousel>
+    <div class="drawer-menu-promo__inner swiper">
+      <div class="drawer-menu-promo__slides swiper-wrapper">
+        {%- assign slide_index = 0 -%}
+        {%- for block in blocks -%}
+          {%- if block.type == 'promo_carousel_slide' or block.type == 'promo_carousel_video' -%}
+            {%- assign slide_index = slide_index | plus: 1 -%}
+            {%- render 'drawer-menu-promo-slide', block: block, index: slide_index -%}
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+    </div>
+
+    {%- comment -%}
+      Sibling of .drawer-menu-promo__inner, not a child of it, on purpose:
+      that inner element is the actual Swiper root, which Swiper itself
+      gives overflow:hidden plus a height clamped to the active slide (see
+      swiper-autoheight) — nav/pagination placed INSIDE it was being laid
+      out correctly (correct position, size, colors, all verified) but
+      clipped away and invisible, since it fell outside that fixed-height
+      box. Swiper's nextEl/prevEl/pagination.el options are just CSS
+      selectors, so they work identically from outside the swiper root.
+    {%- endcomment -%}
+    {%- if promo_count > 1 -%}
+      {%- render 'drawer-menu-promo-navigation' -%}
+    {%- endif -%}
+  </div>
+{%- endif -%}

@@ -1,0 +1,22 @@
+{%- doc -%}
+  Says whether a section block is for the collection being shown. Prints "true" or "false" (capture it).
+  The block lists its collections in `show_in_collections`; an empty list means every collection.
+
+  @param {object} block - The section block.
+{%- enddoc -%}
+{%- liquid
+  assign for_this_collection = true
+
+  if block.settings.show_in_collections.size > 0
+    assign for_this_collection = false
+
+    for block_collection in block.settings.show_in_collections
+      if block_collection.handle == collection.handle
+        assign for_this_collection = true
+        break
+      endif
+    endfor
+  endif
+
+  echo for_this_collection
+-%}

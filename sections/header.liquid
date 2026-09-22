@@ -1,0 +1,1214 @@
+{%- liquid
+  # Transparent header variables
+  assign enable_transparent_template_list = section.settings.enable_transparent_template_list | downcase | split: ', '
+  assign transparent_header_enabled = false
+
+  if section.settings.enable_transparent_everywhere
+    assign transparent_header_enabled = true
+  endif
+
+  if section.settings.enable_transparent_on_home and template.name == 'index'
+    assign transparent_header_enabled = true
+  endif
+
+  for template_item in enable_transparent_template_list
+    if template_item contains '.'
+      assign template_name = template_item | split: '.' | first
+      assign suffix_name = template_item | split: '.' | last
+
+      if template_name == template.name and suffix_name == template.suffix
+        assign transparent_header_enabled = true
+      endif
+    else
+      if template_item == template.name
+        assign transparent_header_enabled = true
+      endif
+    endif
+
+    if transparent_header_enabled
+      break
+    endif
+  endfor
+-%}
+
+<script>
+  {%- liquid
+    # This is done here AND in the JS so it's responsive in the theme editor before the JS is loaded
+    if section.settings.enable_sticky_header
+      echo 'document.documentElement.classList.add("sticky-header-enabled");'
+    endif
+
+    if transparent_header_enabled
+      echo 'document.body.classList.add("header-transparent");'
+    endif
+
+    if section.settings.layout == 'logo-center_nav-below'
+      echo 'document.body.classList.add("quick-search-position-left");'
+    else
+      echo 'document.body.classList.add("quick-search-position-right");'
+    endif
+  -%}
+</script>
+
+{%- liquid
+  # Logo variables
+  assign logo = section.settings.logo
+  assign logo_width = section.settings.logo_width
+  assign mobile_logo_width = section.settings.mobile_logo_width
+  assign logo_position = 'center'
+
+  capture logo_tag_type
+    if request.page_type == 'index'
+      echo 'h1'
+    else
+      echo 'span'
+    endif
+  endcapture
+
+  capture logo_sizes
+    echo '(max-width: 960px) [[mlw]]px, [[lwq]]px' | replace: '[[mlw]]', mobile_logo_width | replace: '[[lwq]]', logo_width
+  endcapture
+
+  # Layout variables
+  assign layout = section.settings.layout
+
+  if layout contains 'logo-left'
+    assign logo_position = 'left'
+  endif
+
+  assign navigation_position = 'below'
+
+  if layout contains 'nav-left'
+    assign navigation_position = 'left'
+  elsif layout contains 'nav-center'
+    assign navigation_position = 'center'
+  endif
+
+  # Transparent header variables
+  assign color_text_transparent = section.settings.color_text_transparent
+  assign color_count_transparent = section.settings.color_count_transparent
+  assign logo_transparent = section.settings.logo_transparent
+
+  # Hero logo variables (big logo shown at the top of the home page,
+  # shrinking to the normal header logo above as the visitor scrolls
+  # through the first section — see heroLogoScale() in theme.js). Only
+  # assigned on the index template itself — everywhere else this stays
+  # blank so the extra <img>s below never render/download at all.
+  #
+  # Same regular/transparent pair as the small header logo above, just at
+  # hero size — logo_hero is the solid-background variant (falls back to
+  # the plain small logo), logo_hero_transparent is the over-the-photo
+  # variant (falls back to the small transparent logo, then the plain
+  # logo) — so a merchant only needs to fill in whichever one(s) actually
+  # differ from the small logo they'd otherwise be blown up from.
+  assign logo_hero = blank
+  assign logo_hero_transparent = blank
+
+  if request.page_type == 'index'
+    assign logo_hero = section.settings.logo_hero | default: logo
+    assign logo_hero_transparent = section.settings.logo_hero_transparent | default: logo_transparent | default: logo
+  endif
+
+  assign logo_hero_width = section.settings.logo_hero_width
+  assign logo_hero_width_mobile = section.settings.logo_hero_width_mobile
+
+  comment
+    Sharpness: on phones the big hero logo is drawn as wide as the screen allows (theme.css, "HERO HEADER":
+    width: min(100vw - 2 x the side margin, 480px)), NOT at the logo_hero_width_mobile setting, so the browser
+    has to be told that real width or it picks a file about 1.6x too small and the logo looks soft.
+  endcomment
+  capture logo_hero_sizes
+    echo '(max-width: 959px) min(calc(100vw - 36px), 480px), [[lwq]]px' | replace: '[[lwq]]', logo_hero_width
+  endcapture
+
+  # Navigation variables
+  assign menu = section.settings.menu
+  assign secondary_menu = section.settings.secondary_menu
+
+  if secondary_menu != blank and secondary_menu != menu
+    assign secondary_menu_valid = true
+  else
+    assign secondary_menu_valid = false
+  endif
+
+  # Localization variables
+  assign enable_locale_selector = section.settings.enable_locale_selector
+  assign enable_country_selector = section.settings.enable_country_selector
+
+  if enable_locale_selector and shop.published_locales.size > 1
+    assign locale_selector = true
+  else
+    assign locale_selector = false
+  endif
+
+  if enable_country_selector and localization.available_countries.size > 1
+    assign country_selector = true
+  else
+    assign country_selector = false
+  endif
+-%}
+
+{%- comment -%} theme-check-disable UnusedAssign {%- endcomment -%}
+{%- assign font_logo = settings.font_logo -%}
+{%- assign uppercase_logo = settings.uppercase_logo -%}
+{%- assign logo_text_transform = settings.logo_text_transform -%}
+{%- comment -%} theme-check-enable UnusedAssign {%- endcomment -%}
+
+{%- # Logo -%}
+{%- capture header_logo -%}
+  <{{ logo_tag_type }} class="header__logo">
+    <a
+      class="header__logo-link"
+      href="{{ routes.root_url }}"
+      {% if logo != blank or logo_transparent != blank %}
+        aria-label="{{ shop.name }}"
+      {% endif %}
+    >
+      {%- liquid
+        if logo != blank
+          render 'image', image: logo, wrapper_class: 'regular-logo', sizes: logo_sizes, prioritize_loading: true
+        endif
+
+        if logo_transparent != blank
+          render 'image', image: logo_transparent, wrapper_class: 'transparent-logo', sizes: logo_sizes, prioritize_loading: true
+        endif
+      -%}
+
+      {%- if logo == blank or logo_transparent == blank -%}
+        <span class="header__logo-text">{{ shop.name }}</span>
+      {%- endif -%}
+    </a>
+
+    {%- comment -%}
+      Hero logo (added): separate <img>s, not the small logo scaled up via
+      CSS transform — reusing the small logo's own image would mean the
+      browser only ever fetched a source sized for var(--logo-width), so
+      blowing it up to the hero size on-screen looked visibly blurry.
+      Rendering its own <img>s with sizes based on logo_hero_width(_mobile)
+      makes the browser fetch a properly high-resolution source instead.
+
+      Renders the SAME regular-logo/transparent-logo pair (reusing those
+      exact classes) as header__logo-link above, just at the hero's own
+      size, from its own logo_hero/logo_hero_transparent settings — not a
+      single static image — so it's driven by the theme's own already-
+      working hover/:focus-within/.dropdown-active/.is-sticky toggle
+      between them (see the header--has-transparent-logo rules), instead
+      of needing new, separate logic here. A single hero image only ever
+      showing the transparent-background variant was the actual original
+      bug report: hovering (or focusing/opening a dropdown) correctly
+      makes the header's background solid, but with no matching regular
+      (solid-background-appropriate) hero variant to switch to, a
+      typically light/white transparent logo simply disappeared against
+      the now-solid header.
+
+      Only rendered on the home page (heroLogoScale() in theme.js no-ops
+      everywhere else) — aria-hidden since header__logo-link's own logo
+      already provides the accessible name/link for every other page and
+      once scroll leaves the hero on this one.
+    {%- endcomment -%}
+    {%- if logo_hero != blank or logo_hero_transparent != blank -%}
+      <a class="header__logo-hero" href="{{ routes.root_url }}" aria-hidden="true" tabindex="-1">
+        {%- liquid
+          if logo_hero != blank
+            render 'image', image: logo_hero, wrapper_class: 'regular-logo', sizes: logo_hero_sizes, prioritize_loading: true
+          endif
+
+          if logo_hero_transparent != blank
+            render 'image', image: logo_hero_transparent, wrapper_class: 'transparent-logo', sizes: logo_hero_sizes, prioritize_loading: true
+          endif
+        -%}
+      </a>
+    {%- endif -%}
+  </{{ logo_tag_type }}>
+{%- endcapture -%}
+
+{%- # Search icon -%}
+{%- capture search_icon -%}
+  <a
+    class="
+      header__icon-touch
+      header__icon-touch--search
+      header__icon-touch--with-label
+      {% if settings.enable_quick_search %}no-transition{% endif -%}
+    "
+    href="{{ routes.search_url }}"
+    {% if settings.enable_quick_search %}data-search{% endif %}
+    aria-label="{{ 'general.accessibility.open_search' | t }}"
+    aria-controls="MainQuickSearch"
+    aria-expanded="false"
+  >
+    <span class="header__icon-touch-icon">
+      {%- render 'icon-button', icon: 'header-search' -%}
+      {%- render 'icon-button', icon: 'header-menu-close' -%}
+    </span>
+    <span class="header__icon-touch-label" aria-hidden="true">Search</span>
+  </a>
+{%- endcapture -%}
+
+{%- # Account icon -%}
+{%- capture account_icon -%}
+  {%- if section.settings.enable_shopify_account_component -%}
+    <div
+      class="
+        header__icon-touch
+        header__icon-touch--account
+        {% if customer %}is-logged-in{% endif %}
+      "
+      style="
+        --shopify-account-avatar-size: 26px;
+        --color-signed-in-avatar-background: {{ section.settings.customer_account_signed_in_background_color }};
+        --color-signed-in-avatar-text: {{ section.settings.customer_account_signed_in_text_color }};
+      "
+      aria-label="{{ 'general.accessibility.go_account' | t }}"
+    >
+      <shopify-account menu="{{ section.settings.customer_account_menu }}">
+        <div slot="signed-out-avatar">
+          {% render 'icon-button', icon: 'header-account' %}
+        </div>
+      </shopify-account>
+    </div>
+  {%- else -%}
+    <a
+      class="header__icon-touch header__icon-touch--account{% if customer %} is-logged-in{% endif %}"
+      href="{{ routes.account_url }}"
+      aria-label="{{ 'general.accessibility.go_account' | t }}"
+    >
+      {% render 'icon-button', icon: 'header-account' %}
+    </a>
+  {%- endif -%}
+{%- endcapture -%}
+
+{%- # Contact link -%}
+{%- capture contact_link -%}
+  <a class="header__icon-touch header__icon-touch--with-label header__contact-link" href="/pages/contact">
+    <span class="header__icon-touch-label">Contact us</span>
+  </a>
+{%- endcapture -%}
+
+{%- # Wishlist icon (visual only — not connected to a wishlist app/page yet) -%}
+{%- capture wishlist_icon -%}
+  <button
+    type="button"
+    class="header__icon-touch header__icon-touch--wishlist"
+    aria-label="Wishlist"
+    data-js-wishlist-button
+  >
+    {% render 'icon-button' with icon: 'header-wishlist' %}
+  </button>
+{%- endcapture -%}
+
+{%- # Cart icon -%}
+{%- capture cart_icon -%}
+  <a
+    class="header__icon-touch no-transition"
+    href="{{ routes.cart_url }}"
+    aria-label="{{ 'general.accessibility.open_cart' | t }}"
+    data-js-cart-icon="{{ section.settings.cart_icon }}"
+  >
+    {%- assign cart_icon_name = 'header-shopping-[[ci]]' | replace: '[[ci]]', section.settings.cart_icon -%}
+    {%- render 'icon-button', icon: cart_icon_name -%}
+  </a>
+{%- endcapture -%}
+
+{%- # Menu icon -%}
+{%- comment -%}
+  Moved above primary_nav so primary_nav can reference it directly — see below.
+{%- endcomment -%}
+{%- capture menu_icon -%}
+  <button
+    class="header__menu-icon header__icon-touch header__icon-touch--with-label header__icon-menu"
+    aria-label="{{ 'general.accessibility.open_menu' | t }}"
+    aria-expanded="false"
+    data-aria-label-closed="{{ 'general.accessibility.open_menu' | t }}"
+    data-aria-label-opened="{{ 'general.accessibility.close_menu' | t }}"
+    data-js-menu-button
+  >
+    <span class="header__icon-touch-icon">
+      {%- render 'icon-button', icon: 'header-menu' -%}
+      {%- render 'icon-button', icon: 'header-menu-close' -%}
+    </span>
+    <span class="header__icon-touch-label" aria-hidden="true">Menu</span>
+  </button>
+{%- endcapture -%}
+
+{%- comment -%}
+  Primary nav used to render the hover-triggered top-level links + meganav
+  dropdowns (via snippets/navigation.liquid, snippets/meganav-*). That whole
+  system is retired in favor of a single hamburger button (at every
+  viewport, not just mobile) opening the drawer-menu drill-down panel —
+  primary_nav now just echoes the same menu_icon button used on mobile,
+  wherever a layout branch below places it in the desktop rows. No branch
+  below needed to change: they all just echo whatever primary_nav contains.
+{%- endcomment -%}
+{%- capture primary_nav -%}
+  {{ menu_icon }}
+{%- endcapture -%}
+
+{%- # Secondary navigation -%}
+{%- capture secondary_nav -%}
+  {%- if secondary_menu_valid -%}
+    <nav class="header__links header__links-secondary" data-secondary-navigation>
+      {%- render 'navigation', menu: secondary_menu -%}
+    </nav>
+  {%- endif -%}
+{%- endcapture -%}
+
+{%- # Filler -%}
+{%- capture filler -%}<div class="header__filler"></div>{%- endcapture -%}
+
+{%- # Localization -%}
+{%- capture localization_dropdowns -%}
+  {%- if locale_selector or country_selector -%}
+    <nav class="header__cross-border fs-body-50" data-secondary-navigation>
+      {%- render 'cross-border',
+        show_locale: locale_selector,
+        show_country: country_selector,
+        id: 'header',
+        desktop_only: true
+      -%}
+    </nav>
+  {%- endif -%}
+{%- endcapture -%}
+
+{%- liquid
+  # Social icons
+  capture social_icons
+    if section.settings.show_social_media or section.settings.show_social_media_mobile
+      render 'social-icons'
+    endif
+  endcapture
+
+  capture social_icons_desktop
+    if section.settings.show_social_media
+      echo social_icons
+    endif
+  endcapture
+
+  capture social_icons_mobile
+    if section.settings.show_social_media_mobile
+      echo social_icons
+    endif
+  endcapture
+
+  # Header class
+  assign formatted_layout = layout | replace: '_', '-'
+
+  capture header_class
+    echo 'section header header--layout-[[fl]]' | replace: '[[fl]]', formatted_layout
+
+    if logo != blank
+      echo ' header--has-logo'
+    endif
+
+    if transparent_header_enabled
+      echo ' header--transparent'
+    endif
+
+    if logo_transparent != blank or logo_hero_transparent != blank
+      echo ' header--has-transparent-logo'
+    endif
+
+    if section.settings.divider_style != 'none'
+      echo ' header--has-divider'
+    endif
+
+    if shop.customer_accounts_enabled
+      echo ' header--has-accounts'
+    endif
+
+    if secondary_menu_valid
+      echo ' header--has-secondary-menu'
+    endif
+
+    if menu == blank and secondary_menu != blank
+      echo ' header--primary-menu-is-secondary'
+    endif
+
+    if settings.uppercase_navigation
+      echo ' header--navigation-is-all-caps'
+    endif
+
+    if social_icons_desktop != blank
+      echo ' header--has-social-links'
+    endif
+
+    if enable_locale_selector or enable_country_selector
+      echo ' header--has-country-or-locale'
+    endif
+  endcapture
+-%}
+
+{%- if section.settings.enable_border_bottom -%}
+  <style>
+    #shopify-section-{{ section.id }} .header{
+      border-bottom: 1px solid {{ section.settings.border_bottom_color }};
+    }
+    body.header-transparent #shopify-section-{{ section.id }} .header{
+      border-bottom: none;
+    }
+  </style>
+{%- endif -%}
+
+<style>
+  /* Auto-hide on scroll down / reveal on scroll up (toggled in theme.js,
+     register("header") — only wired up when enable_sticky_header is on).
+     Translating .header itself (not its sticky wrapper) keeps the sticky
+     wrapper's reserved layout height constant while hidden, so whatever
+     sits sticky at top:0 further down the page (eg. the collection page's
+     category/filter bar) is revealed underneath rather than leaving a gap. */
+  #shopify-section-{{ section.id }} .header{
+    transition: background-color 180ms ease, transform 300ms cubic-bezier(0.33, 0, 0, 1);
+  }
+  #shopify-section-{{ section.id }} .header.header--auto-hidden{
+    transform: translateY(-100%);
+  }
+  /* Desktop: slide out by the header's VISIBLE height (+1px so nothing peeks), not its
+     full layout height. The header sticks with a negative top and its upper row
+     collapses once stuck, so -100% (97px) travels 13px further than what is on
+     screen (84px). The collection's sticky category/filter bar slides by that same
+     visible height and curve (collection-editorial-grid.liquid), so header and bar
+     now move as ONE block — before, they travelled 97px vs 84px in the same 300ms and
+     drifted up to ~10px apart mid-transition. Mobile has no such offset. */
+  @media (min-width: 960px) {
+    #shopify-section-{{ section.id }} .header.header--auto-hidden{
+      transform: translateY(calc(-1 * (var(--header-desktop-sticky-height, 100%) + 1px)));
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #shopify-section-{{ section.id }} .header{
+      transition: background-color 180ms ease;
+    }
+  }
+</style>
+
+<header
+  class="{{ header_class }}"
+  data-section-id="{{ section.id }}"
+  data-section-type="header"
+  data-navigation-position="{{ navigation_position }}"
+  data-logo-position="{{ logo_position }}"
+  {% if section.settings.enable_sticky_header -%}
+    data-enable-sticky-header="true"
+  {%- endif %}
+  {% if transparent_header_enabled -%}
+    data-transparent-header="true"
+  {%- endif %}
+  js-header
+  style="
+    {%- render 'color-scheme-to-vars',
+      color_scheme: section.settings.color_scheme,
+      css_vars: 'background,background_gradient,text,lines-and-borders'
+    -%}
+    --logo-width: {{ logo_width }}px;
+    --mobile-logo-width: {{ mobile_logo_width }}px;
+    --logo-hero-width: {{ logo_hero_width }}px;
+    --mobile-logo-hero-width: {{ logo_hero_width_mobile }}px;
+    --color-cart-count-transparent: {{ color_count_transparent }};
+    --color-text-transparent: {{ color_text_transparent }};
+    --color-text-featured-link: {{ section.settings.featured_link_color }};
+  "
+>
+  <a href="#main" class="header__skip-to-content btn btn--primary btn--small">
+    {{- 'general.accessibility.skip_to_content' | t -}}
+  </a>
+
+  <div class="header__inner section-inner section-inner--width-{{ section.settings.section_width }}">
+    <div class="header__row header__row-desktop upper  ">
+      <div class="header__row-segment header__row-segment-desktop left">
+        {%- liquid
+          if logo_position == 'center'
+            echo secondary_nav
+          else
+            if navigation_position == 'below'
+              echo header_logo
+            else
+              echo filler
+            endif
+          endif
+        -%}
+      </div>
+
+      <div class="header__row-segment header__row-segment-desktop header__row-segment-desktop--logo-left right">
+        {%- liquid
+          if logo_position == 'left'
+            echo secondary_nav
+          endif
+
+          echo social_icons_desktop
+          echo localization_dropdowns
+        -%}
+      </div>
+    </div>
+
+    {%- if logo_position == 'center' and navigation_position == 'below' -%}
+      <div class="header__row header__row-desktop logo-only">
+        {{- header_logo -}}
+      </div>
+    {%- endif -%}
+
+    {%- liquid
+      capture lower_left_content
+        if logo_position == 'center' and navigation_position == 'below'
+          echo search_icon
+        elsif logo_position == 'center' and navigation_position == 'left'
+          echo primary_nav
+          echo search_icon
+        elsif logo_position == 'left' and navigation_position == 'below'
+          echo primary_nav
+        elsif logo_position == 'left' and navigation_position == 'left'
+          echo header_logo
+          echo primary_nav
+        elsif logo_position == 'left' and navigation_position == 'center'
+          echo header_logo
+        endif
+      endcapture
+    -%}
+
+    <div class="header__row header__row-desktop lower {% if logo_position == 'center' or navigation_position == 'center' %}three-segment{% endif %}">
+      <div class="header__row-segment header__row-segment-desktop left {% if lower_left_content contains "header__links-list" %}contains-nav{% endif %}">
+        {{ lower_left_content }}
+      </div>
+
+      {%- liquid
+        if logo_position == 'center' and navigation_position == 'below'
+          echo primary_nav
+        elsif logo_position == 'center' and navigation_position == 'left'
+          echo header_logo
+        elsif logo_position == 'left' and navigation_position == 'center'
+          echo primary_nav
+        endif
+      -%}
+
+      <div class="header__row-segment header__row-segment-desktop right">
+        {%- liquid
+          # search_icon already sits next to the menu icon on the left for
+          # both of these — see lower_left_content above (the below-nav
+          # case echoes it directly, the left-nav case echoes it right
+          # after primary_nav).
+          unless logo_position == 'center' and navigation_position == 'below'
+            unless logo_position == 'center' and navigation_position == 'left'
+              echo search_icon
+            endunless
+          endunless
+
+          echo contact_link
+
+          if shop.customer_accounts_enabled
+            echo account_icon
+          endif
+
+          echo wishlist_icon
+          echo cart_icon
+        -%}
+      </div>
+    </div>
+
+    {%- liquid
+      capture left_content
+        if logo_position == 'center'
+          echo menu_icon
+          echo search_icon
+        else
+          echo header_logo
+        endif
+      endcapture
+
+      capture center_content
+        if logo_position == 'center'
+          echo header_logo
+        endif
+      endcapture
+
+      capture right_content
+        if logo_position == 'center'
+          if shop.customer_accounts_enabled
+            echo account_icon
+          endif
+
+          echo cart_icon
+        else
+          echo search_icon
+          echo menu_icon
+          echo cart_icon
+        endif
+      endcapture
+    -%}
+
+    <div class="header__row header__row-mobile {%- if logo_position == 'center' %} three-segment{%- endif -%}">
+      <div class="header__row-segment left">
+        {{ left_content }}
+      </div>
+
+      {{ center_content }}
+
+      <div class="header__row-segment right">
+        {{ right_content }}
+      </div>
+    </div>
+  </div>
+
+  {%- if section.settings.divider_style != 'none' -%}
+    <span
+      class="
+        header__divider
+        header__divider--style-{{ section.settings.divider_style }}
+        header__divider--full-width-{{ section.settings.enable_full_width_divider }}
+      "
+    ></span>
+  {%- endif -%}
+
+  <div class="no-js-menu no-js-menu--desktop">
+    {%- render 'no-js-navmenu', menu: menu, secondary_menu: secondary_menu -%}
+  </div>
+
+  {%- assign mobile_menu_image_blocks = section.blocks | where: 'type', 'mobile_menu_images' -%}
+  {%- comment -%}
+    Two block types (image / video) share one carousel — filtering by type
+    separately and concatenating would lose the merchant's drag order
+    between the two, so the carousel snippet filters section.blocks itself
+    while iterating, keeping editor order intact.
+  {%- endcomment -%}
+
+  {%- render 'drawer-menu',
+    menu: menu,
+    secondary_menu: secondary_menu,
+    featured_link_label: section.settings.featured_link_label,
+    locale_selector: locale_selector,
+    country_selector: country_selector,
+    social_icons: social_icons_mobile,
+    mobile_menu_image_blocks: mobile_menu_image_blocks,
+    promo_carousel_blocks: section.blocks
+  -%}
+</header>
+
+{%- # This needs to be outside of the header so that we can re-apply the section width classes to ensure alignment with the header. -%}
+{%- if settings.enable_confirmation_popup -%}
+  <div
+    class="
+      purchase-confirmation-popup
+      {% if settings.enable_section_animations -%}
+        animation
+        animation--purchase-confirmation
+      {%- endif %}
+    "
+    data-purchase-confirmation-popup
+  >
+    <div class="purchase-confirmation-popup__inner section-inner section-inner--width-{{ section.settings.section_width }}">
+      <div class="purchase-confirmation-popup__container" js-purchase-confirmation-container></div>
+    </div>
+  </div>
+{%- endif -%}
+
+{%- render 'flash-alert' -%}
+
+<script>
+  // Set heading height at component level
+  const header = document.querySelector('[data-section-type="header"]');
+  document.documentElement.style.setProperty('--height-header', header.offsetHeight + 'px');
+</script>
+
+{% schema %}
+{
+  "name": "t:sections.header.name",
+  "class": "header__outer-wrapper",
+  "settings": [
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "t:sections.header.settings.layout.label",
+      "options": [
+        {
+          "value": "logo-center_nav-below",
+          "label": "t:sections.header.settings.layout.options.logo-center_nav-below"
+        },
+        {
+          "value": "logo-left_nav-left",
+          "label": "t:sections.header.settings.layout.options.logo-left_nav-left"
+        },
+        {
+          "value": "logo-left_nav-center",
+          "label": "t:sections.header.settings.layout.options.logo-left_nav-center"
+        },
+        {
+          "value": "logo-center_nav-left",
+          "label": "t:sections.header.settings.layout.options.logo-center_nav-left"
+        },
+        {
+          "value": "logo-left_nav-below",
+          "label": "t:sections.header.settings.layout.options.logo-left_nav-below"
+        }
+      ]
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_border_bottom",
+      "label": "Agregar borde inferior",
+      "default": true
+    },
+    {
+      "type": "color",
+      "id": "border_bottom_color",
+      "label": "Color del borde inferior",
+      "default": "#4B4B4B",
+      "visible_if": "{{ section.settings.enable_border_bottom }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_sticky_header",
+      "label": "t:sections.header.settings.enable_sticky_header.label",
+      "default": true
+    },
+    {
+      "type": "radio",
+      "id": "cart_icon",
+      "label": "t:sections.header.settings.cart_icon.label",
+      "options": [
+        {
+          "value": "bag",
+          "label": "t:sections.header.settings.cart_icon.options.bag"
+        },
+        {
+          "value": "cart",
+          "label": "t:sections.header.settings.cart_icon.options.cart"
+        }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "divider_style",
+      "label": "t:sections.shared.header.settings.divider_style.label",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:sections.shared.header.settings.divider_style.options.none"
+        },
+        {
+          "value": "thin",
+          "label": "t:sections.shared.header.settings.divider_style.options.thin"
+        },
+        {
+          "value": "thick",
+          "label": "t:sections.shared.header.settings.divider_style.options.thick"
+        }
+      ],
+      "default": "thick"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_full_width_divider",
+      "label": "t:sections.shared.header.settings.enable_full_width_divider.label",
+      "default": true,
+      "visible_if": "{{ section.settings.divider_style != 'none' }}"
+    },
+    {
+      "type": "header",
+      "content": "t:shared.settings.localization.locale_selector.header.content",
+      "info": "t:shared.settings.localization.locale_selector.header.info"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_locale_selector",
+      "label": "t:shared.settings.localization.locale_selector.enable_locale_selector.label",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "t:shared.settings.localization.country_selector.header.content",
+      "info": "t:shared.settings.localization.country_selector.header.info"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_country_selector",
+      "label": "t:shared.settings.localization.country_selector.enable_country_selector.label",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "t:shared.settings.customer_accounts.header.content"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_shopify_account_component",
+      "label": "t:shared.settings.customer_accounts.enable_shopify_account_component.label",
+      "info": "t:sections.header.settings.enable_shopify_account_component.info",
+      "default": true
+    },
+    {
+      "type": "link_list",
+      "id": "customer_account_menu",
+      "label": "t:shared.settings.customer_accounts.customer_account_menu.label",
+      "default": "customer-account-main-menu",
+      "visible_if": "{{ section.settings.enable_shopify_account_component }}"
+    },
+    {
+      "type": "color",
+      "id": "customer_account_signed_in_background_color",
+      "label": "t:shared.settings.customer_accounts.customer_account_signed_in_background_color.label",
+      "visible_if": "{{ section.settings.enable_shopify_account_component }}"
+    },
+    {
+      "type": "color",
+      "id": "customer_account_signed_in_text_color",
+      "label": "t:shared.settings.customer_accounts.customer_account_signed_in_text_color.label",
+      "default": "#fff",
+      "visible_if": "{{ section.settings.enable_shopify_account_component }}"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.header.settings.social_media.header.content",
+      "info": "t:sections.header.settings.social_media.header.info"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_social_media",
+      "label": "t:sections.header.settings.social_media.show_social_media.label",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_social_media_mobile",
+      "label": "t:sections.header.settings.social_media.show_social_media_mobile.label",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "t:sections.shared.header.settings.logo.header.content"
+    },
+    {
+      "type": "image_picker",
+      "id": "logo",
+      "label": "t:sections.shared.header.settings.logo.logo.label"
+    },
+    {
+      "type": "range",
+      "id": "logo_width",
+      "label": "t:sections.shared.header.settings.logo.logo_width.label",
+      "min": 50,
+      "max": 350,
+      "step": 10,
+      "unit": "px",
+      "default": 200
+    },
+    {
+      "type": "range",
+      "id": "mobile_logo_width",
+      "label": "t:sections.shared.header.settings.logo.mobile_logo_width.label",
+      "min": 50,
+      "max": 250,
+      "step": 10,
+      "unit": "px",
+      "default": 200
+    },
+    {
+      "type": "header",
+      "content": "Logo grande (portada)",
+      "info": "Logo mostrado al inicio de la página de inicio, que se reduce suavemente al tamaño normal del header a medida que se hace scroll por la primera sección."
+    },
+    {
+      "type": "image_picker",
+      "id": "logo_hero",
+      "label": "Logo grande",
+      "info": "Se usa cuando el header tiene fondo sólido (por ejemplo, al hacer hover o abrir un menú antes de scrollear). Si se deja en blanco, se usa el logo normal en un tamaño mayor. Para evitar que se vea borroso, sube una imagen con buena resolución para el tamaño elegido abajo."
+    },
+    {
+      "type": "image_picker",
+      "id": "logo_hero_transparent",
+      "label": "Logo grande (transparente)",
+      "info": "Se usa mientras el header está sobre la imagen/video de portada, con fondo transparente. Si se deja en blanco, se usa el logo transparente normal (o el logo grande de arriba) en un tamaño mayor."
+    },
+    {
+      "type": "range",
+      "id": "logo_hero_width",
+      "label": "Ancho del logo grande (escritorio)",
+      "min": 150,
+      "max": 600,
+      "step": 10,
+      "unit": "px",
+      "default": 280
+    },
+    {
+      "type": "range",
+      "id": "logo_hero_width_mobile",
+      "label": "Ancho del logo grande (mobile)",
+      "min": 100,
+      "max": 400,
+      "step": 10,
+      "unit": "px",
+      "default": 220
+    },
+    {
+      "type": "header",
+      "content": "t:sections.header.settings.navigation.header.content"
+    },
+    {
+      "type": "link_list",
+      "id": "menu",
+      "label": "t:sections.header.settings.navigation.menu.label",
+      "default": "main-menu"
+    },
+    {
+      "type": "link_list",
+      "id": "secondary_menu",
+      "label": "t:sections.header.settings.navigation.secondary_menu.label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.header.settings.featured_link.header.content",
+      "info": "t:sections.header.settings.featured_link.header.info"
+    },
+    {
+      "type": "text",
+      "id": "featured_link_label",
+      "label": "t:sections.header.settings.featured_link.featured_link_label.label"
+    },
+    {
+      "type": "color",
+      "id": "featured_link_color",
+      "label": "t:sections.header.settings.featured_link.featured_link_color.label",
+      "default": "#DB4827"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.header.settings.transparent_header.header.content"
+    },
+    {
+      "type": "paragraph",
+      "content": "t:sections.header.settings.transparent_header.paragraph.content"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_transparent_everywhere",
+      "label": "Habilitar en todas las páginas",
+      "info": "Ignora la casilla de inicio y la lista de plantillas de abajo: el header será transparente en todo el sitio.",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_transparent_on_home",
+      "label": "t:sections.header.settings.transparent_header.enable_transparent_on_home.label",
+      "default": true
+    },
+    {
+      "type": "textarea",
+      "id": "enable_transparent_template_list",
+      "label": "t:sections.header.settings.transparent_header.enable_transparent_template_list.label",
+      "placeholder": "collection, product.landing, page.about",
+      "info": "t:sections.header.settings.transparent_header.enable_transparent_template_list.info"
+    },
+    {
+      "type": "image_picker",
+      "id": "logo_transparent",
+      "label": "t:sections.header.settings.transparent_header.logo_transparent.label",
+      "info": "t:sections.header.settings.transparent_header.logo_transparent.info"
+    },
+    {
+      "type": "color",
+      "id": "color_text_transparent",
+      "label": "t:sections.header.settings.transparent_header.color_text_transparent.label",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "color",
+      "id": "color_count_transparent",
+      "label": "t:sections.header.settings.transparent_header.color_count_transparent.label",
+      "default": "#000000"
+    },
+    {
+      "type": "header",
+      "content": "t:shared.settings.section_style.header.content"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:shared.settings.color_scheme.label"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "t:shared.settings.section_style.section_width.label",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "t:shared.settings.section_style.section_width.options.page_width"
+        },
+        {
+          "value": "full-width-padded",
+          "label": "t:shared.settings.section_style.section_width.options.full_width"
+        }
+      ],
+      "default": "page-width"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "mobile_menu_images",
+      "name": "Imágenes de menú",
+      "settings": [
+        {
+          "type": "text",
+          "id": "menu_name",
+          "label": "t:sections.header.blocks.mobile_menu_images.settings.menu_name.label",
+          "info": "t:sections.header.blocks.mobile_menu_images.settings.menu_name.info"
+        },
+        {
+          "type": "image_picker",
+          "id": "custom_image",
+          "label": "Imagen personalizada (opcional)",
+          "info": "Si la subes, se usa esta imagen para la categoría en vez de la imagen de la colección o del metafield. Deja el campo \"Nombre del menú\" arriba con el nombre exacto de la categoría (ej: Joyas) para que esta imagen se asigne a esa categoría."
+        },
+        {
+          "type": "image_picker",
+          "id": "custom_image_2",
+          "label": "Imagen adicional 2 (opcional)",
+          "info": "Si la subes, en escritorio la columna de imagen de esta categoría muestra un grid de varias imágenes en vez de una sola. Sin efecto en mobile."
+        },
+        {
+          "type": "image_picker",
+          "id": "custom_image_3",
+          "label": "Imagen adicional 3 (opcional)",
+          "info": "Con las 3 imágenes cargadas, la tercera se muestra más grande debajo de las otras dos. Sin efecto en mobile."
+        },
+        {
+          "type": "header",
+          "content": "t:sections.header.blocks.mobile_menu_images.settings.thumbnails.header.content",
+          "info": "t:sections.header.blocks.mobile_menu_images.settings.thumbnails.header.info"
+        },
+        {
+          "type": "paragraph",
+          "content": "t:sections.header.blocks.mobile_menu_images.settings.thumbnails.paragraph.content"
+        },
+        {
+          "type": "select",
+          "id": "aspect_ratio",
+          "label": "t:sections.header.blocks.mobile_menu_images.settings.thumbnails.aspect_ratio.label",
+          "options": [
+            {
+              "value": "natural",
+              "label": "t:shared.options.aspect_ratio.natural"
+            },
+            {
+              "value": "square",
+              "label": "t:shared.options.aspect_ratio.square"
+            },
+            {
+              "value": "portrait",
+              "label": "t:shared.options.aspect_ratio.portrait"
+            },
+            {
+              "value": "landscape",
+              "label": "t:shared.options.aspect_ratio.landscape"
+            }
+          ],
+          "default": "square"
+        },
+        {
+          "type": "range",
+          "id": "thumbnail_width",
+          "label": "t:sections.header.blocks.mobile_menu_images.settings.thumbnails.thumbnail_width.label",
+          "min": 30,
+          "max": 80,
+          "step": 1,
+          "unit": "px",
+          "default": 60
+        }
+      ]
+    },
+    {
+      "type": "promo_carousel_slide",
+      "name": "Carrusel del menú: imagen",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Imagen"
+        },
+        {
+          "type": "image_picker",
+          "id": "image_mobile",
+          "label": "Imagen (mobile, opcional)"
+        },
+        {
+          "type": "select",
+          "id": "focal_point",
+          "label": "t:shared.settings.focal_point.image.default.label",
+          "options": [
+            {
+              "value": "image_presentation",
+              "label": "t:shared.options.focal_point.image_presentation"
+            },
+            {
+              "value": "center",
+              "label": "t:shared.options.focal_point.center"
+            },
+            {
+              "value": "top",
+              "label": "t:shared.options.focal_point.top"
+            },
+            {
+              "value": "bottom",
+              "label": "t:shared.options.focal_point.bottom"
+            }
+          ],
+          "default": "image_presentation"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Título"
+        },
+        {
+          "type": "text",
+          "id": "text",
+          "label": "Texto"
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Enlace"
+        },
+        {
+          "type": "text",
+          "id": "link_text",
+          "label": "Texto del enlace"
+        }
+      ]
+    },
+    {
+      "type": "promo_carousel_video",
+      "name": "Carrusel del menú: video",
+      "settings": [
+        {
+          "type": "video",
+          "id": "video",
+          "label": "Video"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Imagen de respaldo (mientras carga el video)"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Título"
+        },
+        {
+          "type": "text",
+          "id": "text",
+          "label": "Texto"
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Enlace"
+        },
+        {
+          "type": "text",
+          "id": "link_text",
+          "label": "Texto del enlace"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

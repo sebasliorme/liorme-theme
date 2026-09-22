@@ -1,0 +1,43 @@
+{%- doc -%}
+  Renders CSS variables for a given global color category.
+
+  @param {string} category - The name of the color category. Can be: {products, notifications}.
+  @param {string} settings_ids - A comma separated list of the setting IDs within the category.
+{%- enddoc -%}
+
+{%- liquid
+  assign setting_ids = setting_ids | remove: ' ' | split: ','
+
+  for id in setting_ids
+    # CSS vars should be handleized, so we need to convert '_'s in the setting ID to '-'s
+    capture handleized_id
+      echo id | replace: '_', '-'
+    endcapture
+
+    capture variable_name
+      echo '--color-[[c]]-[[hi]]' | replace: '[[c]]', category | replace: '[[hi]]', handleized_id
+    endcapture
+
+    capture setting_name
+      echo 'color_[[c]]_[[id]]' | replace: '[[c]]', category | replace: '[[id]]', id
+    endcapture
+
+    capture variable_value
+      echo settings[setting_name]
+    endcapture
+
+    echo '[[vn]]: [[vv]];' | replace: '[[vn]]', variable_name | replace: '[[vv]]', variable_value
+
+    if category == 'products' and id == 'sale'
+      render 'color-alpha-modified-vars', color_setting: variable_value, variable_name_base: variable_name, alpha_values: '10'
+    endif
+
+    if category == 'notifications' and id == 'success'
+      render 'color-alpha-modified-vars', color_setting: variable_value, variable_name_base: variable_name, alpha_values: '08'
+    endif
+
+    unless forloop.last
+      echo ' '
+    endunless
+  endfor
+-%}

@@ -1,0 +1,434 @@
+{%- doc -%}
+  Renders one slide of the collection grid, when it belongs at the current product position.
+
+  Two kinds of section block:
+    - `editorial_slide`: a photo with text (sticky, full height, formats...), placed by row / column, as always.
+    - `mosaic_slide`: a tile of the mosaic that lives INSIDE the product grid, like on Miu Miu's collection pages:
+      a photo or colour panel with a tag, title, text and "Shop" link. It is a cell of the grid (1 to 6 columns by
+      1 to 4 rows of the shape chosen in the section), so it lines up with the product cards; the products flow
+      around it. It looks like the "Mosaico de slides" section (same tile snippet and CSS).
+
+  Where an editorial slide's values come from (first one that has a value wins):
+    - content (image, heading, text, button label, link): the metaobject entry, then the section block;
+    - layout (row/column start and span, horizontal position): the metaobject entry, then the section block
+      for this slot, then a default;
+    - sticky, full height, aspect ratio and mobile padding: the section block (default: off / natural).
+    - focal point (which part of the photo stays in view when the slide's frame crops it): the section block, one for the
+      desktop photo and one for the mobile photo.
+  A mosaic slide takes everything from its block (it has no metaobject entry).
+
+  The metaobject is an entry of the collection metafield `custom.editorial_slides` (type `editorial_slide`).
+  Fields it can have: image, image_mobile, heading, text, button_label, link, and optionally row_start,
+  row_span, column_span, horizontal_position ("left", "right" or "custom" with column_start).
+  A field that the metaobject does not define, or leaves empty, is simply skipped.
+
+  WHICH COLLECTIONS: the section block can list the collections it is for (`show_in_collections`, empty = all of them).
+  Without an entry, a block that is not for the current collection draws nothing. With an entry, a block that is not
+  for the current collection is ignored (the entry gets the default layout, and takes nothing from that block).
+
+  @param {object} [entry] - The metaobject entry. Blank when the slide comes only from a section block.
+  @param {object} [block] - The section block: layout for this slot and fallback content (also what the theme editor selects).
+  @param {number} slot_index - Position of this slide in its list (0-based). Used to place a slide that has no layout of its own.
+  @param {number} columns - Number of desktop columns of the grid.
+  @param {string} [columns_mobile] - Number of columns of the grid on phones ("1" or "2").
+  @param {number} global_product_index - Index of the product the loop is on, counted across all pages already loaded.
+  @param {number} current_page - The page of products being rendered.
+  @param {number} [photo_ratio] - Height / width of a product card's photo (1.25 = 4:5). Used to size the photos of the slides.
+  @param {number} [tile_ratio] - Height / width of one cell of a mosaic slide (1.5 = 2:3). A mosaic slide can have its own shape instead (`aspect_ratio` of its block: square, 4:5...): then its height is its width x that shape, whatever its rows.
+  @param {string} [fallback_label] - Accessible name for a slide that has no title (the collection's title).
+  @param {boolean} [show_entry_text] - Whether the entry's heading, text and button label are shown. When off, only its
+    image (and link and layout) is used, so text that has not been reviewed yet is not published.
+{%- enddoc -%}
+
+{%- liquid
+  assign columns = columns | plus: 0
+  assign columns_mobile_n = columns_mobile | default: 2 | plus: 0
+  assign photo_ratio_n = photo_ratio | default: 1.25 | plus: 0.0
+  assign tile_ratio_n = tile_ratio | default: 1.5 | plus: 0.0
+
+  # ---- is this block for the collection being shown? ----
+  assign block_for_here = true
+
+  if block.settings.show_in_collections.size > 0
+    assign block_for_here = false
+
+    for block_collection in block.settings.show_in_collections
+      if block_collection.handle == collection.handle
+        assign block_for_here = true
+      endif
+    endfor
+  endif
+
+  if block_for_here == false
+    assign block = nil
+  endif
+
+  # ---- layout ----
+  assign row_span = entry.row_span.value | default: block.settings.row_span | default: 2 | plus: 0
+  assign column_span = entry.column_span.value | default: block.settings.column_span | default: 2 | plus: 0
+  assign row_start = entry.row_start.value | default: block.settings.row_start
+
+  if row_start == blank
+    # No layout given anywhere: one slide every 6 rows, starting on row 2
+    assign row_start = slot_index | times: 6 | plus: 2
+  endif
+
+  assign row_start = row_start | plus: 0 | at_least: 1
+  assign row_span = row_span | at_least: 1
+
+  # A slide can not be wider than the grid: a wider one would add a column to the whole grid, and one placed
+  # on the right would start before the first column (an invalid grid line, so it collapses to one column).
+  assign column_span = column_span | at_least: 1 | at_most: columns
+  assign column_start_max = columns | minus: column_span | plus: 1
+
+  assign horizontal_position = entry.horizontal_position.value | default: block.settings.horizontal_position | default: 'left' | downcase
+
+  case horizontal_position
+    when 'right'
+      assign column_start = column_start_max
+    when 'custom'
+      assign column_start = entry.column_start.value | default: block.settings.column_start | default: 1 | plus: 0
+    else
+      assign column_start = 1
+  endcase
+
+  assign column_start = column_start | at_least: 1 | at_most: column_start_max
+
+  # ---- mosaic slide: what it is and where it shows ----
+  assign is_mosaic_slide = false
+  assign slide_visible = true
+  assign mobile_span = 1
+
+  if block.type == 'mosaic_slide'
+    assign is_mosaic_slide = true
+
+    # A start column of its own wins. Without one, the side: left, right (its last columns touch the right edge
+    # whatever its width) or automatic (the first free place of its row, from the left, in list order)
+    assign mosaic_column_start = block.settings.column_start | plus: 0
+    assign mosaic_side = block.settings.horizontal_position | default: 'auto'
+
+    if mosaic_column_start > 0
+      assign column_start = mosaic_column_start | at_most: column_start_max
+    elsif mosaic_side == 'left'
+      assign column_start = 1
+    elsif mosaic_side == 'right'
+      assign column_start = column_start_max
+    else
+      assign column_start = 'auto'
+    endif
+
+    # On phones a wide slide takes the row (when the grid has 2 columns), a one-column slide takes one cell
+    if column_span > 1 and columns_mobile_n > 1
+      assign mobile_span = 2
+    endif
+
+    # Nothing to show (no photo, colour, tag, title or text): only the theme editor draws it
+    if block.settings.image == blank and block.settings.background_color == blank and block.settings.label == blank and block.settings.heading == blank and block.settings.text == blank and request.design_mode != true
+      assign slide_visible = false
+    endif
+  endif
+
+  # Slides are inserted before the product at this position (a row is `columns` products)
+  assign slide_position = row_start | minus: 1 | times: columns
+
+  # A block for other collections is not a slide here (with an entry, the entry is the slide)
+  if block_for_here == false and entry == blank
+    assign slide_visible = false
+  endif
+-%}
+
+{%- if global_product_index == slide_position and slide_visible -%}
+  {%- liquid
+    # ---- content ----
+    assign image = entry.image.value | default: block.settings.image
+    assign image_mobile = entry.image_mobile.value | default: block.settings.image_mobile
+    assign link = entry.link.value | default: block.settings.link
+
+    if entry != blank and show_entry_text != true
+      assign heading = block.settings.heading
+      assign text = block.settings.text
+      assign button_label = block.settings.button_label
+    else
+      assign heading = entry.heading.value | default: block.settings.heading
+      assign text = entry.text.value | default: block.settings.text
+      assign button_label = entry.button_label.value | default: block.settings.button_label
+    endif
+
+    assign accessible_name = heading | strip_html | strip | default: button_label | default: image.alt | default: fallback_label
+
+    # A button that goes nowhere would only look clickable: it is shown only when the slide has a link
+    if link == blank
+      assign button_label = blank
+    endif
+
+    # ---- focal point (from the section block) ----
+    assign focal_desktop = 'center'
+    assign focal_mobile = 'center'
+
+    if is_mosaic_slide != true
+      assign focal_desktop_mode = block.settings.focal_point | default: 'image_presentation'
+      assign focal_mobile_mode = block.settings.mobile_focal_point | default: 'image_presentation'
+      # On phones the desktop photo is what shows when the slide has no mobile one
+      assign focal_mobile_image = image_mobile | default: image
+
+      capture focal_desktop
+        render 'liorme-focal-position', mode: focal_desktop_mode, image: image, x: block.settings.focal_x, y: block.settings.focal_y
+      endcapture
+
+      capture focal_mobile
+        render 'liorme-focal-position', mode: focal_mobile_mode, image: focal_mobile_image, x: block.settings.mobile_focal_x, y: block.settings.mobile_focal_y
+      endcapture
+    endif
+
+    # ---- behaviour (from the section block) ----
+    assign is_sticky = false
+    assign is_full_height = false
+    assign has_mobile_padding = false
+    assign aspect_ratio = 'natural'
+
+    if block.settings.enable_sticky == true
+      assign is_sticky = true
+    endif
+
+    if block.settings.enable_full_height == true
+      assign is_full_height = true
+    endif
+
+    if block.settings.enable_mobile_padding == true
+      assign has_mobile_padding = true
+    endif
+
+    if block.settings.aspect_ratio != blank
+      assign aspect_ratio = block.settings.aspect_ratio
+    endif
+
+    # The image is above the fold when the slide starts near the top of the first page
+    assign image_loading = 'lazy'
+
+    if current_page == 1 and row_start <= 3
+      assign image_loading = 'eager'
+    endif
+
+    assign width_vw = column_span | times: 100.0 | divided_by: columns
+
+    # Sharpness. The photo fills the slide (object-fit: cover), so it is scaled by whichever side needs more: the
+    # file has to be as wide as the slide AND as wide as the slide's HEIGHT x the photo's aspect ratio (a landscape
+    # photo in a tall slide is scaled by its height; 'sizes' by width alone made the browser fetch a file half the
+    # size it needed, and the photo looked soft). The slide's height:
+    #   - mosaic slide: rows x the shape of a cell x the width of one column;
+    #   - editorial slide with a format: its width / the format's ratio; otherwise rows x (a card's photo, the
+    #     column width x the photo ratio, plus ~72px of text under it); on phones 60vh.
+    assign box_ratio = 0
+
+    case aspect_ratio
+      when 'square'
+        assign box_ratio = 1.0
+      when 'portrait'
+        assign box_ratio = 0.6667
+      when 'portrait_alt'
+        assign box_ratio = 0.8
+      when 'landscape'
+        assign box_ratio = 1.5
+      when 'landscape_alt'
+        assign box_ratio = 1.25
+      when 'landscape_wide_alt'
+        assign box_ratio = 1.7778
+    endcase
+
+    # The width of the slide on phones
+    assign size_m_width = '100vw'
+
+    assign mosaic_shape = 0
+
+    if is_mosaic_slide
+      assign cell_m_vw = 100.0 | divided_by: columns_mobile_n
+      assign width_m_vw = mobile_span | times: cell_m_vw
+      assign size_m_width = width_m_vw | append: 'vw'
+
+      if box_ratio > 0
+        # The slide has its own shape (square, 4:5...): height = width x shape, whatever its rows
+        assign mosaic_shape = 1.0 | divided_by: box_ratio
+        assign slide_height_vw = width_vw | times: mosaic_shape
+        assign slide_height_m_vw = width_m_vw | times: mosaic_shape
+      else
+        assign slide_height_vw = row_span | times: tile_ratio_n | times: 100.0 | divided_by: columns
+        assign slide_height_m_vw = row_span | times: tile_ratio_n | times: cell_m_vw
+      endif
+
+      assign slide_height_expr = slide_height_vw | append: 'vw'
+      assign slide_height_expr_m = slide_height_m_vw | append: 'vw'
+    elsif box_ratio > 0
+      assign slide_height_expr = width_vw | divided_by: box_ratio | append: 'vw'
+      assign slide_height_expr_m = '(100vw / ' | append: box_ratio | append: ')'
+    else
+      assign slide_height_vw = row_span | times: photo_ratio_n | times: 100.0 | divided_by: columns
+      assign slide_height_px = row_span | times: 72
+      assign slide_height_expr = '(' | append: slide_height_vw | append: 'vw + ' | append: slide_height_px | append: 'px)'
+      assign slide_height_expr_m = '60vh'
+    endif
+
+    assign image_sizes = '(min-width: 720px) ' | append: width_vw | append: 'vw, ' | append: size_m_width
+
+    if image != blank
+      assign image_aspect = image.aspect_ratio | default: 1
+      assign size_desktop = 'max(' | append: width_vw | append: 'vw, calc(' | append: slide_height_expr | append: ' * ' | append: image_aspect | append: '))'
+      assign size_mobile = 'max(' | append: size_m_width | append: ', calc(' | append: slide_height_expr_m | append: ' * ' | append: image_aspect | append: '))'
+      assign image_sizes = '(min-width: 720px) ' | append: size_desktop | append: ', ' | append: size_mobile
+    endif
+
+    assign image_mobile_sizes = '100vw'
+
+    if image_mobile
+      assign image_mobile_aspect = image_mobile.aspect_ratio | default: 1
+      assign image_mobile_sizes = 'max(' | append: size_m_width | append: ', calc(' | append: slide_height_expr_m | append: ' * ' | append: image_mobile_aspect | append: '))'
+    endif
+
+    capture image_srcset
+      if image != blank
+        render 'liorme-srcset', image: image
+      endif
+    endcapture
+
+    capture image_mobile_srcset
+      if image_mobile
+        render 'liorme-srcset', image: image_mobile
+      endif
+    endcapture
+
+    # The desktop image is hidden on mobile (theme CSS); that is only right when there is a mobile image to
+    # take its place. Without one, the same image is shown at every width (a slide with no image on mobile
+    # was an empty box).
+    assign desktop_image_class = 'collection-editorial-slide__image'
+
+    if image_mobile
+      assign desktop_image_class = desktop_image_class | append: ' collection-editorial-slide__image--desktop'
+    endif
+
+    assign tile_eager = false
+
+    if image_loading == 'eager'
+      assign tile_eager = true
+    endif
+  -%}
+
+  {%- if is_mosaic_slide -%}
+    <div
+      class="collection-editorial-slide collection-editorial-slide--cell{% if block.settings.no_gap_next %} collection-editorial-slide--eat-next{% if mobile_span > 1 %} collection-editorial-slide--eat-next-row{% endif %}{% endif %}"
+      style="
+        --editorial-slide-mobile-span: {{ mobile_span }};
+        --editorial-slide-column-start: {{ column_start }};
+        --editorial-slide-column-span: {{ column_span }};
+        --editorial-slide-row-start: {{ row_start }};
+        --editorial-slide-row-span: {{ row_span }};
+        {%- if mosaic_shape > 0 %}
+        --editorial-slide-shape: {{ mosaic_shape }};
+        {%- endif %}
+      "
+      {{ block.shopify_attributes }}
+    >
+      {%- render 'collection-mosaic-slide',
+        column_span: column_span,
+        row_span: row_span,
+        image: image,
+        image_mobile: image_mobile,
+        focal_point: block.settings.focal_point,
+        focal_x: block.settings.focal_x,
+        focal_y: block.settings.focal_y,
+        mobile_focal_point: block.settings.mobile_focal_point,
+        mobile_focal_x: block.settings.mobile_focal_x,
+        mobile_focal_y: block.settings.mobile_focal_y,
+        background_color: block.settings.background_color,
+        label: block.settings.label,
+        label_color: block.settings.label_color,
+        heading: heading,
+        text: text,
+        button_label: button_label,
+        link: link,
+        text_position: block.settings.text_position,
+        text_color: block.settings.text_color,
+        cols: columns,
+        cols_m: columns_mobile_n,
+        ratio: tile_ratio_n,
+        eager: tile_eager,
+        sizes: image_sizes
+      -%}
+    </div>
+  {%- else -%}
+    <div
+      class="collection-editorial-slide{% unless has_mobile_padding %} collection-editorial-slide--no-padding-mobile{% endunless %}"
+      style="
+        --editorial-slide-mobile-span: {{ mobile_span }};
+        --editorial-slide-column-start: {{ column_start }};
+        --editorial-slide-column-span: {{ column_span }};
+        --editorial-slide-row-start: {{ row_start }};
+        --editorial-slide-row-span: {{ row_span }};
+        --editorial-slide-focal: {{ focal_desktop }};
+        --editorial-slide-focal-mobile: {{ focal_mobile }};
+      "
+      {{ block.shopify_attributes }}
+    >
+      <div
+        class="collection-editorial-slide__sticky"
+        data-sticky="{{ is_sticky }}"
+        data-full-vh="{{ is_full_height }}"
+        data-aspect-ratio="{{ aspect_ratio }}"
+      >
+        {%- if link != blank -%}
+          <a
+            href="{{ link }}"
+            class="collection-editorial-slide__link"
+            aria-label="{{ accessible_name | strip_html | escape }}"
+          ></a>
+        {%- endif -%}
+
+        <div class="collection-editorial-slide__media">
+          {%- if image -%}
+            <img
+              src="{{ image | image_url: width: 1000 }}"
+              srcset="{{ image_srcset }}"
+              sizes="{{ image_sizes }}"
+              alt="{{ image.alt | default: heading | escape }}"
+              loading="{{ image_loading }}"
+              width="{{ image.width }}"
+              height="{{ image.height }}"
+              class="{{ desktop_image_class }}"
+            >
+          {%- else -%}
+            {{ 'lifestyle-1' | placeholder_svg_tag: desktop_image_class | append: ' placeholder' }}
+          {%- endif -%}
+
+          {%- if image_mobile -%}
+            <img
+              src="{{ image_mobile | image_url: width: 800 }}"
+              srcset="{{ image_mobile_srcset }}"
+              sizes="{{ image_mobile_sizes }}"
+              alt="{{ image_mobile.alt | default: heading | escape }}"
+              loading="lazy"
+              width="{{ image_mobile.width }}"
+              height="{{ image_mobile.height }}"
+              class="collection-editorial-slide__image collection-editorial-slide__image--mobile"
+            >
+          {%- endif -%}
+        </div>
+
+        <div class="collection-editorial-slide__overlay"></div>
+
+        <div class="collection-editorial-slide__text-container">
+          {%- if heading != blank -%}
+            <h3 class="collection-editorial-slide__heading">{{ heading | escape }}</h3>
+          {%- endif -%}
+
+          {%- if text != blank -%}
+            <div class="collection-editorial-slide__text">{{ text | escape | newline_to_br }}</div>
+          {%- endif -%}
+
+          {%- if button_label != blank -%}
+            <span class="collection-editorial-slide__button btn btn--secondary">
+              {{- button_label | escape -}}
+            </span>
+          {%- endif -%}
+        </div>
+      </div>
+    </div>
+  {%- endif -%}
+{%- endif -%}

@@ -1,0 +1,501 @@
+{{ 'template-article.css' | asset_url | stylesheet_tag }}
+
+<section
+  class="
+    section
+    section--divider-{{ section.settings.divider_style }}
+    section--divider-full-width-{{ section.settings.enable_full_width_divider }}
+    article
+    {% if settings.enable_section_animations and section.settings.enable_animation -%}
+      animation
+      animation--article
+    {%- endif -%}
+  "
+  style="
+    {%- render 'color-scheme-to-vars', color_scheme: section.settings.color_scheme -%}
+    {%- render 'section-padding-vars' -%}
+    {% if section.settings.content_width == 'custom' %}
+      --custom-content-width: {{ section.settings.custom_content_width }}px;
+    {% endif %}
+  "
+  data-section-id="{{ section.id }}"
+  data-section-type="article"
+>
+  <div class="article__inner section-inner section-inner--width-{{ section.settings.section_width }}">
+    <article itemscope itemtype="http://schema.org/BlogPosting">
+      {%- for block in section.blocks -%}
+        {%- case block.type -%}
+          {%- when 'title' -%}
+            {%- render 'article-block-title',
+              section: section,
+              block: block,
+              forloop: forloop,
+              blog: blog,
+              article: article
+            -%}
+          {%- when 'featured_image' -%}
+            {%- render 'article-block-image', block: block, forloop: forloop, article: article -%}
+          {%- when 'content' -%}
+            {%- render 'article-block-content', block: block, forloop: forloop, article: article -%}
+          {%- when 'social_sharing' -%}
+            {%- render 'article-block-social-share', block: block, article: article -%}
+          {%- when 'pagination' -%}
+            {%- render 'article-block-pagination', block: block, blog: blog -%}
+        {%- endcase -%}
+      {%- endfor -%}
+
+      {%- if blog.comments_enabled? -%}
+        <div class="article__comments">
+          <div class="article__block-inner">
+            {%- liquid
+              if comment.status == 'pending'
+                assign number_of_comments = article.comments_count | plus: 1
+              else
+                assign number_of_comments = article.comments_count
+              endif
+            -%}
+
+            {%- if number_of_comments > 0 -%}
+              <h2 class="comments__heading ff-heading fs-heading-4-base fs-heading-3-base-ns">
+                {{- 'blogs.comments.comments_with_count' | t: count: number_of_comments -}}
+              </h2>
+
+              {%- paginate article.comments by 5 -%}
+                {%- # The '#comments' ID is required because it's used as an anchor link by Shopify. -%}
+                <div id="comments">
+                  <ul class="comments">
+                    {%- liquid
+                      # If a comment was just submitted with no blank field, show it.
+                      if comment.status == 'pending'
+                        render 'comment', comment: comment
+                      endif
+
+                      for comment in article.comments
+                        render 'comment', comment: comment
+                      endfor
+                    -%}
+                  </ul>
+
+                  {%- if paginate.pages > 1 -%}
+                    {%- render 'pagination', paginate: paginate, type: 'general.pagination.comments' -%}
+                  {%- endif -%}
+                </div>
+              {%- endpaginate -%}
+            {%- endif -%}
+
+            {%- form 'new_comment', article -%}
+              <h2 class="comments__leave-heading ff-heading fs-heading-4-base c-heading">
+                {{- 'blogs.comments.title' | t -}}
+              </h2>
+
+              {%- liquid
+                assign form_id = 'CommentForm'
+                assign post_message = 'blogs.comments.success' | t
+
+                if blog.moderated? and comment.status == 'pending' or comment.status == 'unapproved'
+                  assign post_message = 'blogs.comments.success_moderated' | t
+                elsif comment.status == 'spam'
+                  assign post_message = 'blogs.comments.unapproved' | t
+                endif
+              -%}
+
+              {%- render 'form-status', form: form, form_id: form_id, success_message: post_message -%}
+
+              <div class="input-control__container ">
+                <div class="input-control input-control--half">
+                  <label for="{{ form_id }}-author">{{ 'blogs.comments.name' | t }} *</label>
+
+                  <input
+                    type="text"
+                    id="{{ form_id }}-author"
+                    class="input{% if form.errors contains 'author' %} input--error{% endif %}"
+                    name="comment[author]"
+                    placeholder="{{ 'blogs.comments.name' | t }}"
+                    required="required"
+                  >
+                </div>
+
+                <div class="input-control input-control--half">
+                  <label for="{{ form_id }}-email">{{ 'blogs.comments.email' | t }} *</label>
+
+                  <input
+                    type="email"
+                    id="{{ form_id }}-email"
+                    class="input{% if form.errors contains 'email' %} input--error{% endif %}"
+                    name="comment[email]"
+                    placeholder="{{ 'blogs.comments.email' | t }}"
+                    required="required"
+                  >
+                </div>
+
+                <div class="input-control">
+                  <label for="{{ form_id }}-body">{{ 'blogs.comments.message' | t }} *</label>
+
+                  <textarea
+                    id="{{ form_id }}-body"
+                    class="input{% if form.errors contains 'body' %} input--error{% endif %}"
+                    name="comment[body]"
+                    placeholder="{{ 'blogs.comments.message' | t }}"
+                    required="required"
+                    rows="5"
+                  >
+                    {{- form.body -}}
+                  </textarea>
+                </div>
+              </div>
+
+              {%- if blog.moderated? -%}
+                <p class="comments__mod-message ff-body fs-body-75">{{ 'blogs.comments.moderated' | t }}</p>
+              {%- endif -%}
+
+              <button type="submit" class="btn btn--secondary btn--small comments__submit">
+                {{- 'blogs.comments.post' | t -}}
+              </button>
+            {%- endform -%}
+          </div>
+        </div>
+      {%- endif -%}
+    </article>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "t:sections.main_article.name",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "radio",
+      "id": "content_width",
+      "label": "t:shared.settings.content_width.label",
+      "options": [
+        {
+          "value": "full",
+          "label": "t:shared.settings.content_width.options.full"
+        },
+        {
+          "value": "custom",
+          "label": "t:shared.settings.content_width.options.custom"
+        }
+      ],
+      "default": "custom"
+    },
+    {
+      "type": "range",
+      "id": "custom_content_width",
+      "label": "t:shared.settings.custom_content_width.label",
+      "min": 400,
+      "max": 1000,
+      "step": 50,
+      "unit": "px",
+      "default": 700,
+      "info": "t:shared.settings.custom_content_width.info",
+      "visible_if": "{{ section.settings.content_width == 'custom' }}"
+    },
+    {
+      "type": "header",
+      "content": "t:shared.settings.section_style.header.content"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:shared.settings.color_scheme.label"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "t:shared.settings.section_style.section_width.label",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "t:shared.settings.section_style.section_width.options.page_width"
+        },
+        {
+          "value": "full-width-padded",
+          "label": "t:shared.settings.section_style.section_width.options.full_width"
+        }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "range",
+      "id": "section_padding_top",
+      "label": "t:shared.settings.section_style.section_padding.top.label",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "section_padding_bottom",
+      "label": "t:shared.settings.section_style.section_padding.bottom.label",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "select",
+      "id": "divider_style",
+      "label": "t:shared.settings.section_style.divider_style.label",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:shared.settings.section_style.divider_style.options.none"
+        },
+        {
+          "value": "solid",
+          "label": "t:shared.settings.section_style.divider_style.options.solid"
+        }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_full_width_divider",
+      "label": "t:shared.settings.section_style.enable_full_width_divider.label",
+      "visible_if": "{{ section.settings.divider_style == 'solid' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_animation",
+      "label": "t:shared.settings.section_style.enable_animation.label",
+      "default": true,
+      "info": "t:shared.settings.section_style.enable_animation.info"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "title",
+      "name": "t:sections.main_article.blocks.title.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "select",
+          "id": "title_font_class",
+          "label": "t:sections.main_article.blocks.title.settings.title_font_class.label",
+          "options": [
+            {
+              "value": "fs-heading-6-base",
+              "label": "t:shared.settings.heading_font_class.options.xx_small"
+            },
+            {
+              "value": "fs-heading-5-base",
+              "label": "t:shared.settings.heading_font_class.options.x_small"
+            },
+            {
+              "value": "fs-heading-4-base",
+              "label": "t:shared.settings.heading_font_class.options.small"
+            },
+            {
+              "value": "fs-heading-3-base",
+              "label": "t:shared.settings.heading_font_class.options.medium"
+            },
+            {
+              "value": "fs-heading-2-base",
+              "label": "t:shared.settings.heading_font_class.options.large"
+            },
+            {
+              "value": "fs-heading-1-base",
+              "label": "t:shared.settings.heading_font_class.options.x_large"
+            },
+            {
+              "value": "fs-heading-display-3",
+              "label": "t:shared.settings.heading_font_class.options.display_regular"
+            },
+            {
+              "value": "fs-heading-display-2",
+              "label": "t:shared.settings.heading_font_class.options.display_large"
+            },
+            {
+              "value": "fs-heading-display-1",
+              "label": "t:shared.settings.heading_font_class.options.display_x_large"
+            }
+          ],
+          "default": "fs-heading-display-3"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_tags",
+          "label": "t:sections.main_article.blocks.title.settings.show_tags.label",
+          "default": true
+        },
+        {
+          "type": "checkbox",
+          "id": "show_author",
+          "label": "t:sections.main_article.blocks.title.settings.show_author.label",
+          "default": true
+        },
+        {
+          "type": "checkbox",
+          "id": "show_date",
+          "label": "t:sections.main_article.blocks.title.settings.show_date.label",
+          "default": true
+        }
+      ]
+    },
+    {
+      "type": "featured_image",
+      "name": "t:sections.main_article.blocks.featured_image.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "select",
+          "id": "block_width",
+          "label": "t:shared.settings.section_style.section_width.label",
+          "options": [
+            {
+              "value": "page-width",
+              "label": "t:shared.settings.section_style.section_width.options.page_width"
+            },
+            {
+              "value": "full-width",
+              "label": "t:shared.settings.section_style.section_width.options.full_width"
+            },
+            {
+              "value": "full-width-padded",
+              "label": "t:shared.settings.section_style.section_width.options.full_width_padded"
+            }
+          ],
+          "default": "page-width"
+        },
+        {
+          "type": "checkbox",
+          "id": "enable_full_width_on_mobile",
+          "label": "t:shared.settings.section_style.enable_full_width_on_mobile.label",
+          "visible_if": "{{ block.settings.block_width != 'full-width' and block.settings.block_width != 'full-width-background-only' }}"
+        },
+        {
+          "type": "radio",
+          "id": "image_aspect",
+          "label": "t:shared.settings.image_height.image_aspect.label",
+          "options": [
+            {
+              "value": "original",
+              "label": "t:shared.settings.image_height.image_aspect.options.original"
+            },
+            {
+              "value": "custom",
+              "label": "t:shared.settings.image_height.image_aspect.options.custom"
+            }
+          ],
+          "default": "custom"
+        },
+        {
+          "type": "range",
+          "id": "desktop_height",
+          "label": "t:shared.settings.image_height.desktop_height.label",
+          "min": 25,
+          "max": 100,
+          "step": 5,
+          "unit": "%",
+          "default": 100,
+          "visible_if": "{{ section.settings.image_aspect == 'custom' }}"
+        },
+        {
+          "type": "range",
+          "id": "mobile_height",
+          "label": "t:shared.settings.image_height.mobile_height.label",
+          "min": 25,
+          "max": 100,
+          "step": 5,
+          "unit": "%",
+          "default": 100,
+          "visible_if": "{{ section.settings.image_aspect == 'custom' }}"
+        },
+        {
+          "type": "paragraph",
+          "content": "t:shared.settings.image_height.paragraph.content_original",
+          "visible_if": "{{ section.settings.image_aspect == 'original' }}"
+        },
+        {
+          "type": "paragraph",
+          "content": "t:shared.settings.image_height.paragraph.content_custom",
+          "visible_if": "{{ section.settings.image_aspect == 'custom' }}"
+        },
+        {
+          "type": "select",
+          "id": "focal_point",
+          "label": "t:shared.settings.focal_point.image.default.label",
+          "options": [
+            {
+              "value": "image_presentation",
+              "label": "t:shared.options.focal_point.image_presentation"
+            },
+            {
+              "value": "center",
+              "label": "t:shared.options.focal_point.center"
+            },
+            {
+              "value": "top",
+              "label": "t:shared.options.focal_point.top"
+            },
+            {
+              "value": "bottom",
+              "label": "t:shared.options.focal_point.bottom"
+            },
+            {
+              "value": "left",
+              "label": "t:shared.options.focal_point.left"
+            },
+            {
+              "value": "right",
+              "label": "t:shared.options.focal_point.right"
+            }
+          ],
+          "default": "image_presentation"
+        }
+      ]
+    },
+    {
+      "type": "content",
+      "name": "t:sections.main_article.blocks.content.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "checkbox",
+          "id": "enable_corner_rounding",
+          "label": "t:shared.settings.enable_corner_rounding.label",
+          "default": true,
+          "info": "t:shared.settings.enable_corner_rounding.info"
+        }
+      ]
+    },
+    {
+      "type": "social_sharing",
+      "name": "t:sections.main_article.blocks.social_sharing.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "text",
+          "id": "share_text",
+          "label": "t:sections.main_article.blocks.social_sharing.settings.share_text.label",
+          "default": "t:sections.main_article.blocks.social_sharing.settings.share_text.default"
+        },
+        {
+          "type": "paragraph",
+          "content": "t:sections.main_article.blocks.social_sharing.settings.paragraph_1.content"
+        },
+        {
+          "type": "paragraph",
+          "content": "t:sections.main_article.blocks.social_sharing.settings.paragraph_2.content"
+        }
+      ]
+    },
+    {
+      "type": "pagination",
+      "name": "t:sections.main_article.blocks.pagination.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "t:sections.main_article.blocks.pagination.settings.paragraph.content"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

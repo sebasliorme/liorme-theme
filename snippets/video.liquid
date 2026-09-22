@@ -1,0 +1,34 @@
+{%- doc -%}
+  Renders an inline video.
+
+  @param {object} video - The video.
+  @param {string} [aspect_ratio] - The video's aspect ratio.
+  @param {boolean} controls - Whether the video's controls should display.
+  @param {boolean} loop - Whether the video should loop.
+  @param {string} wrapper_class - A class to be added to the wrapper.
+  @param {boolean} animate - Whether the video should animte.
+{%- enddoc -%}
+
+{%- liquid
+  assign controls = controls | default: false, allow_false: true
+  assign loop = loop | default: false, allow_false: true
+  assign animate = animate | default: false, allow_false: true
+-%}
+
+<div
+  class="
+    video-wrapper
+    {% if wrapper_class != blank -%}{{ wrapper_class }}{%- endif %}
+    {% if aspect_ratio != blank and aspect_ratio != 'natural' -%}aspect-ratio--{{ aspect_ratio }}{%- endif %}
+    {% if animate -%}video-wrapper--animate{%- endif -%}
+  "
+>
+  {% liquid
+    assign video_html = video | video_tag: image_size: '1800x', class: 'video', autoplay: true, loop: loop, muted: true, controls: controls
+    assign video_poster_alt = '<img alt="[[vt]]"' | replace: '[[vt]]', video.title
+    assign video_html = video_html | replace: '<img ', video_poster_alt
+
+    echo video_html
+    render 'video-pause'
+  %}
+</div>

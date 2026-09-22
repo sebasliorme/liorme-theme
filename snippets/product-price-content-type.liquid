@@ -1,0 +1,30 @@
+{%- doc -%}
+  Renders the price content type (ie. 'price', 'hide', or 'custom') for a given variant.
+
+  @param {object} variant - The variant.
+{%- enddoc -%}
+
+{%- liquid
+  assign price_content_type = 'price'
+  assign custom_price_content = blank
+
+  if variant.available
+    if variant.price == 0 and variant.compare_at_price == null
+      if settings.zero_dollar_product_price_display == 'hide'
+        assign price_content_type = 'hide'
+      elsif settings.zero_dollar_product_price_display == 'replace'
+        assign price_content_type = 'custom'
+        assign custom_price_content = 'products.inventory.zero_price_custom_label' | t
+      endif
+    endif
+  else
+    if settings.sold_out_product_price_display == 'hide'
+      assign price_content_type = 'hide'
+    elsif settings.sold_out_product_price_display == 'replace'
+      assign price_content_type = 'custom'
+      assign custom_price_content = 'products.inventory.sold_out_price_custom_label' | t
+    endif
+  endif
+
+  echo '[[pct]] | [[cpc]]' | replace: '[[pct]]', price_content_type | replace: '[[cpc]]', custom_price_content
+-%}

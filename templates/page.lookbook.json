@@ -1,0 +1,814 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "main-page",
+      "disabled": true,
+      "settings": {
+        "header_alignment": "center",
+        "heading_font_class": "fs-heading-2-base",
+        "content_width": "custom",
+        "custom_content_width": 700,
+        "enable_corner_rounding": true,
+        "section_width": "page-width",
+        "section_padding_top": 40,
+        "section_padding_bottom": 40,
+        "divider_style": "none",
+        "enable_full_width_divider": false,
+        "enable_animation": true
+      }
+    },
+    "165895876808dbec13": {
+      "type": "image-with-text",
+      "blocks": {
+        "b8f6a59a-2bb3-4c72-8ba3-40b1f49a9f02": {
+          "type": "image",
+          "settings": {
+            "image_size": 200,
+            "image_size_mobile": 200,
+            "enable_corner_rounding": true
+          }
+        },
+        "b98d8f55-67e1-45e7-9d3d-c5758d4efa8f": {
+          "type": "text",
+          "settings": {
+            "text": "<p>'24 Collection</p>",
+            "text_font_class": "fs-body-200"
+          }
+        },
+        "1658958768cacc2fc8-0": {
+          "type": "heading",
+          "settings": {
+            "title": "Lookbook",
+            "heading_font_class": "fs-heading-display-2",
+            "heading_tag": "h2"
+          }
+        },
+        "468a72e2-cb3c-4deb-9def-156f9d8106bb": {
+          "type": "text",
+          "settings": {
+            "text": "<p>This lookbook explores the pieces you’ll find in our collection right now and what’s to come as we move through the season. </p>",
+            "text_font_class": "fs-body-100"
+          }
+        },
+        "1658958768cacc2fc8-2": {
+          "type": "button",
+          "settings": {
+            "link_text": "Shop Collection",
+            "button_style": "btn--secondary"
+          }
+        }
+      },
+      "block_order": [
+        "b8f6a59a-2bb3-4c72-8ba3-40b1f49a9f02",
+        "b98d8f55-67e1-45e7-9d3d-c5758d4efa8f",
+        "1658958768cacc2fc8-0",
+        "468a72e2-cb3c-4deb-9def-156f9d8106bb",
+        "1658958768cacc2fc8-2"
+      ],
+      "settings": {
+        "image_position": "right",
+        "aspect_ratio": "portrait",
+        "focal_point": "center",
+        "image_caption": "",
+        "text_alignment": "center",
+        "mobile_text_alignment": "center",
+        "show_small_image": true,
+        "image_small_aspect": "square",
+        "image_small_focal_point": "top",
+        "section_width": "full-width-padded",
+        "section_padding_top": 40,
+        "section_padding_bottom": 40,
+        "divider_style": "none",
+        "enable_full_width_divider": false,
+        "enable_animation": true
+      }
+    },
+    "16589579997b7958e7": {
+      "type": "rich-text",
+      "blocks": {
+        "8579abdd-3d0c-4f77-9cc6-8387cf4d3dd5": {
+          "type": "spacer",
+          "settings": {
+            "space": 48
+          }
+        },
+        "165895799988ce9f29-0": {
+          "type": "heading",
+          "settings": {
+            "title": "Undeniably Fresh silhouettes",
+            "heading_font_class": "fs-heading-2-base",
+            "heading_tag": "h2"
+          }
+        },
+        "165895799988ce9f29-1": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Here are some of the best pieces for a new take on dressing. Styled correctly, these dresses can be worn in all seasons.</p>",
+            "text_font_class": "fs-body-100"
+          }
+        }
+      },
+      "block_order": [
+        "8579abdd-3d0c-4f77-9cc6-8387cf4d3dd5",
+        "165895799988ce9f29-0",
+        "165895799988ce9f29-1"
+      ],
+      "settings": {
+        "alignment": "center_center",
+        "content_width": "custom",
+        "custom_content_width": 700,
+        "section_width": "page-width",
+        "section_padding_top": 40,
+        "section_padding_bottom": 40,
+        "divider_style": "none",
+        "enable_full_width_divider": false,
+        "enable_animation": true
+      }
+    },
+    "gallery_carousel_iBtLgj": {
+      "type": "gallery-carousel",
+      "blocks": {
+        "image_wgedjc": {
+          "type": "image",
+          "settings": {
+            "focal_point": "image_presentation",
+            "title": "Selena wears the Oia Dress",
+            "text": ""
+          }
+        },
+        "image_fhjtQN": {
+          "type": "image",
+          "settings": {
+            "focal_point": "image_presentation",
+            "title": "Julia wears the Bea Blazer",
+            "text": ""
+          }
+        },
+        "image_9cPPkJ": {
+          "type": "image",
+          "settings": {
+            "focal_point": "image_presentation",
+            "title": "Julia wears the Bromley Bralette",
+            "text": ""
+          }
+        },
+        "image_BWeaNR": {
+          "type": "image",
+          "settings": {
+            "focal_point": "image_presentation",
+            "title": "Sarah wears the Evelyn Trench",
+            "text": ""
+          }
+        }
+      },
+      "block_order": [
+        "image_wgedjc",
+        "image_fhjtQN",
+        "image_9cPPkJ",
+        "image_BWeaNR"
+      ],
+      "settings": {
+        "header_alignment": "left",
+        "heading": "",
+        "heading_font_class": "fs-heading-3-base",
+        "heading_tag": "h2",
+        "text": "",
+        "text_font_class": "fs-body-100",
+        "link": "",
+        "link_text": "",
+        "button_style": "btn--callout",
+        "columns": "2",
+        "mobile_columns": "1",
+        "loop_carousel": true,
+        "aspect_ratio": "portrait",
+        "image_caption_size": "fs-body-100",
+        "image_caption_style": "beneath",
+        "overlay_text_background_style": "gradient",
+        "overlay_color_scheme": "",
+        "section_width": "page-width",
+        "section_padding_top": 40,
+        "section_padding_bottom": 40,
+        "divider_style": "none",
+        "enable_full_width_divider": false,
+        "enable_animation": true
+      }
+    },
+    "16589610875c43c33a": {
+      "type": "complete-the-look",
+      "blocks": {
+        "16589610877f6eee16-0": {
+          "type": "product",
+          "settings": {}
+        },
+        "16589610877f6eee16-1": {
+          "type": "product",
+          "settings": {}
+        },
+        "16589610877f6eee16-2": {
+          "type": "product",
+          "settings": {}
+        },
+        "16589610877f6eee16-3": {
+          "type": "product",
+          "settings": {}
+        }
+      },
+      "block_order": [
+        "16589610877f6eee16-0",
+        "16589610877f6eee16-1",
+        "16589610877f6eee16-2",
+        "16589610877f6eee16-3"
+      ],
+      "settings": {
+        "header_alignment": "left",
+        "heading": "",
+        "heading_font_class": "fs-heading-3-base",
+        "heading_tag": "h2",
+        "text": "<p>Use this section to highlight different products within an image</p>",
+        "text_font_class": "fs-body-100",
+        "link": "",
+        "link_text": "",
+        "button_style": "btn--callout",
+        "video_loop": true,
+        "video_controls": false,
+        "image_position": "right",
+        "aspect_ratio": "natural",
+        "product_image_size": "medium",
+        "section_width": "page-width",
+        "section_padding_top": 64,
+        "section_padding_bottom": 72,
+        "divider_style": "none",
+        "enable_full_width_divider": false,
+        "enable_animation": true
+      }
+    },
+    "16589828837abba57a": {
+      "type": "multi-column",
+      "blocks": {
+        "8fb1332a-95de-4b5b-a9b1-7b53eee7756f": {
+          "type": "image_column",
+          "settings": {
+            "image_width": 100,
+            "aspect_ratio": "natural",
+            "enable_corner_rounding": true,
+            "enable_image_crop_circle": false,
+            "focal_point": "center",
+            "image_position": "above_text",
+            "image_link": "",
+            "small_caption": "",
+            "accent": "",
+            "heading": "Julia wearing the Glimmer Dress",
+            "heading_font_class": "fs-heading-4-base",
+            "heading_tag": "h3",
+            "text": "",
+            "text_font_class": "fs-body-200",
+            "text_max_width": 100,
+            "link_text": "Shop this dress",
+            "button_style": "btn--callout"
+          }
+        }
+      },
+      "block_order": [
+        "8fb1332a-95de-4b5b-a9b1-7b53eee7756f"
+      ],
+      "settings": {
+        "header_alignment": "left",
+        "title": "",
+        "heading_font_class": "fs-heading-3-base",
+        "heading_tag": "h2",
+        "text": "",
+        "text_font_class": "fs-body-100",
+        "item_color_scheme": "",
+        "content_vertical_alignment": "top",
+        "content_background_padding": "large",
+        "columns": "1",
+        "column_spacing": 28,
+        "row_spacing": 28,
+        "column_alignment": "center",
+        "enable_slider_mobile": false,
+        "columns_mobile": "1",
+        "column_spacing_mobile": 20,
+        "row_spacing_mobile": 20,
+        "column_alignment_mobile": "center",
+        "section_width": "page-width",
+        "section_padding_top": 40,
+        "section_padding_bottom": 40,
+        "divider_style": "none",
+        "enable_full_width_divider": false,
+        "enable_animation": true
+      }
+    },
+    "gallery_carousel_W6etDp": {
+      "type": "gallery-carousel",
+      "blocks": {
+        "image_eq7WLL": {
+          "type": "image",
+          "settings": {
+            "focal_point": "image_presentation",
+            "title": "Sarah wears the Sherling Jacket in Brown.",
+            "text": ""
+          }
+        },
+        "image_RWdN7r": {
+          "type": "image",
+          "settings": {
+            "focal_point": "image_presentation",
+            "title": "Julia wears the Evie Blazer in Chestnut.",
+            "text": ""
+          }
+        },
+        "image_gNUtYW": {
+          "type": "image",
+          "settings": {
+            "focal_point": "image_presentation",
+            "title": "Julia wears the Dakota Skirt in Noir Sequin.",
+            "text": ""
+          }
+        }
+      },
+      "block_order": [
+        "image_eq7WLL",
+        "image_RWdN7r",
+        "image_gNUtYW"
+      ],
+      "settings": {
+        "header_alignment": "left",
+        "heading": "",
+        "heading_font_class": "fs-heading-3-base",
+        "heading_tag": "h2",
+        "text": "",
+        "text_font_class": "fs-body-100",
+        "link": "",
+        "link_text": "",
+        "button_style": "btn--callout",
+        "columns": "2",
+        "mobile_columns": "1",
+        "loop_carousel": true,
+        "aspect_ratio": "portrait",
+        "image_caption_size": "fs-body-100",
+        "image_caption_style": "beneath",
+        "overlay_text_background_style": "gradient",
+        "overlay_color_scheme": "",
+        "section_width": "page-width",
+        "section_padding_top": 76,
+        "section_padding_bottom": 100,
+        "divider_style": "none",
+        "enable_full_width_divider": false,
+        "enable_animation": true
+      }
+    },
+    "165897102881bd7033": {
+      "type": "rich-text",
+      "blocks": {
+        "a80af6a7-3d94-422e-901a-a3e06acbac1d": {
+          "type": "spacer",
+          "settings": {
+            "space": 48
+          }
+        },
+        "16589710289fbb90fc-0": {
+          "type": "heading",
+          "settings": {
+            "title": "Elegant Evening Wear",
+            "heading_font_class": "fs-heading-1-base",
+            "heading_tag": "h2"
+          }
+        },
+        "16589710289fbb90fc-1": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Here are some of the best Lola pieces for a new take on evening wear. Styled correctly, these can be worn in all seasons.</p>",
+            "text_font_class": "fs-body-100"
+          }
+        }
+      },
+      "block_order": [
+        "a80af6a7-3d94-422e-901a-a3e06acbac1d",
+        "16589710289fbb90fc-0",
+        "16589710289fbb90fc-1"
+      ],
+      "settings": {
+        "alignment": "center_center",
+        "content_width": "custom",
+        "custom_content_width": 700,
+        "color_scheme": "scheme_3",
+        "section_width": "page-width",
+        "section_padding_top": 40,
+        "section_padding_bottom": 40,
+        "divider_style": "solid",
+        "enable_full_width_divider": true,
+        "enable_animation": true
+      }
+    },
+    "gallery_carousel_dJipjW": {
+      "type": "gallery-carousel",
+      "blocks": {
+        "image_cBMD8W": {
+          "type": "image",
+          "settings": {
+            "focal_point": "image_presentation",
+            "title": "Lidia wears the Chloe Dress in Coffee.",
+            "text": ""
+          }
+        },
+        "image_MgxGLC": {
+          "type": "image",
+          "settings": {
+            "focal_point": "image_presentation",
+            "title": "Julia wears the Isabella Dress in Water Floral.",
+            "text": ""
+          }
+        },
+        "image_bVWNTg": {
+          "type": "image",
+          "settings": {
+            "focal_point": "image_presentation",
+            "title": "Lindsey wears the Stella Jumpsuit in Noir.",
+            "text": ""
+          }
+        },
+        "image_QDUJAY": {
+          "type": "image",
+          "settings": {
+            "focal_point": "image_presentation",
+            "title": "Lidia wears the Magnolia Top in Noir.",
+            "text": ""
+          }
+        }
+      },
+      "block_order": [
+        "image_cBMD8W",
+        "image_MgxGLC",
+        "image_bVWNTg",
+        "image_QDUJAY"
+      ],
+      "settings": {
+        "header_alignment": "left",
+        "heading": "",
+        "heading_font_class": "fs-heading-3-base",
+        "heading_tag": "h2",
+        "text": "",
+        "text_font_class": "fs-body-100",
+        "link": "",
+        "link_text": "",
+        "button_style": "btn--callout",
+        "columns": "2",
+        "mobile_columns": "1",
+        "loop_carousel": true,
+        "aspect_ratio": "portrait",
+        "image_caption_size": "fs-body-100",
+        "image_caption_style": "beneath",
+        "overlay_text_background_style": "gradient",
+        "overlay_color_scheme": "",
+        "color_scheme": "scheme_3",
+        "section_width": "page-width",
+        "section_padding_top": 40,
+        "section_padding_bottom": 100,
+        "divider_style": "none",
+        "enable_full_width_divider": false,
+        "enable_animation": true
+      }
+    },
+    "1659022564493234bc": {
+      "type": "complete-the-look",
+      "blocks": {
+        "16590225646624bbf3-1": {
+          "type": "product",
+          "settings": {}
+        },
+        "16590225646624bbf3-0": {
+          "type": "product",
+          "settings": {}
+        },
+        "16590225646624bbf3-2": {
+          "type": "product",
+          "settings": {}
+        },
+        "16590225646624bbf3-3": {
+          "type": "product",
+          "settings": {}
+        }
+      },
+      "block_order": [
+        "16590225646624bbf3-1",
+        "16590225646624bbf3-0",
+        "16590225646624bbf3-2",
+        "16590225646624bbf3-3"
+      ],
+      "settings": {
+        "header_alignment": "left",
+        "heading": "",
+        "heading_font_class": "fs-heading-3-base",
+        "heading_tag": "h2",
+        "text": "<p>Use this section to highlight different products within an image</p>",
+        "text_font_class": "fs-body-100",
+        "link": "",
+        "link_text": "",
+        "button_style": "btn--callout",
+        "video_loop": true,
+        "video_controls": false,
+        "image_position": "left",
+        "aspect_ratio": "natural",
+        "product_image_size": "medium",
+        "color_scheme": "scheme_3",
+        "section_width": "page-width",
+        "section_padding_top": 76,
+        "section_padding_bottom": 88,
+        "divider_style": "none",
+        "enable_full_width_divider": false,
+        "enable_animation": true
+      }
+    },
+    "1658970520ed01472f": {
+      "type": "rich-text",
+      "blocks": {
+        "7d18e954-e673-4eb8-af9e-6e2ba154fe28": {
+          "type": "spacer",
+          "settings": {
+            "space": 48
+          }
+        },
+        "165897052094fe097e-0": {
+          "type": "heading",
+          "settings": {
+            "title": "Lace With Anything",
+            "heading_font_class": "fs-heading-2-base",
+            "heading_tag": "h2"
+          }
+        },
+        "165897052094fe097e-1": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Our lace looks brings elegance and beauty to any look. Easily pair it with jeans, or a beautiful skirt. Styled correctly, these can be worn in all seasons.</p>",
+            "text_font_class": "fs-body-100"
+          }
+        },
+        "440e43fb-2e4a-462e-9bb9-a64001c8ff34": {
+          "type": "spacer",
+          "settings": {
+            "space": 12
+          }
+        }
+      },
+      "block_order": [
+        "7d18e954-e673-4eb8-af9e-6e2ba154fe28",
+        "165897052094fe097e-0",
+        "165897052094fe097e-1",
+        "440e43fb-2e4a-462e-9bb9-a64001c8ff34"
+      ],
+      "settings": {
+        "alignment": "center_center",
+        "content_width": "custom",
+        "custom_content_width": 700,
+        "section_width": "page-width",
+        "section_padding_top": 40,
+        "section_padding_bottom": 40,
+        "divider_style": "solid",
+        "enable_full_width_divider": true,
+        "enable_animation": true
+      }
+    },
+    "165896144026e752a7": {
+      "type": "shoppable-image",
+      "blocks": {
+        "1658961440e79d65ce-0": {
+          "type": "hotspot",
+          "settings": {
+            "horizontal_position": 34,
+            "vertical_position": 68
+          }
+        },
+        "1658961440e79d65ce-1": {
+          "type": "hotspot",
+          "settings": {
+            "horizontal_position": 27,
+            "vertical_position": 41
+          }
+        },
+        "1658961440e79d65ce-2": {
+          "type": "hotspot",
+          "settings": {
+            "horizontal_position": 77,
+            "vertical_position": 62
+          }
+        }
+      },
+      "block_order": [
+        "1658961440e79d65ce-0",
+        "1658961440e79d65ce-1",
+        "1658961440e79d65ce-2"
+      ],
+      "settings": {
+        "header_alignment": "center",
+        "heading": "",
+        "heading_font_class": "fs-heading-3-base",
+        "heading_tag": "h2",
+        "text": "<p>Use this section to highlight different products within a large image</p>",
+        "text_font_class": "fs-body-100",
+        "link": "",
+        "link_text": "",
+        "button_style": "btn--secondary",
+        "aspect_ratio": "natural",
+        "hotspot_color_scheme": "",
+        "section_width": "page-width",
+        "enable_full_width_on_mobile": false,
+        "enable_padding_on_mobile": true,
+        "section_padding_top": 40,
+        "section_padding_bottom": 40,
+        "divider_style": "none",
+        "enable_full_width_divider": false,
+        "enable_animation": true
+      }
+    },
+    "1658973916a5b028e0": {
+      "type": "complete-the-look",
+      "blocks": {
+        "1658973916bef6674d-3": {
+          "type": "product",
+          "settings": {}
+        },
+        "1658973916bef6674d-1": {
+          "type": "product",
+          "settings": {}
+        },
+        "1658973916bef6674d-2": {
+          "type": "product",
+          "settings": {}
+        },
+        "1658973916bef6674d-0": {
+          "type": "product",
+          "settings": {}
+        }
+      },
+      "block_order": [
+        "1658973916bef6674d-3",
+        "1658973916bef6674d-1",
+        "1658973916bef6674d-2",
+        "1658973916bef6674d-0"
+      ],
+      "settings": {
+        "header_alignment": "left",
+        "heading": "",
+        "heading_font_class": "fs-heading-3-base",
+        "heading_tag": "h2",
+        "text": "<p>Use this section to highlight different products within an image</p>",
+        "text_font_class": "fs-body-100",
+        "link": "",
+        "link_text": "",
+        "button_style": "btn--callout",
+        "video_loop": true,
+        "video_controls": false,
+        "image_position": "left",
+        "aspect_ratio": "natural",
+        "product_image_size": "medium",
+        "section_width": "page-width",
+        "section_padding_top": 40,
+        "section_padding_bottom": 76,
+        "divider_style": "none",
+        "enable_full_width_divider": false,
+        "enable_animation": true
+      }
+    },
+    "16590292859ecb50a9": {
+      "type": "image-with-text",
+      "blocks": {
+        "165902928558c41fc2-0": {
+          "type": "heading",
+          "settings": {
+            "title": "Meet the designer",
+            "heading_font_class": "fs-heading-1-base",
+            "heading_tag": "h2"
+          }
+        },
+        "5ee5f4cf-657f-4e1d-aa76-cb7d8ef6474d": {
+          "type": "text",
+          "settings": {
+            "text": "<p>This self-taught designer brings a balance of sophisticated femininity, with dark accords & a nod to her personal style.</p>",
+            "text_font_class": "fs-body-100"
+          }
+        },
+        "165902928558c41fc2-2": {
+          "type": "button",
+          "settings": {
+            "link_text": "Read more",
+            "button_style": "btn--primary"
+          }
+        }
+      },
+      "block_order": [
+        "165902928558c41fc2-0",
+        "5ee5f4cf-657f-4e1d-aa76-cb7d8ef6474d",
+        "165902928558c41fc2-2"
+      ],
+      "settings": {
+        "image_position": "right",
+        "aspect_ratio": "natural",
+        "focal_point": "center",
+        "image_caption": "",
+        "text_alignment": "center",
+        "mobile_text_alignment": "center",
+        "show_small_image": false,
+        "image_small_aspect": "square",
+        "image_small_focal_point": "center",
+        "section_width": "page-width",
+        "section_padding_top": 76,
+        "section_padding_bottom": 56,
+        "divider_style": "solid",
+        "enable_full_width_divider": true,
+        "enable_animation": true
+      }
+    },
+    "1659047460d9825038": {
+      "type": "rich-text",
+      "blocks": {
+        "8db4fd21-4e49-4be6-873e-a545c7a24b82": {
+          "type": "spacer",
+          "settings": {
+            "space": 12
+          }
+        },
+        "b28f5e25-d222-4cfa-bc99-9697a5695f94": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Thanks for watching.</p>",
+            "text_font_class": "fs-body-100"
+          }
+        },
+        "74b91a9c-df51-494f-9340-5c9c270878fa": {
+          "type": "image",
+          "settings": {
+            "image_size": 260,
+            "image_size_mobile": 200,
+            "enable_corner_rounding": true
+          }
+        },
+        "16590474605363ed35-0": {
+          "type": "heading",
+          "settings": {
+            "title": "",
+            "heading_font_class": "fs-heading-2-base",
+            "heading_tag": "h2"
+          }
+        },
+        "f536c3b8-5b2e-41d1-8bbd-c6f7ca52b799": {
+          "type": "button",
+          "settings": {
+            "link_text": "Shop Collection",
+            "button_style": "btn--primary"
+          }
+        },
+        "ec84d515-e44d-439b-8143-8629a6f678b0": {
+          "type": "spacer",
+          "settings": {
+            "space": 12
+          }
+        }
+      },
+      "block_order": [
+        "8db4fd21-4e49-4be6-873e-a545c7a24b82",
+        "b28f5e25-d222-4cfa-bc99-9697a5695f94",
+        "74b91a9c-df51-494f-9340-5c9c270878fa",
+        "16590474605363ed35-0",
+        "f536c3b8-5b2e-41d1-8bbd-c6f7ca52b799",
+        "ec84d515-e44d-439b-8143-8629a6f678b0"
+      ],
+      "settings": {
+        "alignment": "center_center",
+        "content_width": "custom",
+        "custom_content_width": 700,
+        "section_width": "page-width",
+        "section_padding_top": 40,
+        "section_padding_bottom": 40,
+        "divider_style": "none",
+        "enable_full_width_divider": false,
+        "enable_animation": true
+      }
+    }
+  },
+  "order": [
+    "main",
+    "165895876808dbec13",
+    "16589579997b7958e7",
+    "gallery_carousel_iBtLgj",
+    "16589610875c43c33a",
+    "16589828837abba57a",
+    "gallery_carousel_W6etDp",
+    "165897102881bd7033",
+    "gallery_carousel_dJipjW",
+    "1659022564493234bc",
+    "1658970520ed01472f",
+    "165896144026e752a7",
+    "1658973916a5b028e0",
+    "16590292859ecb50a9",
+    "1659047460d9825038"
+  ]
+}

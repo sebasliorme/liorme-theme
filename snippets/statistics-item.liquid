@@ -1,0 +1,136 @@
+{%- doc -%}
+  Renders a statistics item.
+
+  @param {object} section - The section object.
+  @param {object} block - The block object.
+{%- enddoc -%}
+
+<div class="statistics__grid-item carousel__slide swiper-slide" {{ block.shopify_attributes }}>
+  <div class="statistics__grid-item-inner">
+    {%- liquid
+      if block.settings.icon_custom_icon_image != blank
+        assign enable_corner_rounding = block.settings.enable_corner_rounding
+      else
+        assign enable_corner_rounding = false
+      endif
+    -%}
+
+    <div
+      class="statistics__grid-item-icon-wrapper"
+      data-enable-icon-corner-rounding="{{ enable_corner_rounding }}"
+    >
+      {%- if block.settings.icon != 'none' and block.settings.icon_custom_icon_image == blank -%}
+        {%- render 'icon-editorial', class: 'statistics__grid-item-icon', icon: block.settings.icon -%}
+      {%- endif -%}
+
+      {%- if block.settings.icon_custom_icon_image != blank -%}
+        {%- render 'image',
+          wrapper_class: 'statistics__grid-item-icon',
+          image: block.settings.icon_custom_icon_image,
+          sizes_px: block.settings.icon_width,
+          aspect_ratio: 'natural'
+        -%}
+      {%- endif -%}
+    </div>
+
+    {%- liquid
+      case block.settings.statistic_type
+        when 'number'
+          if block.settings.statistic_number != blank
+            # Prevent letters from being included and creating a NaN state.
+            # Prevent scientific notation by limiting to 19 digits.
+            assign statistic_number_parsed = block.settings.statistic_number | plus: 0 | at_most: 9999999999999999999
+
+            capture number_attributes
+              echo 'js-statistic-number'
+              echo ' '
+              echo 'data-statistic-number-value="[[value]]"' | replace: '[[value]]', statistic_number_parsed
+            endcapture
+
+            # Capturing within a Liquid tag prevents extra whitespace between span elements.
+            capture number_content
+              if block.settings.statistic_prefix != blank
+                echo '<span>[[value]]</span>' | replace: '[[value]]', block.settings.statistic_prefix
+              endif
+
+              echo '<span class="statistics-number__number" [[attributes]]>0</span>'
+
+              if block.settings.statistic_suffix != blank
+                echo '<span>[[value]]</span>' | replace: '[[value]]', block.settings.statistic_suffix
+              endif
+            endcapture
+
+            assign content = '<span class="statistics-number__wrapper">[[number_content]]</span>' | replace: '[[number_content]]', number_content
+          endif
+
+        when 'text'
+          assign content = block.settings.statistic_text
+      endcase
+    -%}
+
+    {%- if content != blank -%}
+      <div
+        class="
+          statistics__grid-item-statistic
+          statistics__grid-item-statistic--{{ block.settings.statistic_type }}
+          {{ section.settings.statistic_font_class }}
+          rte
+        "
+        {%- if block.settings.statistic_type == 'number' -%}
+          js-statistic-block-number
+        {% endif -%}
+      >
+        {% liquid
+          echo content | replace: '[[attributes]]', number_attributes
+
+          # Render a dummy number to maintain the final element height during animation.
+          # Applies a JS attribute in order to correctly format the number.
+          if block.settings.statistic_type == 'number' and section.settings.statistic_animation_enable_counting_animation
+            echo content | replace: '[[attributes]]', 'js-dummy-number'
+          endif
+        %}
+      </div>
+    {%- endif -%}
+
+    {%- unless block.settings.accent == blank
+      and block.settings.heading == blank
+      and block.settings.text == blank
+      and block.settings.link_text == blank
+    -%}
+      <div class="statistics__grid-item-text-container">
+        {%- unless block.settings.accent == blank -%}
+          <p class="statistics__grid-item-accent fs-accent">
+            {{- block.settings.accent -}}
+          </p>
+        {%- endunless -%}
+
+        {%- unless block.settings.heading == blank -%}
+          <{{ block.settings.heading_tag }}
+            class="statistics__grid-item-heading ff-heading {{ section.settings.content_heading_font_class }}"
+          >
+            {{- block.settings.heading -}}
+          </{{ block.settings.heading_tag }}>
+        {%- endunless -%}
+
+        {%- unless block.settings.text == blank -%}
+          <div
+            class="statistics__grid-item-text ff-body {{ section.settings.content_text_font_class }} rte"
+            style="--text-max-width: {{ block.settings.text_max_width }}%"
+          >
+            {{- block.settings.text -}}
+          </div>
+        {%- endunless -%}
+
+        {%- render 'button-block',
+          link: block.settings.link,
+          label: block.settings.link_text,
+          button_style: block.settings.button_style,
+          button_alignment: section.settings.column_alignment,
+          button_alignment_mobile: section.settings.column_alignment_mobile,
+          is_small: true,
+          wrapper_class: 'statistics__grid-item-button'
+        -%}
+      </div>
+    {%- endunless -%}
+  </div>
+</div>

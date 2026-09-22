@@ -1,0 +1,259 @@
+{%- doc -%}
+  Renders the product form.
+
+  @param {string} section_id - The parent section's ID.
+  @param {object} prod - The product object. We use 'prod' to avoid collision with the global 'product' object.
+  @param {object} [block] - The block object.
+  @param {object} [blocks] - All blocks from the section. These are needed for rendering custom option inputs.
+  @param {object} [current_variant] - The currently selected variant of the product.
+  @param {object} [featured_media] - The product's featured media.
+  @param {string} [aspect_ratio] - The aspect ratio of the media.
+  @param {boolean} [show_dynamic_checkout] - Whether to show dynamic checkout.
+  @param {boolean} [is_quick] - Whether the block is being rendered for a quick product display.
+  @param {string} [price_content_type] - The type of price content (ie. 'price', 'custom', or 'hide') based on the $0 and sold out pricing settings.
+  @param {string} [custom_price_content] - Content to show if 'price_content_type' is 'custom'.
+  @param {boolean} [hidden] - Whether the form should be hidden.
+  @param {boolean} [enable_gift_card_recipient] - Whether the gift card recipient form is enabled.
+{%- enddoc -%}
+
+{%- liquid
+  assign product_available_label = 'products.product.add_to_cart' | t
+  assign product_unavailable_label = 'products.product.sold_out' | t
+
+  if template.suffix == 'preorder'
+    assign product_available_label = 'products.product.preorder' | t
+  endif
+
+  capture form_classes
+    echo 'product-form product-form-[[sid]]' | replace: '[[sid]]', section_id
+
+    if hidden
+      echo ' visually-hidden'
+    endif
+  endcapture
+-%}
+
+{% form 'product',
+  prod,
+  class: form_classes,
+  novalidate: 'novalidate',
+  data-product-form: '',
+  data-product-handle: prod.handle,
+  data-current-product-id: current_variant.id
+%}
+  {%- # The product quantity within the form remains hidden but will be updated from outside the form if enabled. -%}
+  <div class="product-form__quantity">
+    <div class="product__label-wrapper">
+      <label class="product__label" for="Quantity-Input-{{ prod.id }}">
+        {{- 'products.product.quantity' | t -}}
+      </label>
+    </div>
+
+    <input
+      id="Quantity-{{ prod.id }}"
+      type="number"
+      class="input product-form__input product-form__input--quantity"
+      name="quantity"
+      value="{{ current_variant.quantity_rule.min | default: 1 }}"
+      min="{{ current_variant.quantity_rule.min | default: 1 }}"
+      step="{{ current_variant.quantity_rule.increment | default: 1 }}"
+      {% if current_variant.quantity_rule.max -%}
+        max="{{ current_variant.quantity_rule.max }}"
+      {%- endif %}
+      pattern="[0-9]*"
+      aria-label="{{ 'general.accessibility.quantity' | t }}"
+    >
+  </div>
+
+  {%- # The option field within form remains hidden but will be updated from outside the form if enabled. -%}
+  {%- assign custom_option_blocks = blocks | where: 'type', 'custom_option' -%}
+
+  {%- for block in custom_option_blocks -%}
+    <div class="product-form__custom-option">
+      <label>
+        {{ block.settings.label }}:&nbsp
+
+        {%- case block.settings.field_type -%}
+          {%- when 'text', 'textarea' -%}
+            <input
+              type="text"
+              class="input"
+              placeholder="{{ block.settings.placeholder }}"
+              name="properties[{{ block.settings.label }}]"
+              data-custom-option-target="{{ block.id }}"
+            >
+          {%- when 'checkbox' -%}
+            <input
+              type="checkbox"
+              value="{{ block.settings.checked_value }}"
+              name="properties[{{ block.settings.label }}]"
+              data-custom-option-target="{{ block.id }}"
+            >
+          {%- when 'list' -%}
+            {%- assign list_options = block.settings.list_options | split: ', ' -%}
+
+            <div class="select-wrapper">
+              <select
+                class="input"
+                name="properties[{{ block.settings.label }}]"
+                data-custom-option-target="{{ block.id }}"
+              >
+                {%- for option in list_options -%}
+                  <option>{{ option }}</option>
+                {%- endfor -%}
+              </select>
+
+              {%- render 'icon', icon: 'chevron-small' -%}
+            </div>
+        {%- endcase -%}
+      </label>
+    </div>
+  {%- endfor -%}
+
+  {% comment %}
+    In order for this form to submit, it needs to contain an input with name="id".
+    ProductForm() will automatically create this input (or make sure it has the
+    right value set if it already exists) on form submit based on the
+    currently selected variant. However, if JS is disabled we need a fallback.
+
+    Include a single <select> element which allows users to select all variants
+    as a fallback and present it only when JS is disabled. In addition,
+    make sure you hide the option inputs declared above, like we do with the
+    `.js-enabled` class which only shows its contents when JS is enabled.
+  {% endcomment %}
+  <div class="product-form__variants">
+    <select
+      name="id"
+      class="input"
+      id="variant-selector"
+      data-variant-select
+    >
+      {%- for variant in prod.variants -%}
+        <option
+          value="{{ variant.id }}"
+          {%- if variant == current_variant -%}
+            selected="selected"
+          {%- endif -%}
+        >
+          {{- variant.title }}
+          {%- if variant.available == false %} - {{ 'products.product.sold_out' | t }}{%- endif -%}
+        </option>
+      {%- endfor -%}
+    </select>
+  </div>
+
+  {%- comment -%}
+    With JS enabled, this form will always be hidden, but updated from an outside form.
+
+    With JS disabled, the outside form is hidden, and this form will be visible.
+  {%- endcomment -%}
+  {%- liquid
+    if enable_gift_card_recipient and prod.gift_card?
+      render 'gift-card-recipient-form', source: 'product-form', form: form
+    endif
+  -%}
+
+  <div
+    class="product-form__controls-group product-form__controls-group--submit"
+    {% if block -%}
+      {{ block.shopify_attributes }}
+    {%- endif -%}
+  >
+    <div
+      class="
+        product-form__item product-form__item--submit
+        {%- if show_dynamic_checkout %} product-form__item--payment-button {%- endif -%}
+        {%- if prod.has_only_default_variant %} product-form__item--no-variants {%- endif -%}
+      "
+    >
+      {%- liquid
+        capture availbility_label
+          if current_variant.available
+            echo product_available_label
+          else
+            echo product_unavailable_label
+          endif
+        endcapture
+
+        capture add_to_cart_button_style
+          if block
+            echo block.settings.add_to_cart_button_style
+          else
+            if show_dynamic_checkout
+              echo 'btn--secondary'
+            else
+              echo 'btn--primary'
+            endif
+          endif
+        endcapture
+      -%}
+
+      {%- liquid
+        # "Personalizar": only when the product has charms to offer (custom.customization_products). When it
+        # shows, the add-to-cart button shares the row with it instead of taking the full width.
+        # Not inside a hidden dummy form, and not in a quick-view/quick-add popup (its own overlay stacked over
+        # another overlay would be awkward) - only the real product page.
+        assign has_customizer = false
+
+        if hidden != true and is_quick != true
+          if prod.metafields.custom.customization_products.value.size > 0 or prod.handle == 'anillo-24'
+            assign has_customizer = true
+          endif
+        endif
+      -%}
+
+      <div class="product-form__submit-row{% if has_customizer %} product-form__submit-row--split{% endif %}">
+        {%- if has_customizer -%}
+          {%- render 'product-customizer-trigger', prod: prod -%}
+        {%- endif -%}
+
+        <button
+          type="submit"
+          name="add"
+          class="product-form__cart-submit btn btn--medium {% unless has_customizer %}btn--full{% endunless %} {{ add_to_cart_button_style }}"
+          data-add-to-cart
+          data-lang-available="{{ product_available_label }}"
+          data-lang-unavailable="{{ 'product.unavailable' | t }}"
+          data-lang-sold-out="{{ 'product.sold_out' | t }}"
+          aria-label="{{ availbility_label }}"
+          {% unless current_variant.available -%}
+            aria-disabled="true" disabled
+          {%- endunless -%}
+        >
+          <span data-add-to-cart-text>
+            {{- availbility_label -}}
+          </span>
+
+          <div class="btn__loading-wrap">
+            <div class="btn__loading-bar"></div>
+          </div>
+          {% render 'icon', icon: 'checkmark' %}
+        </button>
+      </div>
+
+      {%- if has_customizer -%}
+        {%- render 'product-customizer', prod: prod, current_variant: current_variant, section_id: section_id -%}
+      {%- endif -%}
+
+      {%- if show_dynamic_checkout -%}
+        {{- form | payment_button -}}
+      {%- endif -%}
+
+      {%- unless is_quick -%}
+        <div class="product-form__shop-pay fs-body-75">
+          {{- form | payment_terms -}}
+        </div>
+      {%- endunless -%}
+
+      {%- unless is_quick -%}
+        {% comment %} Surface pick-up {% endcomment %}
+        <div
+          class="store-availability-container__wrapper"
+          data-store-availability-container
+          data-base-url="{{ shop.url }}{{ routes.root_url }}"
+        ></div>
+      {%- endunless -%}
+    </div>
+  </div>
+
+{%- endform -%}

@@ -1,0 +1,27 @@
+{% render 'spacer-block', space: block.settings.space, shopify_attributes: block.shopify_attributes %}
+
+{% schema %}
+{
+  "name": "t:blocks.content._spacer.name",
+  "tag": null,
+  "settings": [
+    {
+      "type": "range",
+      "id": "space",
+      "label": "t:blocks.content._spacer.settings.space.label",
+      "min": 4,
+      "max": 64,
+      "step": 4,
+      "unit": "px",
+      "default": 12
+    }
+  ],
+  "blocks": [],
+  "presets": [
+    {
+      "name": "t:blocks.content._spacer.presets.name",
+      "blocks": []
+    }
+  ]
+}
+{% endschema %}

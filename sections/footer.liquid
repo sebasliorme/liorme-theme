@@ -1,0 +1,916 @@
+{%- liquid
+  if section.settings.enable_locale_selector and shop.published_locales.size > 1
+    assign show_locale_selector = true
+  else
+    assign show_locale_selector = false
+  endif
+
+  if section.settings.enable_country_selector and localization.available_countries.size > 1
+    assign show_country_selector = true
+  else
+    assign show_country_selector = false
+  endif
+
+  if section.settings.show_payment_icons and shop.enabled_payment_types != empty
+    assign show_payment_icons = true
+  else
+    assign show_payment_icons = false
+  endif
+-%}
+
+<style>
+  /*
+    Explicit request: the legal-disclosure divider line should span the
+    full width of the viewport, not just the footer's own padded content
+    width. .footer__inner (section-inner--width-full-width-padded) sits
+    inset by the section's own side padding (var(--space-outer)), and
+    .footer__legal-disclosure's border-top inherits that same inset since
+    it's a normal, non-full-bleed child — so the line stopped short of
+    both edges instead of reaching them. Pulling it out with matching
+    negative margins (and adding the padding back so the centered text/
+    link inside keeps its original position) breaks just the border out
+    to the true edges without needing to move .footer__legal-disclosure
+    itself out of the padded container.
+  */
+  #shopify-section-{{ section.id }} .footer__legal-disclosure {
+    margin-left: calc(var(--space-outer) * -1);
+    margin-right: calc(var(--space-outer) * -1);
+    padding-left: var(--space-outer);
+    padding-right: var(--space-outer);
+  }
+
+  /*
+    Explicit request: reorder/center this bottom block to match the Miu
+    Miu reference — locale selector on top, copyright below it, both
+    centered as a single stacked column — instead of the theme's default
+    left-aligned copyright / right-aligned locale selector side-by-side
+    (desktop) or left-aligned stack (mobile). Using `order` to swap which
+    comes first rather than moving the Liquid markup itself, so the
+    underlying structure/behavior (locale form, payment icons) stays
+    exactly what it was.
+  */
+  #shopify-section-{{ section.id }} .footer__bottom {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  #shopify-section-{{ section.id }} .footer__bottom-left {
+    order: 2;
+  }
+
+  #shopify-section-{{ section.id }} .footer__bottom-right {
+    order: 1;
+    justify-content: center;
+    margin-top: 0;
+  }
+
+  #shopify-section-{{ section.id }} .footer__bottom-left,
+  #shopify-section-{{ section.id }} .footer__bottom-right {
+    width: 100%;
+    margin-bottom: var(--spacing-3);
+  }
+
+  /* Spacing for the globe icon added via show_globe_icon (cross-border.liquid) — it's the
+     toggle's first icon only in this footer instance, since the header doesn't opt in. */
+  #shopify-section-{{ section.id }} .disclosure__toggle .icon:first-child {
+    margin-right: 6px;
+  }
+
+  /*
+    Explicit request: match the reference's social row — plain black circular
+    icon badges, no "Follow us" label above them. Hiding the label via CSS
+    (rather than deleting it from footer-block.liquid, which is shared by
+    every text-type footer block, not just this newsletter one) keeps this
+    scoped to just this section instead of a theme-wide content change.
+  */
+  #shopify-section-{{ section.id }} .footer__newsletter-follow {
+    display: none;
+  }
+
+  #shopify-section-{{ section.id }} .social-icons li {
+    width: 32px;
+    height: 32px;
+  }
+
+  #shopify-section-{{ section.id }} .social-icons a {
+    width: 100%;
+    height: 100%;
+    background-color: var(--color-text);
+    color: var(--color-background);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #shopify-section-{{ section.id }} .social-icons .icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  /*
+    Explicit request: between mobile and ~1200px, use a 2-column layout —
+    the 4 "links" blocks stacked as a collapsible accordion on the left,
+    the newsletter block as its own column on the right — instead of the
+    theme's default, which only has two states: full mobile (everything
+    stacked in one column) and full desktop (all 5 blocks in an even row,
+    which gets visibly cramped before 1200px). This range borrows the
+    accordion behavior mobile already has (undoing the theme's own
+    min-width:960px rules that force the static title + always-open
+    content) and rearranges into 2 columns with CSS Grid: newsletter gets
+    an explicit column + row-span so it sits beside the stack without
+    forcing every accordion row to stretch to its height, and the 4 links
+    blocks auto-place into the remaining column, top to bottom, in the
+    same order they're already in.
+  */
+  @media (min-width: 960px) and (max-width: 1199px) {
+    #shopify-section-{{ section.id }} .footer__groups {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      column-gap: 5%;
+      flex-wrap: unset;
+    }
+
+    #shopify-section-{{ section.id }} .footer__group {
+      width: 100%;
+    }
+
+    #shopify-section-{{ section.id }} .footer__group--links {
+      grid-column: 1;
+      border-bottom: 1px solid var(--color-text-alpha-20);
+    }
+
+    #shopify-section-{{ section.id }} .footer__group--links.footer__group--last {
+      border-bottom: none;
+    }
+
+    #shopify-section-{{ section.id }} .footer__group--newsletter {
+      grid-column: 2;
+      grid-row: 1 / span 4;
+    }
+
+    /* Re-enable the collapsible accordion header/content that the
+       theme's own >=960px rules otherwise force open and static. */
+    #shopify-section-{{ section.id }} .footer__header {
+      display: flex;
+      margin-bottom: 0;
+      padding: var(--spacing-4) 0;
+      pointer-events: auto;
+    }
+
+    #shopify-section-{{ section.id }} .footer__header.footer__header--collapsed {
+      display: none;
+    }
+
+    #shopify-section-{{ section.id }} .footer__group--collapse .footer__header {
+      cursor: pointer;
+    }
+
+    /*
+      Closed by default (overriding the theme's own min-width:960px rule
+      that forces this open+static). theme.js's handleHeaderClick toggles
+      an "open" class on the button (.footer__header[data-header]) and
+      then animates .footer__group-content — its NEXT SIBLING — via
+      slideUp/slideDown, which writes plain (non-!important) inline
+      styles. A plain inline style does NOT beat an author-stylesheet
+      !important rule, so the "closed by default" rule below would
+      otherwise also block the click from ever opening it again — the
+      ".open" rule beneath it is more specific (one more class) than the
+      closed one, so it wins once JS adds that class, letting the click
+      actually take effect.
+    */
+    #shopify-section-{{ section.id }} .footer__group--collapse .footer__group-content {
+      display: none !important;
+    }
+
+    #shopify-section-{{ section.id }} .footer__header.open + .footer__group-content {
+      display: block !important;
+    }
+
+    #shopify-section-{{ section.id }} .footer__group-content {
+      padding: 0 0 var(--spacing-5);
+      width: 100%;
+    }
+
+    #shopify-section-{{ section.id }} .footer__arrow {
+      display: block;
+    }
+  }
+</style>
+
+<div
+  class="
+    section
+    section--divider-{{ section.settings.divider_style }}
+    section--divider-full-width-{{ section.settings.enable_full_width_divider }}
+    footer
+  "
+  data-section-id="{{ section.id }}"
+  data-section-type="footer"
+  data-transparent-header="{{ section.settings.enable_transparent_header }}"
+  data-transparent-header-dark="{{ section.settings.dark_logo_on_transparent }}"
+  style="
+    {%- render 'color-scheme-to-vars', color_scheme: section.settings.color_scheme -%}
+    {%- render 'section-padding-vars' -%}
+  "
+>
+  <div class="footer__inner section-inner section-inner--width-{{ section.settings.section_width }}">
+    <div class="footer__groups">
+      {%- liquid
+        # Pre-process the blocks to determine the index of the last non-spacer block.
+        #
+        # This allows us to remove the bottom border from the last visible group on mobile.
+        assign has_non_spacer_blocks = false
+        assign last_non_spacer_block_index = 0
+
+        for block in section.blocks
+          unless block.type == 'spacer'
+            assign has_non_spacer_blocks = true
+            assign last_non_spacer_block_index = forloop.index
+          endunless
+        endfor
+
+        for block in section.blocks
+          render 'footer-block', block: block, forloop_index: forloop.index, has_non_spacer_blocks: has_non_spacer_blocks, last_non_spacer_block_index: last_non_spacer_block_index
+        endfor
+      -%}
+    </div>
+
+    {%- if section.settings.footer_logo != blank -%}
+      {%- comment -%}
+        Mobile side matches the CSS in theme.css (.footer__big-logo-image
+        width:100% below 749px, overriding footer_logo_width_mobile on
+        purpose) rather than the setting itself, which no longer reflects
+        the real rendered width — a stale mismatch there was what caused
+        the browser to fetch a source image sized for the old, narrower
+        setting and stretch it, blurring the logo on mobile.
+      {%- endcomment -%}
+      {%- capture footer_logo_sizes -%}
+        (max-width: 749px) 100vw, {{ section.settings.footer_logo_width }}px
+      {%- endcapture -%}
+      <div
+        class="footer__big-logo"
+        style="
+          --footer-logo-width: {{ section.settings.footer_logo_width }}px;
+          --footer-logo-width-mobile: {{ section.settings.footer_logo_width_mobile }}px;
+        "
+        aria-hidden="true"
+      >
+        {%- render 'image',
+          image: section.settings.footer_logo,
+          wrapper_class: 'footer__big-logo-image',
+          sizes: footer_logo_sizes
+        -%}
+      </div>
+    {%- endif -%}
+
+    <div class="footer__bottom">
+      <div class="footer__bottom-left">
+        <div class="footer__credits fs-body-50">
+          <p>
+            &copy; {{ shop.name | upcase }} 2019 - {{ 'now' | date: '%Y' }}
+          </p>
+
+          {{ section.settings.additional_copyright_text }}
+        </div>
+      </div>
+
+      <div class="footer__bottom-right">
+        {%- liquid
+          if show_locale_selector or show_country_selector
+            render 'cross-border', show_locale: show_locale_selector, show_country: show_country_selector, id: 'footer', defer_styles: true, show_globe_icon: true
+          endif
+
+          if show_payment_icons
+            render 'payment-icons'
+          endif
+        -%}
+      </div>
+    </div>
+
+    {%- if section.settings.legal_disclosure_text != blank -%}
+      <div class="footer__legal-disclosure fs-body-25">
+        {{ section.settings.legal_disclosure_text }}
+      </div>
+    {%- endif -%}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "t:sections.footer.name",
+  "tag": "footer",
+  "class": "footer__parent",
+  "settings": [
+    {
+      "type": "header",
+      "content": "t:shared.settings.localization.locale_selector.header.content",
+      "info": "t:shared.settings.localization.locale_selector.header.info"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_locale_selector",
+      "label": "t:shared.settings.localization.locale_selector.enable_locale_selector.label",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "t:shared.settings.localization.country_selector.header.content",
+      "info": "t:shared.settings.localization.country_selector.header.info"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_country_selector",
+      "label": "t:shared.settings.localization.country_selector.enable_country_selector.label",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "t:sections.footer.settings.payment_types.header.content",
+      "info": "t:sections.footer.settings.payment_types.header.info"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_payment_icons",
+      "label": "t:sections.footer.settings.payment_types.show_payment_icons.label",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "t:sections.footer.settings.additional_content.header.content"
+    },
+    {
+      "type": "richtext",
+      "id": "additional_copyright_text",
+      "label": "t:sections.footer.settings.additional_content.additional_copyright_text.label"
+    },
+    {
+      "type": "header",
+      "content": "Logo grande",
+      "info": "Logo grande y centrado, mostrado como remate visual del footer, justo arriba de la barra de copyright."
+    },
+    {
+      "type": "image_picker",
+      "id": "footer_logo",
+      "label": "Logo grande"
+    },
+    {
+      "type": "range",
+      "id": "footer_logo_width",
+      "label": "Ancho del logo (escritorio)",
+      "info": "El logo nunca sobrepasa el ancho disponible del footer (respeta su padding) — subí este valor por encima de ese ancho para que ocupe el 100% disponible.",
+      "min": 100,
+      "max": 2100,
+      "step": 20,
+      "unit": "px",
+      "default": 400
+    },
+    {
+      "type": "range",
+      "id": "footer_logo_width_mobile",
+      "label": "Ancho del logo (mobile)",
+      "min": 80,
+      "max": 400,
+      "step": 10,
+      "unit": "px",
+      "default": 220
+    },
+    {
+      "type": "header",
+      "content": "Texto legal (parte final)"
+    },
+    {
+      "type": "richtext",
+      "id": "legal_disclosure_text",
+      "label": "Texto legal debajo de todo",
+      "info": "Aparece centrado, con una línea divisoria arriba, al final del todo del footer."
+    },
+    {
+      "type": "header",
+      "content": "Encabezado transparente"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_transparent_header",
+      "label": "Header transparente sobre esta sección",
+      "info": "Mientras el scroll esté sobre esta sección, el header se muestra transparente.",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "dark_logo_on_transparent",
+      "label": "Logo negro",
+      "info": "Usa el logo y los colores oscuros del header (en vez de los blancos) mientras esta sección esté activa. Útil si el fondo de esta sección es claro.",
+      "default": false
+    },
+    {
+      "type": "header",
+      "content": "t:shared.settings.section_style.header.content"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:shared.settings.color_scheme.label"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "t:shared.settings.section_style.section_width.label",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "t:shared.settings.section_style.section_width.options.page_width"
+        },
+        {
+          "value": "full-width-padded",
+          "label": "t:shared.settings.section_style.section_width.options.full_width"
+        }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "range",
+      "id": "section_padding_top",
+      "label": "t:shared.settings.section_style.section_padding.top.label",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "section_padding_bottom",
+      "label": "t:shared.settings.section_style.section_padding.bottom.label",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "select",
+      "id": "divider_style",
+      "label": "t:shared.settings.section_style.divider_style.label",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:shared.settings.section_style.divider_style.options.none"
+        },
+        {
+          "value": "solid",
+          "label": "t:shared.settings.section_style.divider_style.options.solid"
+        }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_full_width_divider",
+      "label": "t:shared.settings.section_style.enable_full_width_divider.label",
+      "visible_if": "{{ section.settings.divider_style == 'solid' }}"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "text",
+      "name": "t:sections.footer.blocks.text.name",
+      "settings": [
+        {
+          "type": "range",
+          "id": "desktop_width",
+          "label": "t:sections.footer.blocks.shared.settings.desktop_width.label",
+          "min": 10,
+          "max": 100,
+          "step": 1,
+          "unit": "%",
+          "default": 30,
+          "info": "t:sections.footer.blocks.shared.settings.desktop_width.info"
+        },
+        {
+          "type": "range",
+          "id": "desktop_padding",
+          "label": "t:sections.footer.blocks.shared.settings.desktop_padding.label",
+          "min": 0,
+          "max": 20,
+          "step": 1,
+          "unit": "%",
+          "default": 2
+        },
+        {
+          "type": "checkbox",
+          "id": "collapse_on_mobile",
+          "label": "t:sections.footer.blocks.shared.settings.collapse_on_mobile.label",
+          "default": true,
+          "info": "t:sections.footer.blocks.shared.settings.collapse_on_mobile.info"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "t:sections.footer.blocks.shared.settings.title.label",
+          "default": "t:sections.footer.blocks.shared.settings.title.default_text",
+          "info": "t:sections.footer.blocks.shared.settings.title.info"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_title_on_desktop",
+          "label": "t:sections.footer.blocks.shared.settings.show_title_on_desktop.label",
+          "default": true,
+          "info": "t:sections.footer.blocks.shared.settings.show_title_on_desktop.info"
+        },
+        {
+          "type": "richtext",
+          "id": "text",
+          "label": "t:sections.footer.blocks.text.settings.text.label",
+          "default": "t:sections.footer.blocks.text.settings.text.default"
+        },
+        {
+          "type": "select",
+          "id": "text_font_class",
+          "label": "t:shared.settings.text_font_class.label",
+          "options": [
+            {
+              "value": "fs-body-25",
+              "label": "t:shared.settings.text_font_class.options.xx_small"
+            },
+            {
+              "value": "fs-body-50",
+              "label": "t:shared.settings.text_font_class.options.x_small"
+            },
+            {
+              "value": "fs-body-75",
+              "label": "t:shared.settings.text_font_class.options.small"
+            },
+            {
+              "value": "fs-body-100",
+              "label": "t:shared.settings.text_font_class.options.regular"
+            },
+            {
+              "value": "fs-body-150",
+              "label": "t:shared.settings.text_font_class.options.large"
+            },
+            {
+              "value": "fs-body-200",
+              "label": "t:shared.settings.text_font_class.options.x_large"
+            },
+            {
+              "value": "fs-body-250",
+              "label": "t:shared.settings.text_font_class.options.2x_large"
+            },
+            {
+              "value": "fs-body-300",
+              "label": "t:shared.settings.text_font_class.options.3x_large"
+            },
+            {
+              "value": "fs-body-350",
+              "label": "t:shared.settings.text_font_class.options.4x_large"
+            },
+            {
+              "value": "fs-body-400",
+              "label": "t:shared.settings.text_font_class.options.5x_large"
+            }
+          ],
+          "default": "fs-body-100"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:sections.footer.blocks.text.settings.image.label"
+        },
+        {
+          "type": "range",
+          "id": "image_max_width",
+          "label": "t:sections.footer.blocks.text.settings.image_max_width.label",
+          "min": 50,
+          "max": 350,
+          "step": 10,
+          "unit": "px",
+          "default": 200
+        },
+        {
+          "type": "select",
+          "id": "image_placement",
+          "label": "t:sections.footer.blocks.text.settings.image_placement.label",
+          "options": [
+            {
+              "value": "above_text",
+              "label": "t:sections.footer.blocks.text.settings.image_placement.options.above_text"
+            },
+            {
+              "value": "below_text",
+              "label": "t:sections.footer.blocks.text.settings.image_placement.options.below_text"
+            }
+          ]
+        },
+        {
+          "type": "checkbox",
+          "id": "enable_corner_rounding",
+          "label": "t:shared.settings.enable_corner_rounding.label",
+          "default": true,
+          "info": "t:shared.settings.enable_corner_rounding.info"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.footer.blocks.shared.settings.social_media.header.content",
+          "info": "t:sections.footer.blocks.shared.settings.social_media.header.info"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_social_icons",
+          "label": "t:sections.footer.blocks.shared.settings.social_media.show_social_icons.label",
+          "default": false
+        },
+        {
+          "type": "header",
+          "content": "t:sections.footer.blocks.shared.settings.follow_on_shop.header.content",
+          "info": "t:sections.footer.blocks.shared.settings.follow_on_shop.header.info"
+        },
+        {
+          "type": "checkbox",
+          "id": "enable_follow_on_shop",
+          "label": "t:sections.footer.blocks.shared.settings.follow_on_shop.enable_follow_on_shop.label",
+          "default": false
+        }
+      ]
+    },
+    {
+      "type": "links",
+      "name": "t:sections.footer.blocks.links.name",
+      "settings": [
+        {
+          "type": "range",
+          "id": "desktop_width",
+          "label": "t:sections.footer.blocks.shared.settings.desktop_width.label",
+          "min": 10,
+          "max": 100,
+          "step": 1,
+          "unit": "%",
+          "default": 20,
+          "info": "t:sections.footer.blocks.shared.settings.desktop_width.info"
+        },
+        {
+          "type": "range",
+          "id": "desktop_padding",
+          "label": "t:sections.footer.blocks.shared.settings.desktop_padding.label",
+          "min": 0,
+          "max": 20,
+          "step": 1,
+          "unit": "%",
+          "default": 4
+        },
+        {
+          "type": "checkbox",
+          "id": "collapse_on_mobile",
+          "label": "t:sections.footer.blocks.shared.settings.collapse_on_mobile.label",
+          "default": true,
+          "info": "t:sections.footer.blocks.shared.settings.collapse_on_mobile.info"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "t:sections.footer.blocks.shared.settings.title.label",
+          "default": "t:sections.footer.blocks.shared.settings.title.default_links",
+          "info": "t:sections.footer.blocks.shared.settings.title.info"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_title_on_desktop",
+          "label": "t:sections.footer.blocks.shared.settings.show_title_on_desktop.label",
+          "default": true,
+          "info": "t:sections.footer.blocks.shared.settings.show_title_on_desktop.info"
+        },
+        {
+          "type": "link_list",
+          "id": "link_list",
+          "label": "t:sections.footer.blocks.links.settings.link_list.label",
+          "default": "footer",
+          "info": "t:sections.footer.blocks.links.settings.link_list.info"
+        }
+      ]
+    },
+    {
+      "type": "liquid",
+      "name": "t:sections.footer.blocks.liquid.name",
+      "settings": [
+        {
+          "type": "range",
+          "id": "desktop_width",
+          "label": "t:sections.footer.blocks.shared.settings.desktop_width.label",
+          "min": 10,
+          "max": 100,
+          "step": 1,
+          "unit": "%",
+          "default": 30,
+          "info": "t:sections.footer.blocks.shared.settings.desktop_width.info"
+        },
+        {
+          "type": "range",
+          "id": "desktop_padding",
+          "label": "t:sections.footer.blocks.shared.settings.desktop_padding.label",
+          "min": 0,
+          "max": 20,
+          "step": 1,
+          "unit": "%",
+          "default": 2
+        },
+        {
+          "type": "liquid",
+          "id": "liquid",
+          "label": "t:sections.footer.blocks.liquid.settings.liquid.label"
+        }
+      ]
+    },
+    {
+      "type": "newsletter",
+      "name": "t:sections.footer.blocks.newsletter.name",
+      "settings": [
+        {
+          "type": "range",
+          "id": "desktop_width",
+          "label": "t:sections.footer.blocks.shared.settings.desktop_width.label",
+          "min": 10,
+          "max": 100,
+          "step": 1,
+          "unit": "%",
+          "default": 30,
+          "info": "t:sections.footer.blocks.shared.settings.desktop_width.info"
+        },
+        {
+          "type": "range",
+          "id": "desktop_padding",
+          "label": "t:sections.footer.blocks.shared.settings.desktop_padding.label",
+          "min": 0,
+          "max": 20,
+          "step": 1,
+          "unit": "%",
+          "default": 2
+        },
+        {
+          "type": "checkbox",
+          "id": "collapse_on_mobile",
+          "label": "t:sections.footer.blocks.shared.settings.collapse_on_mobile.label",
+          "default": true,
+          "info": "t:sections.footer.blocks.shared.settings.collapse_on_mobile.info"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "t:sections.footer.blocks.shared.settings.title.label",
+          "default": "t:sections.footer.blocks.shared.settings.title.default_newsletter",
+          "info": "t:sections.footer.blocks.shared.settings.title.info"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_title_on_desktop",
+          "label": "t:sections.footer.blocks.shared.settings.show_title_on_desktop.label",
+          "default": true,
+          "info": "t:sections.footer.blocks.shared.settings.show_title_on_desktop.info"
+        },
+        {
+          "type": "checkbox",
+          "id": "enable_collect_customer_name",
+          "label": "t:shared.options.enable_collect_customer_name.label",
+          "info": "t:shared.options.enable_collect_customer_name.info",
+          "default": false
+        },
+        {
+          "type": "richtext",
+          "id": "text",
+          "label": "t:sections.footer.blocks.newsletter.settings.text.label",
+          "default": "t:sections.footer.blocks.newsletter.settings.text.default"
+        },
+        {
+          "type": "select",
+          "id": "text_font_choice",
+          "label": "t:sections.footer.blocks.newsletter.settings.text_font_choice.label",
+          "options": [
+            {
+              "value": "ff-heading",
+              "label": "t:shared.settings.font_choice.options.heading"
+            },
+            {
+              "value": "ff-body",
+              "label": "t:shared.settings.font_choice.options.body"
+            }
+          ]
+        },
+        {
+          "type": "select",
+          "id": "text_font_class",
+          "label": "t:shared.settings.text_font_class.label",
+          "options": [
+            {
+              "value": "fs-body-25",
+              "label": "t:shared.settings.text_font_class.options.xx_small"
+            },
+            {
+              "value": "fs-body-50",
+              "label": "t:shared.settings.text_font_class.options.x_small"
+            },
+            {
+              "value": "fs-body-75",
+              "label": "t:shared.settings.text_font_class.options.small"
+            },
+            {
+              "value": "fs-body-100",
+              "label": "t:shared.settings.text_font_class.options.regular"
+            },
+            {
+              "value": "fs-body-150",
+              "label": "t:shared.settings.text_font_class.options.large"
+            },
+            {
+              "value": "fs-body-200",
+              "label": "t:shared.settings.text_font_class.options.x_large"
+            },
+            {
+              "value": "fs-body-250",
+              "label": "t:shared.settings.text_font_class.options.2x_large"
+            },
+            {
+              "value": "fs-body-300",
+              "label": "t:shared.settings.text_font_class.options.3x_large"
+            },
+            {
+              "value": "fs-body-350",
+              "label": "t:shared.settings.text_font_class.options.4x_large"
+            },
+            {
+              "value": "fs-body-400",
+              "label": "t:shared.settings.text_font_class.options.5x_large"
+            }
+          ],
+          "default": "fs-body-150"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.footer.blocks.shared.settings.social_media.header.content",
+          "info": "t:sections.footer.blocks.shared.settings.social_media.header.info"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_social_icons",
+          "label": "t:sections.footer.blocks.shared.settings.social_media.show_social_icons.label",
+          "default": true
+        },
+        {
+          "type": "header",
+          "content": "t:sections.footer.blocks.shared.settings.follow_on_shop.header.content",
+          "info": "t:sections.footer.blocks.shared.settings.follow_on_shop.header.info"
+        },
+        {
+          "type": "checkbox",
+          "id": "enable_follow_on_shop",
+          "label": "t:sections.footer.blocks.shared.settings.follow_on_shop.enable_follow_on_shop.label",
+          "default": true
+        },
+        {
+          "type": "header",
+          "content": "Texto legal / consentimiento"
+        },
+        {
+          "type": "richtext",
+          "id": "consent_text",
+          "label": "Texto debajo del formulario",
+          "info": "Aparece debajo del botón de suscripción, encima de \"Síguenos\"."
+        }
+      ]
+    },
+    {
+      "type": "spacer",
+      "name": "t:sections.footer.blocks.spacer.name",
+      "settings": [
+        {
+          "type": "range",
+          "id": "desktop_width",
+          "label": "t:sections.footer.blocks.shared.settings.desktop_width.label",
+          "min": 5,
+          "max": 100,
+          "step": 1,
+          "unit": "%",
+          "default": 5,
+          "info": "t:sections.footer.blocks.shared.settings.desktop_width.info"
+        }
+      ]
+    }
+  ],
+  "default": {
+    "blocks": [
+      {
+        "type": "text"
+      },
+      {
+        "type": "links"
+      },
+      {
+        "type": "spacer"
+      },
+      {
+        "type": "newsletter"
+      }
+    ]
+  }
+}
+{% endschema %}

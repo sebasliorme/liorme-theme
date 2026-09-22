@@ -1,0 +1,221 @@
+<div
+  class="
+    section
+    section--divider-{{ section.settings.divider_style }}
+    section--divider-full-width-{{ section.settings.enable_full_width_divider }}
+    page
+    {% if settings.enable_section_animations and section.settings.enable_animation -%}
+      animation
+      animation--page
+    {%- endif -%}
+  "
+  data-section-id="{{ section.id }}"
+  data-section-type="page"
+  data-enable-image-corner-rounding="{{ section.settings.enable_corner_rounding }}"
+  style="
+    {%- render 'color-scheme-to-vars', color_scheme: section.settings.color_scheme -%}
+    {%- render 'section-padding-vars' -%}
+    {% if section.settings.content_width == 'custom' -%}
+      --custom-content-width: {{ section.settings.custom_content_width }}px;
+    {%- endif -%}
+  "
+>
+  <div class="page__inner section-inner section-inner--width-{{ section.settings.section_width }}">
+    <header class="page__header page__header--alignment-{{ section.settings.header_alignment }}">
+      <h1 class="page__heading ff-heading {{ section.settings.heading_font_class }}">
+        {{- page.title -}}
+      </h1>
+    </header>
+
+    <div class="page__rte ff-body rte rte--page">
+      {{- page.content -}}
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "t:sections.main_page.name",
+  "tag": "section",
+  "class": "page-section",
+  "settings": [
+    {
+      "type": "select",
+      "id": "header_alignment",
+      "label": "t:shared.settings.alignment_horizontal.header.label",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:shared.options.alignment.horizontal.left"
+        },
+        {
+          "value": "center",
+          "label": "t:shared.options.alignment.horizontal.center"
+        },
+        {
+          "value": "right",
+          "label": "t:shared.options.alignment.horizontal.right"
+        }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "select",
+      "id": "heading_font_class",
+      "label": "t:shared.settings.heading_font_class.label",
+      "options": [
+        {
+          "value": "fs-heading-6-base",
+          "label": "t:shared.settings.heading_font_class.options.xx_small"
+        },
+        {
+          "value": "fs-heading-5-base",
+          "label": "t:shared.settings.heading_font_class.options.x_small"
+        },
+        {
+          "value": "fs-heading-4-base",
+          "label": "t:shared.settings.heading_font_class.options.small"
+        },
+        {
+          "value": "fs-heading-3-base",
+          "label": "t:shared.settings.heading_font_class.options.medium"
+        },
+        {
+          "value": "fs-heading-2-base",
+          "label": "t:shared.settings.heading_font_class.options.large"
+        },
+        {
+          "value": "fs-heading-1-base",
+          "label": "t:shared.settings.heading_font_class.options.x_large"
+        },
+        {
+          "value": "fs-heading-display-3",
+          "label": "t:shared.settings.heading_font_class.options.display_regular"
+        },
+        {
+          "value": "fs-heading-display-2",
+          "label": "t:shared.settings.heading_font_class.options.display_large"
+        },
+        {
+          "value": "fs-heading-display-1",
+          "label": "t:shared.settings.heading_font_class.options.display_x_large"
+        }
+      ],
+      "default": "fs-heading-2-base"
+    },
+    {
+      "type": "radio",
+      "id": "content_width",
+      "label": "t:shared.settings.content_width.label",
+      "options": [
+        {
+          "value": "full",
+          "label": "t:shared.settings.content_width.options.full"
+        },
+        {
+          "value": "custom",
+          "label": "t:shared.settings.content_width.options.custom"
+        }
+      ],
+      "default": "custom"
+    },
+    {
+      "type": "range",
+      "id": "custom_content_width",
+      "label": "t:shared.settings.custom_content_width.label",
+      "min": 400,
+      "max": 1000,
+      "step": 50,
+      "unit": "px",
+      "default": 700,
+      "info": "t:shared.settings.custom_content_width.info",
+      "visible_if": "{{ section.settings.content_width == 'custom' }}"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.main_page.settings.content_images.header.content"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_corner_rounding",
+      "label": "t:shared.settings.enable_corner_rounding.label",
+      "default": true,
+      "info": "t:shared.settings.enable_corner_rounding.info"
+    },
+    {
+      "type": "header",
+      "content": "t:shared.settings.section_style.header.content"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:shared.settings.color_scheme.label"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "t:shared.settings.section_style.section_width.label",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "t:shared.settings.section_style.section_width.options.page_width"
+        },
+        {
+          "value": "full-width-padded",
+          "label": "t:shared.settings.section_style.section_width.options.full_width"
+        }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "range",
+      "id": "section_padding_top",
+      "label": "t:shared.settings.section_style.section_padding.top.label",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "section_padding_bottom",
+      "label": "t:shared.settings.section_style.section_padding.bottom.label",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "select",
+      "id": "divider_style",
+      "label": "t:shared.settings.section_style.divider_style.label",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:shared.settings.section_style.divider_style.options.none"
+        },
+        {
+          "value": "solid",
+          "label": "t:shared.settings.section_style.divider_style.options.solid"
+        }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_full_width_divider",
+      "label": "t:shared.settings.section_style.enable_full_width_divider.label",
+      "visible_if": "{{ section.settings.divider_style == 'solid' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_animation",
+      "label": "t:shared.settings.section_style.enable_animation.label",
+      "default": true,
+      "info": "t:shared.settings.section_style.enable_animation.info"
+    }
+  ]
+}
+{% endschema %}

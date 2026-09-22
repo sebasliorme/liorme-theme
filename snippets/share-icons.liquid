@@ -1,0 +1,53 @@
+{%- doc -%}
+  Renders share icons.
+
+  @param {string} url - The URL being shared.
+  @param {string} title - The title for the URL being shared.
+  @param {object} [image] - The image to use for the URL preview.
+{%- enddoc -%}
+
+<div class="share-icons" data-share="{{ 'product.share' | t }}">
+  <a
+    href="//twitter.com/intent/tweet?text={{ title | url_param_escape }}&amp;url={{ url }}"
+    class="btn btn--x-small share-icons__icon"
+    target="_blank"
+    rel="noopener"
+  >
+    {%- render 'icon', icon: 'twitter' -%}
+    <span class="share-icons__label">{{ 'general.social.alt_text.share_on_twitter' | t }}</span>
+  </a>
+
+  <a
+    href="//www.facebook.com/sharer.php?u={{ url }}"
+    class="btn btn--x-small share-icons__icon"
+    target="_blank"
+    rel="noopener"
+  >
+    {%- render 'icon', icon: 'facebook' -%}
+    <span class="share-icons__label">{{ 'general.social.alt_text.share_on_facebook' | t }}</span>
+  </a>
+
+  {%- liquid
+    capture pinterest_link
+      echo '//pinterest.com/pin/create/button/?url=[[url]]&amp;' | replace: '[[url]]', url
+
+      if image != blank
+        assign image_url = image | image_url: width: 1024, height: 1024
+        echo 'media=[[iu]]&amp;' | replace: '[[iu]]', image_url
+      endif
+
+      assign escaped_title = title | url_param_escape
+      echo 'description=[[et]]' | replace: '[[et]]', escaped_title
+    endcapture
+  -%}
+
+  <a
+    href="{{ pinterest_link }}"
+    class="btn btn--x-small share-icons__icon"
+    target="_blank"
+    rel="noopener"
+  >
+    {%- render 'icon', icon: 'pinterest' -%}
+    <span class="share-icons__label">{{ 'general.social.alt_text.share_on_pinterest' | t }}</span>
+  </a>
+</div>

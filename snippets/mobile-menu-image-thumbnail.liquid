@@ -1,0 +1,60 @@
+{% liquid
+  comment
+    Renders images within the mobile menu if mobile menu image blocks are added in the header.
+
+    Required parameters:
+      - link: { Object } The link within a menu that has enabled the mobile menu images block.
+      - aspect_ratio: { String } The block setting's aspect ratio to apply to the image. Can be:
+        - Natural, Square, Portrait, Landscape
+      - thumbnail_width: { Number } The block setting's thumbnail width to apply to the image.
+
+    Optional parameters:
+      - size: { String } 'large' renders one big category image (used for the
+        drill-down second-level panel) instead of the small inline row
+        thumbnail. Omit for the original small-thumbnail behavior.
+      - custom_image: { Object } An explicit image (from the block's own
+        "custom_image" image_picker setting) that takes priority over the
+        metafield/collection/product fallback chain below.
+  endcomment
+
+  assign resource = link.object
+
+  if custom_image != blank
+    assign thumbnail_image = custom_image
+  elsif resource.metafields.stiletto.mobile_menu_thumbnail != blank
+    assign thumbnail_image = resource.metafields.stiletto.mobile_menu_thumbnail.value
+  endif
+
+  unless thumbnail_image
+    case link.type
+      when 'collection_link'
+        assign thumbnail_image = resource.image | default: resource.products.first.featured_image
+      when 'product_link'
+        assign thumbnail_image = resource.featured_image
+    endcase
+  endunless
+%}
+
+{% if thumbnail_image %}
+  {% if size == 'large' %}
+    <div class="drawer-menu__category-image">
+      {%- comment -%}
+        On desktop this covers a full-height column (~2x taller than
+        wide) — object-fit:cover scales by height there, not by the
+        column's own width, so a sizes hint proportional to width alone
+        under-requests resolution badly. src_set_type 'thumbnail' also
+        caps out at 600px, nowhere near enough for a near-full-viewport-
+        height crop. 'grid' (up to 2200px) + an inflated sizes value
+        (accounting for the height-driven scale-up) keeps it sharp.
+      {%- endcomment -%}
+      {% render 'image', image: thumbnail_image, aspect_ratio: aspect_ratio, sizes: '(min-width: 960px) 60vw, 100vw', src_set_type: 'grid' %}
+    </div>
+  {% else %}
+    <div
+      class="drawer-menu__link-thumbnail"
+      style="--thumbnail-width:{{ thumbnail_width }}px"
+    >
+      {% render 'image', image: thumbnail_image, aspect_ratio: aspect_ratio, sizes: '200px', src_set_type: 'thumbnail' %}
+    </div>
+  {% endif %}
+{% endif %}

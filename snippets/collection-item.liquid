@@ -1,0 +1,113 @@
+{%- doc -%}
+  Renders a collection item.
+
+  @param {object} collection - The collection being rendered.
+  @param {boolean} [placeholder] - Whether the item is being rendered as a placeholder.
+  @param {string} [aspect_ratio] - The aspect ratio of the item.
+  @param {string} label_font - The font family class for the label (ie. 'ff-heading', or 'ff-body').
+  @param {string} label_size - The font size class for the label.
+  @param {string} label_style - The label style (ie. 'beneath', or 'overlay').
+  @param {string} overlay_title_background_style - The label background style when displaying as an overlay (ie. 'solid', or 'gradient').
+  @param {object} overlay_color_scheme - The color scheme to use for the overlay.
+  @param {string} image_sizes - A list of responsive image sizes (for the 'sizes' attribute).
+{%- enddoc -%}
+
+{%- liquid
+  assign placeholder = placeholder | default: false, allow_false: true
+
+  if label_style == 'overlay'
+    assign label_is_overlay = true
+  else
+    assign label_is_overlay = false
+  endif
+-%}
+
+{% capture collection_label %}
+  <div class="collection-item__label">
+    <h4 class="collection-item__title {{ label_font }} {{ label_size }}">
+      {%- if label_is_overlay -%}
+        <span>
+          {%- liquid
+            if placeholder
+              echo 'collections.general.collection_label' | t
+            else
+              echo collection.title
+            endif
+          -%}
+        </span>
+
+        <span class="collection-item__icon">
+          {%- render 'icon', icon: 'arrow-short' -%}
+        </span>
+      {%- else -%}
+        {%- if placeholder -%}
+          {{ 'collections.general.collection_label' | t }}
+        {%- else -%}
+          <a href="{{ collection.url }}">{{ collection.title }}</a>
+        {%- endif -%}
+      {%- endif -%}
+    </h4>
+  </div>
+{% endcapture %}
+
+<div
+  class="
+    collection-item
+    collection-item--label-{{ label_style }}
+    collection-item--label-background-{{ overlay_title_background_style }}
+    animation--item
+  "
+  style="
+    {%- render 'color-scheme-to-vars',
+      color_scheme: overlay_color_scheme,
+      output_placeholder_colors: false,
+      css_vars: 'background,text'
+    -%}
+    --label-gradient-start: {{ overlay_color_scheme.settings.background | color_modify: 'alpha', 0.4 }};
+    --label-gradient-mid: {{ overlay_color_scheme.settings.background | color_modify: 'alpha', 0.2 }};
+    --label-gradient-end: {{ overlay_color_scheme.settings.background | color_modify: 'alpha', 0 }};
+  "
+>
+  {%- liquid
+    capture wrapping_tag
+      if placeholder
+        echo 'div'
+      else
+        echo 'a'
+      endif
+    endcapture
+
+    capture wrapping_attributes
+      unless placeholder
+        echo 'href="[[cu]]" aria-label="[[ct]]"' | replace: '[[cu]]', collection.url | replace: '[[ct]]', collection.title
+      endunless
+    endcapture
+  -%}
+
+  <{{ wrapping_tag }}
+    {{ wrapping_attributes }}
+    class="collection-item__image-wrapper hover"
+  >
+    {% render 'image',
+      image: collection.featured_image,
+      wrapper_class: 'collection-item__image',
+      aspect_ratio: aspect_ratio,
+      placeholder_name: 'collection-1',
+      include_placeholder: true,
+      sizes: image_sizes,
+      src_set_type: 'grid'
+    %}
+
+    {%- liquid
+      if label_is_overlay
+        echo collection_label
+      endif
+    -%}
+  </{{ wrapping_tag }}>
+
+  {%- liquid
+    unless label_is_overlay
+      echo collection_label
+    endunless
+  -%}
+</div>

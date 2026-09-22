@@ -1,0 +1,114 @@
+{%- doc -%}
+  Renders an "Image hero split" item.
+
+  @param {object} [block] - The block object.
+  @param {number} index - The index of the item.
+  @param {string} image_aspect - The aspect ratio of the item.
+  @param {string} text_position - The vertical alignment of item's content.
+{%- enddoc -%}
+
+{%- liquid
+  if section.index == 1
+    assign prioritize_loading = true
+  else
+    assign prioritize_loading = false
+  endif
+
+  capture tag
+    if block.settings.link_text == blank and block.settings.link != blank
+      echo 'a'
+    else
+      echo 'div'
+    endif
+  endcapture
+
+  capture attributes
+    if block.settings.link_text == blank and block.settings.link != blank
+      echo 'href="[[link]]"' | replace: '[[link]]', block.settings.link
+    endif
+  endcapture
+
+  comment
+    Sharpness on phones. The picture fills a full-height box with object-fit: cover, so it is scaled by the
+    box's HEIGHT, not its width: the file has to be as wide as the box is tall times the picture's aspect ratio
+    (never less than the viewport width). With a plain 100vw the browser asked for a file about 1.7x too small
+    and the photo looked soft. Above 45em the item is half the screen and 50vw is right.
+  endcomment
+  assign split_image_ratio = block.settings.image.aspect_ratio | default: 0.8
+  assign split_image_mobile_ratio = block.settings.image_mobile.aspect_ratio | default: 0.5625
+
+  capture split_image_sizes
+    echo '(max-width: 45em) max(100vw, calc(100vh * ' | append: split_image_ratio | append: ')), 50vw'
+  endcapture
+
+  capture split_mobile_image_sizes
+    echo 'max(100vw, calc(100vh * ' | append: split_image_mobile_ratio | append: '))'
+  endcapture
+-%}
+
+<{{ tag }}
+  class="
+    image-hero-split-item
+    image-hero-split-item--{{ index }}
+    image-hero-split-item--image-aspect-{{ image_aspect }}
+    animation--item
+  "
+  style="--text-vertical-position: {{ text_position }};"
+  {{ attributes }}
+>
+  <div class="image-hero-split-item__image-container">
+    {%- liquid
+      if image_aspect == 'original' and index == 1
+        assign placeholder_aspect_ratio = 'square'
+      else
+        assign placeholder_aspect_ratio = 'no-ratio'
+      endif
+    -%}
+
+    {%- if block.settings.image_mobile != blank -%}
+      {%- render 'image',
+        wrapper_class: 'image-hero-split-item__image image-hero-split-item__image--mobile',
+        image: block.settings.image_mobile,
+        sizes: split_mobile_image_sizes,
+        focal_point: block.settings.mobile_focal_point,
+        animate: true
+      -%}
+    {%- endif -%}
+
+    {%- render 'image',
+      wrapper_class: 'image-hero-split-item__image',
+      image: block.settings.image,
+      sizes: split_image_sizes,
+      focal_point: block.settings.focal_point,
+      include_placeholder: true,
+      placeholder_natural_fallback_ratio: placeholder_aspect_ratio,
+      animate: true,
+      prioritize_loading: prioritize_loading
+    -%}
+  </div>
+
+  <div class="image-hero-split-item__text-container">
+    <div class="image-hero-split-item__text-container-inner section-blocks animation--section-blocks">
+      {%- render 'section-block-heading',
+        heading_tag: block.settings.heading_tag,
+        heading: block.settings.title,
+        heading_font_class: block.settings.heading_font_class,
+        custom_class: 'image-hero-split-item__heading'
+      -%}
+
+      {%- render 'section-block-text',
+        text: block.settings.text,
+        text_font_class: block.settings.text_font_class,
+        custom_class: 'image-hero-split-item__text rte'
+      -%}
+
+      {%- render 'button-block',
+        link: block.settings.link,
+        label: block.settings.link_text,
+        button_alignment: 'center',
+        button_style: block.settings.button_style,
+        wrapper_class: 'image-hero-split-item__button section-blocks__button'
+      -%}
+    </div>
+  </div>
+</{{ tag }}>

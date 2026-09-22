@@ -1,0 +1,118 @@
+{%- doc -%}
+  Structured data (JSON-LD) for search engines, rendered in the <head>:
+  - home: the Organization (the brand) and the WebSite
+  - collection and product pages: the breadcrumb trail
+  The Product markup itself lives in snippets/product-scripts-and-schema.liquid.
+{%- enddoc -%}
+
+{%- if request.page_type == 'index' -%}
+  {%- liquid
+    assign brand_logo = shop.brand.logo
+    assign social_list = settings.social_instagram_link | append: '|' | append: settings.social_facebook_link | append: '|' | append: settings.social_tiktok_link | append: '|' | append: settings.social_youtube_link | append: '|' | append: settings.social_pinterest_link | append: '|' | append: settings.social_twitter_link | split: '|'
+    assign same_as_clean = ''
+    for link in social_list
+      if link contains 'http'
+        assign one_link = link | json
+        if same_as_clean == ''
+          assign same_as_clean = one_link
+        else
+          assign same_as_clean = same_as_clean | append: ',' | append: one_link
+        endif
+      endif
+    endfor
+  -%}
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": {{ shop.url | append: '/#organization' | json }},
+          "name": {{ shop.name | json }},
+          "url": {{ shop.url | json }}
+          {%- if brand_logo != blank -%},
+          "logo": {{ brand_logo | image_url: width: 600 | remove: 'https:' | remove: 'http:' | prepend: 'https:' | json }}
+          {%- endif -%}
+          {%- if same_as_clean != blank -%},
+          "sameAs": [{{ same_as_clean }}]
+          {%- endif -%}
+        },
+        {
+          "@type": "WebSite",
+          "@id": {{ shop.url | append: '/#website' | json }},
+          "name": {{ shop.name | json }},
+          "url": {{ shop.url | json }},
+          "inLanguage": {{ request.locale.iso_code | json }},
+          "publisher": { "@id": {{ shop.url | append: '/#organization' | json }} }
+        }
+      ]
+    }
+  </script>
+{%- endif -%}
+
+{%- if request.page_type == 'collection' and collection.title != blank -%}
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": {{ 'general.navigation.home' | t | json }},
+          "item": {{ shop.url | append: routes.root_url | json }}
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": {{ collection.title | json }},
+          "item": {{ shop.url | append: collection.url | json }}
+        }
+      ]
+    }
+  </script>
+{%- endif -%}
+
+{%- if request.page_type == 'product' and product != blank -%}
+  {%- liquid
+    assign crumb_collection = collection
+    if crumb_collection == blank or crumb_collection.handle == 'all'
+      assign crumb_collection = product.collections | first
+    endif
+  -%}
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": {{ 'general.navigation.home' | t | json }},
+          "item": {{ shop.url | append: routes.root_url | json }}
+        }
+        {%- if crumb_collection != blank -%},
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": {{ crumb_collection.title | json }},
+          "item": {{ shop.url | append: crumb_collection.url | json }}
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": {{ product.title | json }},
+          "item": {{ shop.url | append: product.url | json }}
+        }
+        {%- else -%},
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": {{ product.title | json }},
+          "item": {{ shop.url | append: product.url | json }}
+        }
+        {%- endif -%}
+      ]
+    }
+  </script>
+{%- endif -%}

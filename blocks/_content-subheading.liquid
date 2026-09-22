@@ -1,0 +1,92 @@
+{% render 'section-block-subheading',
+  subheading_tag: block.settings.subheading_tag,
+  subheading: block.settings.text,
+  subheading_font_class: block.settings.subheading_font_class,
+  shopify_attributes: block.shopify_attributes
+%}
+
+{% schema %}
+{
+  "name": "t:blocks.content._subheading.name",
+  "tag": null,
+  "settings": [
+    {
+      "type": "text",
+      "id": "text",
+      "label": "t:blocks.content._subheading.settings.subheading.label",
+      "default": "t:blocks.content._subheading.settings.subheading.default"
+    },
+    {
+      "type": "select",
+      "id": "subheading_font_class",
+      "label": "t:shared.settings.subheading_font_class.label",
+      "options": [
+        {
+          "value": "fs-heading-6-base",
+          "label": "t:shared.settings.subheading_font_class.options.xx_small"
+        },
+        {
+          "value": "fs-heading-5-base",
+          "label": "t:shared.settings.subheading_font_class.options.x_small"
+        },
+        {
+          "value": "fs-heading-4-base",
+          "label": "t:shared.settings.subheading_font_class.options.small"
+        },
+        {
+          "value": "fs-heading-3-base",
+          "label": "t:shared.settings.subheading_font_class.options.medium"
+        },
+        {
+          "value": "fs-heading-2-base",
+          "label": "t:shared.settings.subheading_font_class.options.large"
+        },
+        {
+          "value": "fs-heading-1-base",
+          "label": "t:shared.settings.subheading_font_class.options.x_large"
+        }
+      ],
+      "default": "fs-heading-5-base"
+    },
+    {
+      "type": "select",
+      "id": "subheading_tag",
+      "label": "t:shared.settings.heading_tag.subheading.label",
+      "options": [
+        {
+          "value": "h2",
+          "label": "t:shared.settings.heading_tag.options.h2"
+        },
+        {
+          "value": "h3",
+          "label": "t:shared.settings.heading_tag.options.h3"
+        },
+        {
+          "value": "h4",
+          "label": "t:shared.settings.heading_tag.options.h4"
+        },
+        {
+          "value": "h5",
+          "label": "t:shared.settings.heading_tag.options.h5"
+        },
+        {
+          "value": "h6",
+          "label": "t:shared.settings.heading_tag.options.h6"
+        }
+      ],
+      "default": "h3"
+    },
+    {
+      "type": "paragraph",
+      "content": "t:shared.settings.heading_tag.subheading.info"
+    }
+  ],
+  "blocks": [],
+  "presets": [
+    {
+      "name": "t:blocks.content._subheading.presets.name",
+      "blocks": []
+    }
+  ]
+}
+{% endschema %}

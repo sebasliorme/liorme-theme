@@ -1,0 +1,49 @@
+{%- doc -%}
+  Renders social icons.
+
+  @param {string} position - The horizontal position (ie. alignment) of the icons.
+{%- enddoc -%}
+
+{%- capture list_item_structure -%}
+  <li>
+    <a
+      href="[[link]]"
+      title="[[title]]"
+      target="_blank"
+      rel="noopener"
+    >
+      [[icon]]
+    </a>
+  </li>
+{%- endcapture -%}
+
+{%- liquid
+  assign position = position | default: 'left'
+  assign social_accounts = 'Facebook, Instagram, LinkedIn, Pinterest, Snapchat, Tiktok, Tumblr, Twitter, Vimeo, WhatsApp, YouTube, Discord, Houzz, WeChat, Bluesky, Rednote, LINE' | split: ', '
+  assign num_accounts = 0
+
+  capture list_items
+    for account in social_accounts
+      assign account_handle = account | handleize
+      assign account_link = 'social_[[ah]]_link' | replace: '[[ah]]', account_handle
+
+      if settings[account_link] != blank
+        assign num_accounts = num_accounts | plus: 1
+        assign link = settings[account_link]
+        assign title = 'sections.footer.social_platform' | t: name: shop.name, platform: account
+
+        capture icon
+          render 'icon', icon: account_handle
+        endcapture
+
+        echo list_item_structure | replace: '[[link]]', link | replace: '[[title]]', title | replace: '[[icon]]', icon
+      endif
+    endfor
+  endcapture
+-%}
+
+{%- if num_accounts > 0 -%}
+  <ul class="social-icons social-icons--{{ position }}" data-count="{{ num_accounts }}">
+    {{ list_items }}
+  </ul>
+{%- endif -%}

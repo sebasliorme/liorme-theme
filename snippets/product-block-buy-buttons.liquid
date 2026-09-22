@@ -1,0 +1,46 @@
+{%- doc -%}
+  Renders the buy buttons product block.
+
+  @param {string} section_id - The parent section's ID.
+  @param {object} [block] - The block object.
+  @param {object} [blocks] - All blocks from the section. These are needed for rendering custom option inputs in the product form.
+  @param {object} prod - The product object. We use 'prod' to avoid collision with the global 'product' object.
+  @param {object} current_variant - The currently selected variant of the product.
+  @param {object} featured_media - The product's featured media.
+  @param {string} aspect_ratio - The aspect ratio of the media.
+  @param {boolean} [is_quick] - Whether the block is being rendered for a quick product display.
+  @param {string} price_content_type - The type of price content (ie. 'price', 'custom', or 'hide') based on the $0 and sold out pricing settings.
+  @param {string} custom_price_content - Content to show if 'price_content_type' is 'custom'.
+  @param {boolean} enable_gift_card_recipient - Whether the gift card recipient form is enabled.
+{%- enddoc -%}
+
+{%- assign is_quick = is_quick | default: false, allow_false: true -%}
+
+<div
+  class="product__quantity-error product__block product__block--medium hidden"
+  data-quantity-error
+  data-fallback-error-message="{{ 'products.product.quantity_error' | t }}"
+>
+  {{- 'products.product.quantity_error' | t -}}
+</div>
+
+{%- liquid
+  if enable_gift_card_recipient and prod.gift_card? and template.suffix != 'quick-view'
+    render 'gift-card-recipient-form', source: 'product-display'
+  endif
+-%}
+
+{%- render 'product-form',
+  section_id: section_id,
+  block: block,
+  blocks: blocks,
+  prod: prod,
+  current_variant: current_variant,
+  featured_media: featured_media,
+  aspect_ratio: aspect_ratio,
+  show_dynamic_checkout: block.settings.show_dynamic_checkout,
+  is_quick: is_quick,
+  price_content_type: price_content_type,
+  custom_price_content: custom_price_content,
+  enable_gift_card_recipient: enable_gift_card_recipient
+-%}

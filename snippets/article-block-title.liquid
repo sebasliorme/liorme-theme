@@ -1,0 +1,77 @@
+{%- doc -%}
+  Renders the 'Title' block for the article page.
+
+  @param {object} section - The section object.
+  @param {object} block - The block object.
+  @param {object} forloop - The forloop object for the current loop through the blocks.
+  @param {object} blog - The blog object.
+  @param {object} article - The article object.
+{%- enddoc -%}
+
+{%- liquid
+  assign article_categories = settings.article_categories | downcase
+
+  if blog
+    assign tag_el = 'a'
+  else
+    assign tag_el = 'span'
+  endif
+
+  capture tag_list_items
+    if block.settings.show_tags
+      for tag in article.tags
+        assign downcased_tag = tag | downcase
+
+        if article_categories contains downcased_tag or article_categories == blank
+          render 'article-block-title-tag-item', blog: blog, tag: tag, tag_el: tag_el
+        endif
+      endfor
+    endif
+  endcapture
+-%}
+
+<header
+  class="
+    article__block
+    article__header
+    page__header
+    {% if forloop.first -%}
+      article__header--top
+    {%- endif -%}
+  "
+  {{ block.shopify_attributes }}
+>
+  <div
+    class="article__header-inner"
+    style="
+      {%- if section.settings.content_width == 'custom' -%}
+        --custom-content-width: {{ section.settings.custom_content_width }}px;
+      {%- endif -%}
+    "
+  >
+    {%- if tag_list_items != blank -%}
+      <div class="article__tags">
+        <ul class="article-tags">
+          {{- tag_list_items -}}
+        </ul>
+      </div>
+    {%- endif -%}
+
+    <h1 class="article__heading ff-heading {{ block.settings.title_font_class }} ta-c">{{ article.title }}</h1>
+
+    {%- if block.settings.show_author or block.settings.show_date -%}
+      <p class="article__meta fs-body-75">
+        {%- if block.settings.show_author -%}
+          <span>
+            {{- 'blogs.article.by' | t }}
+            {{ article.author -}}
+          </span>
+        {%- endif -%}
+
+        {%- if block.settings.show_date -%}
+          {{- article.published_at | time_tag: format: 'abbreviated_date' -}}
+        {%- endif -%}
+      </p>
+    {%- endif -%}
+  </div>
+</header>

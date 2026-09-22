@@ -1,0 +1,151 @@
+{%- doc -%}
+  Renders a multi-column item.
+
+  @param {object} block - The block object.
+  @param {number} columns - The number of columns on desktop.
+{%- enddoc -%}
+
+{%- liquid
+  if block.settings.aspect_ratio == 'square' and block.settings.enable_image_crop_circle
+    assign circle_crop = true
+  else
+    assign circle_crop = false
+  endif
+-%}
+
+{%- capture image_figure -%}
+  <figure
+    class="multi-column__grid-item-image-figure"
+    style="--image-max-width: {{ block.settings.image_width }}%;"
+    data-enable-image-corner-rounding="{{ block.settings.enable_corner_rounding }}"
+    data-enable-image-circle-crop="{{ circle_crop }}"
+  >
+    {%- liquid
+      capture image_wrapper_tag
+        if block.settings.image_link != blank
+          echo 'a'
+        else
+          echo 'div'
+        endif
+      endcapture
+
+      capture image_wrapper_attributes
+        if block.settings.image_link != blank
+          assign image_caption = block.settings.small_caption | default: block.settings.image.alt
+
+          echo 'href="[[il]]"' | replace: '[[il]]', block.settings.image_link
+          echo ' aria-label="[[ic]]"' | replace: '[[ic]]', image_caption
+        endif
+      endcapture
+
+      capture image_sizes
+        assign image_width = block.settings.image_width | divided_by: 100.0
+        echo '(min-width: 720px) calc(calc(100vw - calc(2 * clamp(18px, 3.3vw, 3.3vw))) / [[col]] * [[iw]]), calc(100vw - calc(2 * 3.3vw))' | replace: '[[col]]', columns | replace: '[[iw]]', image_width
+      endcapture
+    -%}
+
+    <{{ image_wrapper_tag }}
+      class="multi-column__grid-item-image-wrapper"
+      {{ image_wrapper_attributes }}
+    >
+      {%-
+        render 'image',
+        wrapper_class: "multi-column__grid-item-image",
+        image: block.settings.image,
+        sizes: image_sizes,
+        aspect_ratio: block.settings.aspect_ratio,
+        focal_point: block.settings.focal_point,
+        include_placeholder: true
+      -%}
+    </{{ image_wrapper_tag }}>
+
+    {%- unless block.settings.small_caption == blank -%}
+      <figcaption class="multi-column__grid-item-small-caption ff-body fs-body-75">
+        {{- block.settings.small_caption -}}
+      </figcaption>
+    {%- endunless -%}
+  </figure>
+{%- endcapture -%}
+
+<div class="multi-column__grid-item carousel__slide swiper-slide" {{ block.shopify_attributes }}>
+  <div class="multi-column__grid-item-inner">
+    {%- if block.type == 'icon_column' -%}
+      {%- liquid
+        if block.settings.custom_icon_image != blank
+          assign enable_corner_rounding = block.settings.enable_corner_rounding
+        else
+          assign enable_corner_rounding = false
+        endif
+      -%}
+
+      <div
+        class="multi-column__grid-item-icon-wrapper"
+        style="
+          --icon-max-width: {{ block.settings.icon_width }}px;
+          --icon-max-width-mobile: {{ block.settings.icon_width_mobile }}px;
+        "
+        data-enable-icon-corner-rounding="{{ enable_corner_rounding }}"
+      >
+        {%- if block.settings.icon != 'none' and block.settings.custom_icon_image == blank -%}
+          {%- render 'icon-editorial', class: 'multi-column__grid-item-icon', icon: block.settings.icon -%}
+        {%- endif -%}
+
+        {%- if block.settings.custom_icon_image != blank -%}
+          {%- render 'image',
+            wrapper_class: 'multi-column__grid-item-icon',
+            image: block.settings.custom_icon_image,
+            sizes_px: block.settings.icon_width,
+            aspect_ratio: 'natural'
+          -%}
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    {%- if block.type == 'image_column' and block.settings.image_position == 'above_text' -%}
+      {{- image_figure -}}
+    {%- endif -%}
+
+    {%- unless block.settings.accent == blank
+      and block.settings.heading == blank
+      and block.settings.text == blank
+      and block.settings.link_text == blank
+    -%}
+      <div class="multi-column__grid-item-text-container">
+        {%- unless block.settings.accent == blank -%}
+          <p class="multi-column__grid-item-accent fs-accent">
+            {{- block.settings.accent -}}
+          </p>
+        {%- endunless -%}
+
+        {%- unless block.settings.heading == blank -%}
+          <{{ block.settings.heading_tag }}
+            class="multi-column__grid-item-heading ff-heading {{ block.settings.heading_font_class }}"
+          >
+            {{- block.settings.heading -}}
+          </{{ block.settings.heading_tag }}>
+        {%- endunless -%}
+
+        {%- unless block.settings.text == blank -%}
+          <div
+            class="multi-column__grid-item-text ff-body {{ block.settings.text_font_class }} rte"
+            style="--text-max-width: {{ block.settings.text_max_width }}%"
+          >
+            {{- block.settings.text -}}
+          </div>
+        {%- endunless -%}
+
+        {%- render 'button-block',
+          link: block.settings.link,
+          label: block.settings.link_text,
+          button_style: block.settings.button_style,
+          is_small: true,
+          wrapper_class: 'multi-column__grid-item-button'
+        -%}
+      </div>
+    {%- endunless -%}
+
+    {%- if block.type == 'image_column' and block.settings.image_position == 'below_text' -%}
+      {{- image_figure -}}
+    {%- endif -%}
+  </div>
+</div>

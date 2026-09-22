@@ -1,0 +1,102 @@
+{%- doc -%}
+  Renders one slide of the drawer menu's promotional carousel. Trimmed-down
+  sibling of snippets/slideshow-slide.liquid, adapted for a small nav-panel
+  card instead of a full-bleed hero: one caption + one optional link instead
+  of the dual heading/subheading/two-button layout, and it reads block/index
+  values passed in directly rather than section.settings/section.index (this
+  renders inside the header section, not a slideshow section).
+
+  @param {object} block - The block object for the current slide.
+  @param {number} index - The slide index (1-based).
+{%- enddoc -%}
+
+<div
+  class="drawer-menu-promo__slide swiper-slide"
+  data-slide="{{ index }}"
+  data-slide-type="{{ block.type }}"
+  {{ block.shopify_attributes }}
+>
+  <div class="drawer-menu-promo__slide-inner">
+    {%- if block.type == 'promo_carousel_video' -%}
+      {%- comment -%}
+        The video is kept in a <template> and only put into the page when the menu opens
+        (assets/drawer-menu-lazy-video.js), so it is not downloaded on every page load. The still frame
+        shows meanwhile.
+      {%- endcomment -%}
+      <div
+        class="drawer-menu-promo__media"
+        data-lazy-promo-video
+        {% if block.settings.video != blank -%}
+          style="background-image: url('{{ block.settings.video.preview_image | image_url: width: 640 }}'); background-size: cover; background-position: center;"
+        {%- endif %}
+      >
+        <template data-lazy-promo-video-template>
+          {%- render 'background-video',
+            video: block.settings.video,
+            focal_point: 'center',
+            class: 'drawer-menu-promo__video',
+            placeholder_name: 'lifestyle-1'
+          -%}
+        </template>
+      </div>
+    {%- else -%}
+      <div class="drawer-menu-promo__media">
+        {%- if block.settings.image_mobile != blank -%}
+          {%- render 'image',
+            wrapper_class: 'drawer-menu-promo__image drawer-menu-promo__image--mobile',
+            image: block.settings.image_mobile,
+            sizes: '(min-width: 960px) 320px, 100vw',
+            focal_point: block.settings.focal_point,
+            placeholder_name: 'lifestyle-1'
+          -%}
+        {%- endif -%}
+
+        {%- render 'image',
+          wrapper_class: 'drawer-menu-promo__image',
+          image: block.settings.image,
+          sizes: '(min-width: 960px) 320px, 100vw',
+          focal_point: block.settings.focal_point,
+          include_placeholder: true,
+          placeholder_name: 'lifestyle-1'
+        -%}
+      </div>
+    {%- endif -%}
+
+    {%- comment -%}
+      Whole-slide click-through only when there's no separate CTA button
+      (avoids two links doing the same thing / a link nested awkwardly next
+      to another link for the same href).
+    {%- endcomment -%}
+    {%- if block.settings.link != blank and block.settings.link_text == blank -%}
+      <a
+        href="{{ block.settings.link }}"
+        class="drawer-menu-promo__link-overlay"
+        aria-label="{{ block.settings.title | default: block.settings.link }}"
+      ></a>
+    {%- endif -%}
+  </div>
+
+  {%- comment -%}
+    Caption sits below the image now, in normal flow, rather than overlaid
+    on top of it — kept inside .drawer-menu-promo__slide (a sibling of
+    .drawer-menu-promo__slide-inner, not nested in it) so it still travels
+    with its own slide as Swiper pages between them, without being clipped
+    by slide-inner's own overflow:hidden (that's only there to crop the
+    image to the fixed aspect-ratio).
+  {%- endcomment -%}
+  {%- if block.settings.title != blank or block.settings.text != blank or block.settings.link_text != blank -%}
+    <div class="drawer-menu-promo__caption">
+      {%- if block.settings.title != blank -%}
+        <p class="drawer-menu-promo__title">{{ block.settings.title }}</p>
+      {%- endif -%}
+
+      {%- if block.settings.text != blank -%}
+        <p class="drawer-menu-promo__text">{{ block.settings.text }}</p>
+      {%- endif -%}
+
+      {%- if block.settings.link != blank and block.settings.link_text != blank -%}
+        <a href="{{ block.settings.link }}" class="drawer-menu-promo__cta">{{ block.settings.link_text }}</a>
+      {%- endif -%}
+    </div>
+  {%- endif -%}
+</div>

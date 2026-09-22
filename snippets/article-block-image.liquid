@@ -1,0 +1,47 @@
+{%- doc -%}
+  Renders the 'Featured image' block for the article page.
+
+  @param {object} block - The block object.
+  @param {object} forloop - The forloop object for the current loop through the blocks.
+  @param {object} article - The article object.
+{%- enddoc -%}
+
+{%- if article.image != blank -%}
+  {%- liquid
+    if block.settings.image_aspect == 'original'
+      assign placeholder_aspect_ratio = 'square'
+    else
+      assign placeholder_aspect_ratio = 'no-ratio'
+    endif
+  -%}
+
+  <div
+    class="
+      article__block
+      article__image
+      article__image--image-aspect-{{ block.settings.image_aspect }}
+      article__image--width-{{ block.settings.block_width }}
+      article__image--mobile-full-width-{{ block.settings.enable_full_width_on_mobile }}
+      {% if forloop.first -%}
+        article__image--top
+      {%- endif -%}
+    "
+    style="
+      --custom-height: {{ block.settings.desktop_height }}vh;
+      --custom-height-mobile: {{ block.settings.mobile_height }}vh;
+    "
+    {{ block.shopify_attributes }}
+  >
+    <div class="article__image-container">
+      {%- render 'image',
+        wrapper_class: 'article__image-inner',
+        image: article.image,
+        sizes: '100vw',
+        focal_point: block.settings.focal_point,
+        placeholder_natural_fallback_ratio: placeholder_aspect_ratio,
+        animate: true,
+        prioritize_loading: true
+      -%}
+    </div>
+  </div>
+{%- endif -%}

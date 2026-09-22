@@ -1,0 +1,1395 @@
+<!doctype html>
+
+<!--
+  ___                 ___           ___           ___
+       /  /\                     /__/\         /  /\         /  /\
+      /  /:/_                    \  \:\       /  /:/        /  /::\
+     /  /:/ /\  ___     ___       \  \:\     /  /:/        /  /:/\:\
+    /  /:/ /:/ /__/\   /  /\  ___  \  \:\   /  /:/  ___   /  /:/  \:\
+   /__/:/ /:/  \  \:\ /  /:/ /__/\  \__\:\ /__/:/  /  /\ /__/:/ \__\:\
+   \  \:\/:/    \  \:\  /:/  \  \:\ /  /:/ \  \:\ /  /:/ \  \:\ /  /:/
+    \  \::/      \  \:\/:/    \  \:\  /:/   \  \:\  /:/   \  \:\  /:/
+     \  \:\       \  \::/      \  \:\/:/     \  \:\/:/     \  \:\/:/
+      \  \:\       \__\/        \  \::/       \  \::/       \  \::/
+       \__\/                     \__\/         \__\/         \__\/
+
+  --------------------------------------------------------------------
+  #  Stiletto v6.2.0
+  #  Documentation: https://help.fluorescent.co/v/stiletto
+  #  Purchase: https://themes.shopify.com/themes/stiletto/
+  #  A product by Fluorescent: https://fluorescent.co/
+  --------------------------------------------------------------------
+-->
+
+<html
+  class="no-js"
+  lang="{{ request.locale.iso_code }}"
+  style="
+    --announcement-height: 1px;
+    --mobile-sticky-header-height: 0px;
+    --mobile-sticky-announcement-height: 0px;
+  "
+>
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    {% render 'meta-description' %}
+
+    <link rel="canonical" href="{{ canonical_url }}">
+
+    {%- comment -%}
+      Keep thin pages out of the search index: internal search results, collections with no products and
+      default-template pages with no content. They stay reachable and crawlable (follow), they just are not listed.
+    {%- endcomment -%}
+    {%- liquid
+      assign hide_from_search = false
+      if request.page_type == 'search'
+        assign hide_from_search = true
+      elsif request.page_type == 'collection' and collection.products_count == 0
+        assign hide_from_search = true
+      elsif request.page_type == 'page' and page.content == blank and template.suffix == blank
+        assign hide_from_search = true
+      endif
+    -%}
+    {%- if hide_from_search -%}
+      <meta name="robots" content="noindex, follow">
+    {%- endif -%}
+
+    <link rel="preconnect" href="https://cdn.shopify.com" crossorigin>
+
+    {%- if settings.favicon != blank -%}
+      <link rel="icon" href="{{ settings.favicon | image_url: width: 16, height: 16 }}" type="image/png">
+      <link rel="icon" sizes="32x32" href="{{ settings.favicon | image_url: width: 32, height: 32 }}" type="image/png">
+      <link rel="icon" sizes="48x48" href="{{ settings.favicon | image_url: width: 48, height: 48 }}" type="image/png">
+      <link rel="apple-touch-icon" href="{{ settings.favicon | image_url: width: 48, height: 48 }}" type="image/png">
+      <link
+        rel="apple-touch-icon"
+        sizes="152x152"
+        href="{{ settings.favicon | image_url: width: 152, height: 152 }}"
+        type="image/png"
+      >
+      <link
+        rel="apple-touch-icon"
+        sizes="167x167"
+        href="{{ settings.favicon | image_url: width: 167, height: 167 }}"
+        type="image/png"
+      >
+      <link
+        rel="apple-touch-icon"
+        sizes="180x180"
+        href="{{ settings.favicon | image_url: width: 180, height: 180 }}"
+        type="image/png"
+      >
+    {%- endif -%}
+
+    {%- capture seo_title -%}
+      {%- if request.page_type == 'search' and search.performed == true -%}
+        {{ 'search.heading' | t: count: search.results_count }}:
+        {{ 'search.results_with_count' | t: terms: search.terms, count: search.results_count }}
+      {%- else -%}
+        {{ page_title }}
+      {%- endif -%}
+      {%- if current_tags -%}
+        {%- assign meta_tags = current_tags | join: ', ' -%}
+        &ndash; {{ 'general.meta.tags' | t: tags: meta_tags -}}
+      {%- endif -%}
+      {%- if current_page != 1 -%}
+        &ndash; {{ 'general.meta.page' | t: page: current_page }}
+      {%- endif -%}
+      {%- assign escaped_page_title = page_title | escape -%}
+      {%- unless escaped_page_title contains shop.name -%}
+        &ndash; {{ shop.name }}
+      {%- endunless -%}
+    {%- endcapture -%}
+    <title>{{ seo_title | strip }}</title>
+
+    {% render 'social-meta-tags' %}
+    {% render 'structured-data' %}
+
+    {% render 'theme-setup' %}
+    {% render 'theme-setting-vars' %}
+    {%- render 'theme-globals' -%}
+    {%- render 'liorme-typography' -%}
+
+    {{ content_for_header }}
+
+    {%- if template.name == 'index' -%}
+      <style>
+        /* "Page turn" cover effect used to be built with position:sticky,
+           which turned out to have a confirmed Chrome bug (reproduced in
+           total isolation, unrelated to this page): once you scroll past a
+           sticky element, Chrome can keep reporting it as "stuck" forever
+           instead of releasing it, so every previously-passed section ends
+           up sitting at the same on-screen spot as the current one, hidden
+           only by z-index. Going backward, the destination section was
+           therefore already sitting fully in place from frame one — the
+           z-index swap made it appear instantly instead of sliding in.
+           Replaced with a plain, non-sticky stacking context (z-index still
+           needs *some* position other than static to take effect) — the
+           actual "cover" motion is now driven directly by the snap script
+           itself (see animateScrollTo's freeze transform below), not by any
+           CSS positioning trick, so it can't get stuck either way. */
+        body.template-index #main > .shopify-section {
+          position: relative;
+        }
+
+        /* Slightly slower than the theme default (500ms/67ms) so the
+           heading/text fade-up reads as part of the same unhurried "page
+           turn" pace as the section-cover transition, instead of finishing
+           well before it. Scoped to the home page only — other pages keep
+           the theme's normal animation timing. */
+        body.template-index {
+          --duration-normal: 700ms;
+          --delay-normal: 90ms;
+        }
+
+        /* Hides the visible scrollbar track/thumb on the home page only —
+           matches the reference's app-like slideshow feel. Scroll itself
+           still works exactly as before (wheel, touch, keyboard, and the
+           snap script's own scrollTo calls); this only removes the
+           rendered UI chrome, which also means dragging the scrollbar
+           thumb specifically is no longer possible, same as the reference. */
+        html:has(body.template-index) {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        html:has(body.template-index)::-webkit-scrollbar {
+          display: none;
+        }
+
+        /* While a section turn is being dragged with the mouse: no text selection, closed-hand cursor. The
+           class is on <html> only during the drag. Images and links are not draggable on the home, so the
+           browser's own drag ghost never takes the gesture over. */
+        html.home-dragging,
+        html.home-dragging * {
+          -webkit-user-select: none !important;
+          user-select: none !important;
+          cursor: grabbing !important;
+        }
+        body.template-index img,
+        body.template-index a {
+          -webkit-user-drag: none;
+        }
+
+        /* Section indicator (created by the home script): number, a tick and a hairline at the bottom edge.
+           Its colour follows the section under it (white over photos). Above the sections, below the header. */
+        .home-indicator {
+          position: fixed;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 499;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding-bottom: env(safe-area-inset-bottom, 0px);
+          color: #111111;
+          pointer-events: none;
+          transition: opacity 0.3s ease, color 0.3s ease;
+        }
+        .home-indicator--light {
+          color: #ffffff;
+        }
+        .home-indicator.is-hidden,
+        body[data-fluorescent-overlay-open="true"] .home-indicator {
+          opacity: 0;
+        }
+        .home-indicator__count {
+          display: block;
+          font-family: var(--font-body);
+          font-size: 11px;
+          font-weight: 400;
+          line-height: 1;
+          letter-spacing: 0.06em;
+          font-variant-numeric: tabular-nums;
+        }
+        .home-indicator__tick {
+          display: block;
+          width: 1px;
+          height: 14px;
+          margin-top: 7px;
+          background: currentColor;
+        }
+        .home-indicator::after {
+          content: "";
+          display: block;
+          width: 100%;
+          height: 1px;
+          background: currentColor;
+        }
+
+        /* Scroll-UP page turn only (animateReverseCover adds/removes
+           .snap-reverse on <html>). The header's upper row eases its
+           margin-bottom over 0.2s (theme.css) to smooth the sticky flip
+           while scrolling normally, where the sticky top offset changes a
+           pixel at a time. A reverse page turn moves the real scroll to the
+           top in ONE frame instead, so that offset (-12px -> 0) flips
+           instantly while the margin still glides: the icons dropped 12px
+           and eased back up over ~150ms. With the transition off for the
+           duration of the turn both change in the same frame and cancel
+           out. */
+        html.snap-reverse header[data-navigation-position="left"][data-logo-position="center"] .header__row.header__row-desktop.upper {
+          transition: none !important;
+        }
+      </style>
+      <script>
+        /* Home page section snap — hand-rolled instead of native CSS
+           scroll-snap. Native "mandatory" reliably locked the page unable
+           to scroll past the first section (confirmed even after simplifying
+           to two plain, non-sticky 100vh sections, so it isn't just the old
+           sticky/curtain setup at fault); "proximity" didn't lock but felt
+           weak/inconsistent.
+
+           This intercepts wheel/touch input directly (preventDefault, so native
+           scrolling never runs at all) instead of letting the browser scroll
+           freely and correcting afterwards — a strong flick under the old
+           "correct after the fact" approach could carry native scroll across
+           more than one section before the correction even ran. Intercepting
+           the gesture up front guarantees exactly one section per gesture,
+           every time, regardless of how hard or fast it was.
+
+           Runs on every input type (wheel, trackpad, touch) and on every
+           viewport width — an earlier version gated touch behind a desktop
+           media query, which meant phones got plain free scroll with no
+           snap at all. prefers-reduced-motion no longer disables the feature
+           outright either: sections still land exactly on-screen, just via
+           an instant jump instead of the animated glide, since a "half
+           landed" section is a worse experience than a shorter animation. */
+        (function () {
+          function init() {
+            var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            var sections = Array.prototype.slice.call(document.querySelectorAll('#main > .shopify-section'));
+
+            var DURATION_MS = 580; // full, deliberate section-to-section travel time — slow enough to read the incoming section sliding up and covering the previous one as an intentional "page turn," not so slow it drags. Raised twice on request for a smoother, less rushed feel (420 -> 500 -> 580); revisit if this starts reading as sluggish the way 560 once did at a slightly shorter length.
+            // A trackpad flick keeps emitting decaying "momentum" wheel events
+            // for a while after the fingers actually lift — well past when the
+            // animation itself finishes. If the input lock released the
+            // moment the animation ended, a strong flick's leftover momentum
+            // ticks would arrive as a "new" gesture and fire a second,
+            // unintended jump. COOLDOWN_MS is measured from the START of the
+            // gesture (not the animation's end) and is deliberately longer
+            // than the animation so a comfortable quiet buffer always follows
+            // landing before new input is accepted again.
+            var COOLDOWN_MS = 730;
+            // Keyboard gets its own, much shorter cooldown: a keydown is one
+            // discrete event with no trailing "momentum" to guard against
+            // (unlike a wheel/trackpad gesture), so gating it behind the same
+            // long buffer meant for that just made repeated ArrowDown presses
+            // feel unresponsive — a press landing inside that window was
+            // silently dropped, needing 2-3 presses to actually move. This
+            // only needs to outlast the animation itself, plus a small buffer
+            // so a fast key-repeat can't fire a second jump mid-animation.
+            var KEYBOARD_COOLDOWN_MS = DURATION_MS + 90;
+            var TOUCH_THRESHOLD = 40; // px of vertical drag before a touchmove counts as "swipe to the next section"
+
+            var locked = false;
+            var lockTimeout = null;
+            var raf = null;
+            var currentIndex = 0;
+            // A keydown that arrives while locked (an animation is still
+            // playing) used to just be silently dropped — the exact "I
+            // pressed ArrowDown and nothing happened, had to press it again"
+            // complaint this exists to fix. Wheel/touch still drop input
+            // outright while locked (that lock is there specifically to
+            // absorb decaying trackpad momentum, which must NOT queue up
+            // and fire again), but a keydown is a single deliberate action
+            // with nothing to protect against — remembering just the LATEST
+            // one (not a growing queue, so mashing the key repeatedly can't
+            // queue up a runaway string of jumps) and firing it the instant
+            // the lock clears means even a press that lands mid-animation
+            // still takes effect on its own, with no re-press needed.
+            var pendingKeyDir = null;
+
+            // Every full-screen drawer/modal in this theme (the sandwich
+            // menu, quick-search, cart, filters, quick-view, etc.) sets this
+            // attribute while open, regardless of which one it is — these
+            // wheel/touch/keydown listeners live on window, not scoped to
+            // any particular element, so without this check, scrolling or
+            // swiping while one of those is open still drove THIS page's own
+            // section-to-section snap underneath it: the transform-based
+            // cover effect (see animateScrollTo/animateReverseCover) doesn't
+            // care whether the visible drawer is dimming or covering it, so
+            // whatever section got scrolled to would flash through.
+            function isOverlayOpen() {
+              return document.body.getAttribute('data-fluorescent-overlay-open') === 'true';
+            }
+
+            // A horizontally-scrollable component nested inside one of
+            // these full-height sections (e.g. the collections slider on
+            // mobile) needs native touch-scroll for its own left/right
+            // swipe. TOUCH_THRESHOLD (below) already ignores small vertical
+            // wobble during a swipe, but a real finger dragging mostly
+            // sideways still often drifts past it — without this check
+            // that wobble got read as "swipe to next/prev section" and
+            // hijacked the gesture (e.preventDefault(), goTo()) right out
+            // from under the component's own horizontal scroll, killing it
+            // mid-drag. Elements opt in via [data-horizontal-scroll] rather
+            // than this file naming any component's class directly.
+            function isInsideHorizontalScroll(target) {
+              return !!(target && target.closest && target.closest('[data-horizontal-scroll]'));
+            }
+
+            // The section being scrolled TO always needs the highest
+            // z-index so it covers whatever was on screen before it, in
+            // EITHER scroll direction. A one-time z-index assigned by
+            // document order only covers the forward direction correctly —
+            // scrolling back to an earlier section left it with a LOWER
+            // z-index than the one ahead of it, so it could never re-cover
+            // that later section. zCounter always holds the highest z-index
+            // handed out so far; every navigation bumps it and gives it to
+            // the section being entered, regardless of direction.
+            var zCounter = sections.length;
+            sections.forEach(function (el, i) {
+              el.style.zIndex = i + 1;
+            });
+
+            // Shopify's theme editor re-renders sections over AJAX when the
+            // merchant adds/removes/reorders one on this page, which wouldn't
+            // touch this already-captured list — refresh it on that event so a
+            // section edited live doesn't leave the snap targeting stale tops.
+            document.addEventListener('shopify:section:load', refreshSections);
+            document.addEventListener('shopify:section:unload', refreshSections);
+            function refreshSections() {
+              sections = Array.prototype.slice.call(document.querySelectorAll('#main > .shopify-section'));
+              zCounter = sections.length;
+              sections.forEach(function (el, i) {
+                el.style.zIndex = i + 1;
+              });
+              refreshStopsCache();
+              syncCurrentIndex();
+            }
+
+            // Returns one stop per screen-worth of content, not one per
+            // section — a section that renders taller than one viewport
+            // (e.g. image-hero-split stacks its two images full-height on
+            // mobile, so the section itself is ~2 screens tall there) is
+            // split into that many evenly-spaced stops, so a swipe lands on
+            // each stacked image in turn instead of jumping straight over
+            // the second one to whatever comes after the section. Each stop
+            // also carries the section element it belongs to, so a jump can
+            // bump that section's z-index (see zCounter above) regardless of
+            // which of its stops was the actual target.
+            //
+            // computeStopsFresh() does the real offsetTop/offsetHeight
+            // reads; stops() itself just returns a cache of that, refreshed
+            // by refreshStopsCache() below. This used to read live on every
+            // call ("no reason not to stay self-correcting against a late-
+            // loading image" — true, but that only needs checking once
+            // things settle, not on every call) — except every call
+            // included onWheel and onTouchMove firing on every single
+            // native wheel/touchmove event during an ordinary scroll
+            // gesture, each one forcing a fresh synchronous layout read of
+            // EVERY section, with no throttling at all. On this page's
+            // handful of full-bleed image sections that was enough
+            // continuous main-thread work during a fast scroll to visibly
+            // tear/glitch the screen. The one place that still legitimately
+            // wants a guaranteed-fresh read (the "did a late-loading image
+            // shift the layout while that animation was mid-flight"
+            // correction once a snap-jump lands) calls
+            // refreshStopsCache() right before reading instead of trusting
+            // a value that might be a frame stale.
+            // For an overtall section split into multiple stops (see count
+            // below), a plain stop-to-stop move used to fall back to a bare
+            // scroll with no cover/freeze effect at all — goTo()'s
+            // crossesSection check compares outgoingEl !== enteringEl, and
+            // every stop of the SAME section shared that section as its
+            // el, so consecutive stops there could never "cross" anything.
+            // Reported directly: image-hero-split's two stacked mobile
+            // images (a real case of this) read as "passing straight
+            // through" with none of the page-turn feel every other jump
+            // on this page has. Finds whichever descendant occupies that
+            // ONE stop's own vertical slice — geometrically, not by name,
+            // so this isn't tied to image-hero-split's own class names and
+            // keeps working for any future section built the same way.
+            //
+            // Each stop below carries BOTH this descendant (el) AND its
+            // top-level .shopify-section (sectionEl), because they answer
+            // two different questions and using the wrong one for either
+            // is a real, confirmed bug, not just a style choice:
+            //   - Moving between two stops of the SAME section (this one
+            //     was built for): el is the right thing to bump/freeze —
+            //     both stops' descendants already share one stacking
+            //     context (siblings inside the section), so their z-index
+            //     is directly comparable to each other.
+            //   - Moving between a stop here and a stop in a DIFFERENT
+            //     section (an ordinary cross-section jump that happens to
+            //     land on stop 0 of an overtall section, or leave from its
+            //     last stop): the section itself has to be what's bumped/
+            //     frozen. Bumping just the descendant's z-index doesn't
+            //     escape its own section's stacking context — the section
+            //     element itself was untouched, so it stayed sitting
+            //     behind whatever the outgoing section's own z-index
+            //     already was, and the "entering" descendant's higher
+            //     z-index only won against ITS OWN siblings, not the
+            //     actual section it needed to cover. Confirmed live: the
+            //     slider section stayed visible on top through the entire
+            //     transition into this one.
+            function findStopElement(sectionEl, index, vh, sectionTop) {
+              var targetTop = sectionTop + index * vh;
+              var candidates = sectionEl.querySelectorAll("*");
+              for (var i = 0; i < candidates.length; i++) {
+                var node = candidates[i];
+                var rect = node.getBoundingClientRect();
+                if (Math.abs(rect.height - vh) <= 2 && Math.abs(rect.top + window.scrollY - targetTop) <= 2) {
+                  return node;
+                }
+              }
+              return null;
+            }
+            function computeStopsFresh() {
+              var vh = window.innerHeight;
+              var out = [];
+              sections.forEach(function (el) {
+                // Read each section's own transparent-header opt-in(s)
+                // here — once per cache refresh — instead of querying for
+                // it from inside the scroll handler on every frame.
+                var flagEl = el.querySelector('[data-transparent-header]');
+                var transparent = !!(flagEl && flagEl.getAttribute('data-transparent-header') === 'true');
+                var dark = !!(flagEl && flagEl.getAttribute('data-transparent-header-dark') === 'true');
+                var count = Math.max(1, Math.round(el.offsetHeight / vh));
+                var sectionTop = el.offsetTop;
+                for (var i = 0; i < count; i++) {
+                  var stopEl = el;
+                  if (count > 1) {
+                    var found = findStopElement(el, i, vh, sectionTop);
+                    if (found) stopEl = found;
+                  }
+                  out.push({ top: sectionTop + i * vh, el: stopEl, sectionEl: el, transparent: transparent, dark: dark });
+                }
+              });
+
+              // One more stop for the footer's own full reveal (position:
+              // sticky; top: 100vh in its CSS) — without this, crossing
+              // from the last real section on into the footer had no snap
+              // target at all, so it just got handed off to raw, unassisted
+              // native scroll: no eased motion, none of the "page turn"
+              // feel every other transition on this page has.
+              //
+              // el is the sticky <footer>.footer__parent wrapper itself
+              // (a real sibling of #main, not one of the .shopify-section
+              // children walked above) — NOT null. It used to be null on
+              // the theory that the footer's own sticky positioning
+              // already provides the "cover" visual for free, so goTo()
+              // wouldn't need to freeze/z-index-bump anything for it. That
+              // was wrong in practice: without a z-index bump, the footer
+              // sits at a lower stacking order than #main (see #main's own
+              // z-index in theme.css) and — worse — freezing the OUTGOING
+              // section while entering it (which every other crossing
+              // does) makes that frozen section paint as if it still fills
+              // the whole viewport for the entire animation, since a
+              // transform doesn't change what a transform doesn't move
+              // out of the way. With nothing else stacked above it, the
+              // footer stayed completely hidden behind that frozen section
+              // until the animation's very last frame, when it popped into
+              // place all at once — the "instant/direct" jump this was
+              // reported as, in both directions. Giving it a real el here
+              // lets it go through the exact same forward (z-index bump,
+              // no freeze — its own sticky position already slides it into
+              // view over the frozen outgoing section once bumped above
+              // it) and backward (reverse-cover, retreating the same way
+              // every other backward crossing does) paths as any other
+              // section, with no special-casing needed in goTo() at all.
+              //
+              // Only added when the footer actually needs its own
+              // dedicated scroll room beyond the last section's stop — if
+              // it doesn't (a very short footer), the last section's own
+              // stop already sits at effectively the same position, and
+              // skipping the duplicate stop keeps that boundary case
+              // simple instead of adding a stop 1-2px away from the one
+              // right before it. (One stop regardless of the footer's own
+              // height, even if it's taller than one screen — the footer
+              // isn't split into multiple stops the way an overtall
+              // section is above.)
+              // The footer has its own "Header transparente sobre esta
+              // sección"/"Logo negro" opt-in too, same as every other
+              // section here — but the flag lives on a DIV nested inside
+              // this <footer> wrapper (footer-group's own section markup),
+              // not on the wrapper itself, so it still needs its own
+              // explicit lookup rather than reusing footerStickyEl below.
+              var footerStickyEl = document.querySelector('.shopify-section.footer__parent');
+              var footerFlagEl = document.querySelector('[data-section-type="footer"]');
+              var footerTransparent = !!(footerFlagEl && footerFlagEl.getAttribute('data-transparent-header') === 'true');
+              var footerDark = !!(footerFlagEl && footerFlagEl.getAttribute('data-transparent-header-dark') === 'true');
+              var maxScrollY = document.documentElement.scrollHeight - vh;
+              if (out.length === 0 || maxScrollY > out[out.length - 1].top + 2) {
+                out.push({ top: maxScrollY, el: footerStickyEl, sectionEl: footerStickyEl, transparent: footerTransparent, dark: footerDark });
+              }
+              return out;
+            }
+
+            var cachedStops = [];
+            function refreshStopsCache() {
+              cachedStops = computeStopsFresh();
+            }
+            function stops() {
+              return cachedStops;
+            }
+
+            function sectionTops() {
+              return stops().map(function (s) { return s.top; });
+            }
+
+            function syncCurrentIndex() {
+              var tops = sectionTops();
+              var y = window.scrollY;
+              var idx = 0;
+              for (var i = 0; i < tops.length; i++) {
+                if (tops[i] <= y + 1) idx = i;
+              }
+              currentIndex = idx;
+            }
+            refreshStopsCache();
+            syncCurrentIndex();
+            window.addEventListener('resize', function () {
+              refreshStopsCache();
+              syncCurrentIndex();
+            });
+            // Late-loading images (or fonts) can still change section
+            // heights after this script first runs — one more refresh once
+            // everything has actually finished loading covers that without
+            // needing to keep re-measuring on every scroll/wheel event.
+            window.addEventListener('load', refreshStopsCache);
+
+            // Per-section transparent header: each section on this page
+            // renders its own data-transparent-header="true"/"false"
+            // attribute (from that section's own "Header transparente
+            // sobre esta sección" setting). Whichever section currently
+            // fills the top of the viewport decides the header's
+            // transparency, so this reads scroll position directly instead
+            // of piggybacking on currentIndex/goTo — it needs to stay
+            // correct during raw native scroll (inside an overtall
+            // section, or past the last stop) just as much as during an
+            // animated snap jump, and a plain scroll listener covers both
+            // without caring which one is currently happening. stops() is
+            // the cached version (see above), so this reads it as often as
+            // it likes without forcing layout.
+            // Deliberately NOT touching body's own "header-transparent"
+            // class from this feature — that one is set once, statically,
+            // by header.liquid's inline script from the template-level
+            // settings, and the hero-logo-scale feature (theme.js) reads
+            // it exactly once at load to decide whether to activate at
+            // all; the CSS for the big hero logo's collapse/expand is
+            // ALSO scoped under body.header-transparent staying present
+            // for the whole page. Toggling it off mid-scroll (an earlier
+            // version of this code) silently broke that unrelated
+            // feature's CSS scoping, leaving both the collapsed and
+            // expanded logo visible at once — this only ever drives
+            // header--force-transparent/header--dark-on-transparent below.
+            //
+            // The header's own CSS normally forces a solid background
+            // once .is-sticky kicks in (a few hundred px of scroll — see
+            // the IntersectionObserver in theme.js), regardless of
+            // header-transparent, so a section deep in the page opting
+            // into transparency would otherwise never actually show it.
+            // header--force-transparent is the escape hatch: every one
+            // of those `:not(.is-sticky)` conditions in theme.css was
+            // widened to `:is(:not(.is-sticky), .header--force-transparent)`,
+            // so this class makes a section's own opt-in win even while
+            // stuck, without touching the default (still solid-when-
+            // stuck) behavior for every section that hasn't opted in.
+            // header--dark-on-transparent is the equivalent for a
+            // section's "Logo negro" opt-in.
+            //
+            // headerEl is looked up once (not every scroll frame), and
+            // the two classList.toggle calls are skipped entirely once
+            // neither value has actually changed since the last frame —
+            // during ordinary scrolling, the overwhelming majority of
+            // frames land inside the SAME section as the frame before,
+            // so this makes those frames genuinely free instead of
+            // repeating the same DOM writes/style recalculation on every
+            // single one.
+            var transparentHeaderTicking = false;
+            var transparentHeaderEl = document.querySelector('header[data-section-type="header"]');
+            var lastAppliedTransparent = null;
+            var lastAppliedDark = null;
+            function applyTransparentHeaderForScroll() {
+              transparentHeaderTicking = false;
+              if (!transparentHeaderEl) return;
+              // While any drawer/modal (search, menu, cart) has body scroll
+              // locked, body-scroll-lock's position:fixed technique makes
+              // window.scrollY read 0 regardless of the real scroll
+              // position — a stray resize/scroll event firing during that
+              // window (confirmed to happen: e.g. the scrollbar disappearing
+              // when scroll-lock engages) would otherwise misread this as
+              // "at the very top of the page" and incorrectly strip
+              // header--force-transparent for a section deep in the page,
+              // and that wrong state then sticks (see lastAppliedTransparent
+              // memoization below) until the next real scroll. Skipping
+              // entirely here — rather than trying to correct for it — is
+              // safe: no genuine page scrolling can happen while locked
+              // anyway, so there's nothing real to react to until it's
+              // lifted. Same root cause as the analogous hero-logo-collapse
+              // fix elsewhere in this theme.
+              if (document.body.classList.contains('scroll-lock')) return;
+              var currentStops = stops();
+              // During a reverse cover (see animateReverseCover) the real
+              // scroll is already at the destination while the screen still
+              // shows the section being retreated from — read the VISUAL
+              // position instead so this flips with what's actually on
+              // screen, not a frame-0 jump to the destination.
+              var y = window.__snapVisualY != null ? window.__snapVisualY : window.scrollY;
+              var current = null;
+              for (var i = 0; i < currentStops.length; i++) {
+                if (currentStops[i].top <= y + 1) current = currentStops[i];
+              }
+              var shouldBeTransparent = !!(current && current.transparent);
+              var shouldBeDark = shouldBeTransparent && !!(current && current.dark);
+              if (shouldBeTransparent === lastAppliedTransparent && shouldBeDark === lastAppliedDark) return;
+              lastAppliedTransparent = shouldBeTransparent;
+              lastAppliedDark = shouldBeDark;
+              transparentHeaderEl.classList.toggle('header--force-transparent', shouldBeTransparent);
+              transparentHeaderEl.classList.toggle('header--dark-on-transparent', shouldBeDark);
+            }
+            function onScrollForTransparentHeader() {
+              if (transparentHeaderTicking) return;
+              transparentHeaderTicking = true;
+              requestAnimationFrame(applyTransparentHeaderForScroll);
+            }
+            applyTransparentHeaderForScroll();
+            window.addEventListener('scroll', onScrollForTransparentHeader, { passive: true });
+            window.addEventListener('resize', onScrollForTransparentHeader);
+            // Fired once per animation frame by animateReverseCover (already
+            // inside a rAF callback, so applied directly — no extra rAF
+            // hop, which would leave the header a frame behind the motion).
+            window.addEventListener('snap:visual-scroll', applyTransparentHeaderForScroll);
+
+            // Fast-start, gentle-finish — reads as a committed "snap" rather
+            // than the symmetric ease-in-out's soft, undecided-feeling ramp up.
+            function easeOutCubic(t) {
+              return 1 - Math.pow(1 - t, 3);
+            }
+
+            // freezeEl (optional): the section being left behind when a
+            // gesture crosses into a DIFFERENT section — real scrolling
+            // moves everything at the same rate, which by itself just
+            // looks like a filmstrip sliding past. To read as one screen
+            // being covered by the next instead, freezeEl gets a
+            // counter-transform equal to however far the real scroll has
+            // moved so far, canceling its own on-screen movement out so it
+            // visually stays put while the entering section (moving
+            // normally with real scroll, no transform needed) slides over
+            // it. transform doesn't affect layout, so every other
+            // section's offsetTop-based geometry stays exactly as reliable
+            // as it was with no cover effect at all.
+            // Scroll-driven header state (heroLogoScale() and the sticky flag
+            // in theme.js, applyTransparentHeaderForScroll above) follows
+            // window.__snapVisualY while it's set, window.scrollY otherwise.
+            // Only animateReverseCover sets it: its real scroll jumps to the
+            // destination in one frame, so without this the header snapped
+            // to its "top of page" state (logo 150 -> 400px, +32px tall,
+            // colors flipped) while the outgoing section was still covering
+            // the screen for another ~580ms. Forward gestures animate the
+            // real scroll, so they never needed it.
+            function setSnapVisualY(y) {
+              window.__snapVisualY = y;
+              window.dispatchEvent(new Event('snap:visual-scroll'));
+            }
+
+            function animateScrollTo(target, freezeEl, onDone) {
+              if (raf) cancelAnimationFrame(raf);
+              // a reverse cover cut short by a new gesture must not leave
+              // the header pinned to its stale visual position
+              window.__snapVisualY = null;
+              document.documentElement.classList.remove('snap-reverse');
+
+              if (reduceMotion) {
+                window.scrollTo(0, target);
+                if (freezeEl) freezeEl.style.transform = '';
+                onDone();
+                return;
+              }
+
+              var startY = window.scrollY;
+              var distance = target - startY;
+              var startTime = null;
+
+              // Same GPU-layer-promotion hint as animateReverseCover below,
+              // applied here too — this direction was missing it, animating
+              // freezeEl's transform every frame without it while a profiler
+              // trace showed real ~100ms+ main-thread stalls (ScrollLayer/
+              // GPUTask dominated) during this exact animation on this
+              // page's full-viewport, image-heavy sections. Forward-only
+              // testing after the reverse-cover fix missed that this
+              // direction had the identical gap.
+              if (freezeEl) freezeEl.style.willChange = 'transform';
+
+              function step(now) {
+                if (startTime === null) startTime = now;
+                var elapsed = now - startTime;
+                var t = Math.min(elapsed / DURATION_MS, 1);
+                var currentY = startY + distance * easeOutCubic(t);
+                window.scrollTo(0, currentY);
+                if (freezeEl) freezeEl.style.transform = 'translateY(' + (currentY - startY) + 'px)';
+                if (t < 1) {
+                  raf = requestAnimationFrame(step);
+                } else {
+                  raf = null;
+                  if (freezeEl) {
+                    freezeEl.style.transform = '';
+                    freezeEl.style.willChange = '';
+                  }
+                  onDone();
+                }
+              }
+              raf = requestAnimationFrame(step);
+            }
+
+            // Backward's mirror of the forward cover — not the same motion
+            // reused in the opposite direction, but literally the forward
+            // entrance played in reverse. Forward pushes a new section on
+            // top (it slides in, the one underneath stays put). Reverse
+            // pops that top section back off: the real scroll position
+            // jumps straight to the target instantly (the section being
+            // returned to needs no animation of its own — it was sitting
+            // there the whole time, just hidden underneath, so it's simply
+            // revealed), while outgoingEl is given a compensating
+            // transform so it still LOOKS like it hasn't moved yet, then
+            // that compensation is eased out to 0 over the same duration —
+            // visually, outgoingEl retreats back down (or up) the exact
+            // way it originally arrived, uncovering what was underneath.
+            function animateReverseCover(target, outgoingEl, onDone) {
+              if (raf) cancelAnimationFrame(raf);
+              window.__snapVisualY = null;
+
+              if (reduceMotion) {
+                window.scrollTo(0, target);
+                outgoingEl.style.transform = '';
+                onDone();
+                return;
+              }
+
+              // Document-relative, not offsetTop (which is relative to
+              // outgoingEl's own offsetParent — correct by coincidence for
+              // a top-level section, since its offsetParent is always
+              // `main`, but wrong for a sub-item stop inside a multi-stop
+              // section, whose offsetParent is a local wrapper nested
+              // inside that section).
+              var outgoingStaticTop = outgoingEl.getBoundingClientRect().top + window.scrollY;
+              // Set BEFORE the scrollTo below: the real scroll event it
+              // triggers must already find the visual position (= where the
+              // viewport visually still sits, the outgoing section's own
+              // top) instead of the destination.
+              document.documentElement.classList.add('snap-reverse');
+              window.__snapVisualY = outgoingStaticTop;
+              window.scrollTo(0, target);
+              // Same tick as the scrollTo: lets the header re-apply anything
+              // that must change WITH the real scroll (its sticky flag) in
+              // the same frame, before the first paint, instead of a few
+              // frames later via IntersectionObserver.
+              window.dispatchEvent(new Event('snap:visual-scroll'));
+              // Where outgoingEl will naturally sit on-screen, unassisted,
+              // now that real scroll already reflects the new position.
+              var restingOffset = outgoingStaticTop - target;
+              // Set the t=0 compensating transform synchronously, in the
+              // same tick as the scrollTo above — the step() loop below
+              // only starts painting it from inside requestAnimationFrame,
+              // which runs strictly after the browser's next paint. Without
+              // this line, that left a real gap where a frame could get
+              // painted with the real scroll already jumped but the
+              // compensation not applied yet: outgoingEl briefly rendered
+              // at its raw, uncovered resting position — often scrolled
+              // mostly out of view — instead of still covering the
+              // viewport like it's supposed to for the entire gesture.
+              // That flash is what showed up as a stripe/ghost artifact
+              // repeated on every section crossed scrolling upward (the
+              // only direction that uses this reverse-cover path at all).
+              // Promotes outgoingEl to its own GPU compositing layer up
+              // front, for the whole animation, instead of the browser
+              // deciding that mid-gesture — on a full-viewport, image-heavy
+              // section, animating transform without this hint can still
+              // mean repainting/re-rastering that content on every frame
+              // rather than just recompositing an existing layer, which is
+              // exactly the kind of sustained per-frame cost that shows up
+              // on screen as tearing over the animation's whole duration,
+              // not just its first frame.
+              outgoingEl.style.willChange = 'transform';
+              outgoingEl.style.transform = 'translateY(' + -restingOffset + 'px)';
+              var startTime = null;
+
+              function step(now) {
+                if (startTime === null) startTime = now;
+                var elapsed = now - startTime;
+                var t = Math.min(elapsed / DURATION_MS, 1);
+                var eased = easeOutCubic(t);
+                outgoingEl.style.transform = 'translateY(' + (-restingOffset * (1 - eased)) + 'px)';
+                // Same easing as the transform above, so the header's
+                // scroll-driven state tracks exactly how far the outgoing
+                // section has visually retreated.
+                if (t < 1) {
+                  setSnapVisualY(target + restingOffset * (1 - eased));
+                  raf = requestAnimationFrame(step);
+                } else {
+                  raf = null;
+                  outgoingEl.style.transform = '';
+                  outgoingEl.style.willChange = '';
+                  document.documentElement.classList.remove('snap-reverse');
+                  setSnapVisualY(null);
+                  onDone();
+                }
+              }
+              raf = requestAnimationFrame(step);
+            }
+
+            // The lock is released by a single timer set for COOLDOWN_MS from
+            // the moment the gesture started — not chained off the
+            // animation's own completion — so wheel/touchmove stay actively
+            // preventDefault()-ed for a fixed, predictable window no matter
+            // how the animation itself resolves. That also guarantees the
+            // lock always clears on its own (nothing can leave scrolling
+            // permanently frozen, the exact "mandatory" bug this approach
+            // exists to avoid repeating).
+            function releaseLock() {
+              clearTimeout(lockTimeout);
+              locked = false;
+              if (pendingKeyDir !== null) {
+                var dir = pendingKeyDir;
+                pendingKeyDir = null;
+                syncCurrentIndex();
+                var target = targetIndexForDirection(dir, sectionTops());
+                if (target !== null) {
+                  goTo(target, KEYBOARD_COOLDOWN_MS);
+                }
+              }
+            }
+
+            function goTo(index, cooldownMs) {
+              var allStops = stops();
+              index = Math.max(0, Math.min(allStops.length - 1, index));
+              var target = allStops[index] ? allStops[index].top : 0;
+
+              if (index === currentIndex && Math.abs(window.scrollY - target) < 2) return;
+
+              // The "freeze one side, let the other move naturally" cover
+              // effect always needs outgoingEl/enteringEl to be two things
+              // that are ACTUALLY compared in the same stacking context —
+              // see the big comment on stops()/computeStopsFresh() above
+              // for why that's the stop's own descendant (el) when both
+              // stops share a section (image-hero-split's two stacked
+              // mobile images, e.g.), but has to be the top-level section
+              // itself (sectionEl) the moment either side is a genuinely
+              // different section — bumping just a descendant's z-index
+              // there doesn't escape its own section's stacking context,
+              // so the section itself stays sitting wherever it already
+              // was relative to the one being left.
+              var goingForward = index > currentIndex;
+              var outgoingStop = allStops[currentIndex];
+              var enteringStop = allStops[index];
+              var sameSection = !!(outgoingStop && enteringStop && outgoingStop.sectionEl && outgoingStop.sectionEl === enteringStop.sectionEl);
+              var outgoingEl = outgoingStop && (sameSection ? outgoingStop.el : outgoingStop.sectionEl);
+              var enteringEl = enteringStop && (sameSection ? enteringStop.el : enteringStop.sectionEl);
+              var crossesSection = outgoingEl && enteringEl && outgoingEl !== enteringEl;
+
+              currentIndex = index;
+
+              // Forward: entering section pushes ON TOP of the outgoing one
+              // (bumped to the highest z-index yet) and does the moving —
+              // it slides up from below and covers the outgoing section,
+              // which is frozen in place underneath. Backward plays that
+              // same motion in reverse instead of repeating it forward: the
+              // OUTGOING section (the one on top, already sitting at a
+              // higher z-index from when it was forward-entered) is what
+              // moves — it retreats back the way it came, un-covering the
+              // entering section, which needs no animation of its own since
+              // it was sitting there the whole time, just hidden
+              // underneath. Nothing needs bumping for backward moves:
+              // whichever section is current always already holds a higher
+              // z-index than its immediate neighbor, precisely because
+              // getting there forward is the only thing that ever raises it.
+              var useReverseCover = false;
+              if (crossesSection) {
+                if (goingForward) {
+                  zCounter += 1;
+                  enteringEl.style.zIndex = zCounter;
+                } else {
+                  useReverseCover = true;
+                }
+              }
+              locked = true;
+              clearTimeout(lockTimeout);
+              lockTimeout = setTimeout(releaseLock, cooldownMs || COOLDOWN_MS);
+
+              var onLanded = function () {
+                // Final authoritative correction: forces the stops cache
+                // fresh and re-reads it, instead of trusting the value
+                // captured when the gesture started, so a layout shift
+                // mid-animation (a late-loading asset changing page height
+                // above this point) can't leave the landing a few pixels
+                // short of a clean boundary. This one call is deliberately
+                // NOT throttled/cached like every other read of stops() —
+                // it only runs once per completed snap-jump, not once per
+                // scroll/wheel event, so it was never the source of the
+                // per-event jank the cache above exists to avoid.
+                refreshStopsCache();
+                var liveTops = sectionTops();
+                var liveTarget = liveTops[index];
+                if (typeof liveTarget === 'number' && Math.abs(window.scrollY - liveTarget) > 1) {
+                  window.scrollTo(0, liveTarget);
+                }
+              };
+
+              if (useReverseCover) {
+                animateReverseCover(target, outgoingEl, onLanded);
+              } else {
+                animateScrollTo(target, goingForward && crossesSection ? outgoingEl : null, onLanded);
+              }
+            }
+
+            // Only ever intercept a gesture when there's an ADJACENT section to
+            // jump to in that direction — past the last section (into the
+            // footer, which lives outside #main and isn't one of these
+            // sections at all) or above the first, there's nothing to hijack
+            // the scroll for, so it's left untouched. Without this, reaching
+            // the last section and continuing to scroll down still got
+            // preventDefault()-ed with nowhere for goTo() to go, permanently
+            // trapping the page there — the exact "can't reach the footer" bug
+            // this whole rewrite exists to not repeat.
+            // dir: 1 = down, -1 = up. Returns the section index a gesture in
+            // that direction should land on, or null if there's nothing to
+            // hijack for (let native scroll handle it instead).
+            function targetIndexForDirection(dir, tops) {
+              if (dir > 0) {
+                if (currentIndex >= tops.length - 1) return null;
+                return currentIndex + 1;
+              }
+              if (currentIndex <= 0 && window.scrollY <= tops[0] + 1) return null;
+              // Scrolling up while resting past the LAST section's own top
+              // (free-scrolled into the footer beyond it) first reclaims that
+              // section's top instead of skipping straight past it to the
+              // previous one — otherwise one "up" gesture from deep in the
+              // footer jumped back two sections at once instead of one.
+              if (currentIndex === tops.length - 1 && window.scrollY > tops[currentIndex] + 2) {
+                return currentIndex;
+              }
+              return currentIndex - 1;
+            }
+
+            // No viewport-width gate here on purpose: a 'wheel' event only
+            // ever comes from a real mouse wheel or trackpad regardless of
+            // window width, so gating it behind a min-width media query
+            // (an earlier version checked >=768px, meant to mean "desktop
+            // hardware") actually just broke wheel input for anyone with a
+            // narrower or zoomed-in browser window — a real desktop user
+            // whose CSS viewport happens to read under 768px got no snap at
+            // all from their wheel, while keyboard (which had no such gate)
+            // still worked. Touch already can't reach this handler no
+            // matter the width, so there's nothing left to gate on.
+            function onWheel(e) {
+              if (isOverlayOpen()) return;
+              // Only defer when the wheel gesture is itself horizontally
+              // dominant AND lands on a horizontal-scroll element — the
+              // collections slider fills virtually the whole width/height
+              // of its section, so once a jump lands there, every ordinary
+              // vertical wheel tick was ALSO landing "inside" it and got
+              // waved through untouched (confirmed live: the page-turn
+              // worked for the very first section, then wheel scrolling
+              // degraded to plain small-increment native scroll for every
+              // section after). Checking deltaX vs deltaY, not just the
+              // target, means a real vertical scroll over that section
+              // still gets the page-turn treatment; only a genuine
+              // horizontal swipe/trackpad gesture there is left alone.
+              if (isInsideHorizontalScroll(e.target) && Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return;
+              if (stops().length < 2) return;
+              if (e.deltaY === 0) return;
+
+              syncCurrentIndex();
+              var target = targetIndexForDirection(e.deltaY > 0 ? 1 : -1, sectionTops());
+
+              // Nothing to snap to in this direction (past the last section —
+              // scrolling on down into the footer's own reveal — or above the
+              // first) — let native scroll handle it completely normally,
+              // regardless of the lock. The lock only exists to stop a NEW
+              // snap-jump from firing on top of leftover trackpad momentum
+              // from the previous one; checking it before this meant it also
+              // blocked plain continued scrolling once there was nothing left
+              // to snap to, so any wheel input arriving during the ~700ms
+              // cooldown right after landing on the last section got silently
+              // swallowed instead of continuing on into the footer — the page
+              // would just stop responding to further downward scrolling for
+              // a beat, right at that exact boundary.
+              if (target === null) return;
+
+              if (locked) {
+                e.preventDefault();
+                return;
+              }
+
+              e.preventDefault();
+              goTo(target);
+            }
+            window.addEventListener('wheel', onWheel, { passive: false });
+
+            // Touch runs on every viewport width — phones and tablets get the
+            // same section-snap as desktop trackpad/wheel input.
+            var touchStartX = null;
+            var touchStartY = null;
+            // Whether THIS touch started on a horizontal-scroll element —
+            // just a hint, not a verdict: a swipe that starts there can
+            // still turn out to be a vertical page-turn gesture (the
+            // collections slider fills virtually the whole section, so
+            // most vertical swipes past it start "inside" it too). The
+            // real call is axisLock below, based on which way the finger
+            // actually moves.
+            var touchMaybeHorizontal = false;
+            // Undecided until the finger has moved past AXIS_LOCK_PX in
+            // either direction, then pinned to 'x' or 'y' for the rest of
+            // this same touch — deciding once and sticking with it avoids
+            // flip-flopping between the two on a swipe that isn't
+            // perfectly straight. A small, separate threshold from
+            // TOUCH_THRESHOLD (which is about when to actually FIRE a
+            // page-turn, not about which element owns the gesture).
+            var AXIS_LOCK_PX = 10;
+            var touchAxis = null;
+            // Separate from `locked` (a pure time-based cooldown, meant to
+            // absorb trailing trackpad/wheel momentum) — for touch, a single
+            // physical drag can still be generating touchmove events after
+            // COOLDOWN_MS has already elapsed if the browser's event queue
+            // falls behind for a moment (confirmed: traced a real case where
+            // the second goTo() fired with locked already false, from a
+            // touchmove belonging to the SAME uninterrupted drag as the
+            // first). That reads as the gesture blowing straight through an
+            // extra section. touchGestureHandled is reset once per
+            // touchstart and, once a jump has fired, blocks any further one
+            // for the rest of THIS physical touch no matter how much wall-
+            // clock time the browser took to deliver its events — cooldown
+            // and gesture-identity are two different questions and both
+            // need to hold.
+            var touchGestureHandled = false;
+            function onTouchStart(e) {
+              if (stops().length < 2 || isOverlayOpen()) return;
+              touchStartX = e.touches[0].clientX;
+              touchStartY = e.touches[0].clientY;
+              touchMaybeHorizontal = isInsideHorizontalScroll(e.target);
+              touchAxis = null;
+              touchGestureHandled = false;
+            }
+            function onTouchMove(e) {
+              if (stops().length < 2 || touchStartY === null) return;
+              if (isOverlayOpen()) return;
+
+              var dx = touchStartX - e.touches[0].clientX;
+              var dy = touchStartY - e.touches[0].clientY;
+
+              if (touchAxis === null && (Math.abs(dx) >= AXIS_LOCK_PX || Math.abs(dy) >= AXIS_LOCK_PX)) {
+                touchAxis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+              }
+
+              // Only actually hand this gesture off to the horizontal-
+              // scroll element once its axis is confirmed (or still
+              // undecided, in the first ~10px) — a swipe that turns out to
+              // be vertical still belongs to the page-turn system even
+              // though it started on top of that element.
+              if (touchMaybeHorizontal && touchAxis !== 'y') return;
+
+              // Direction (and therefore target/null) only depends on dy's
+              // sign, which is already known well before the finger has
+              // moved the full TOUCH_THRESHOLD — resolving it here, ahead
+              // of that check, lets the block below call preventDefault()
+              // on every frame from the very start of a gesture this
+              // feature is going to claim, not just once TOUCH_THRESHOLD
+              // is crossed. Calling it late used to leave the first ~40px
+              // of every swipe un-prevented; the browser treats those
+              // frames as ordinary native scrolling and commits to it, so
+              // by the time the threshold fired and this code finally
+              // tried to preventDefault(), the browser had already decided
+              // the touch was mid-scroll and silently ignored it (visible
+              // as a "cancelable=false" warning) — native scroll and the
+              // animated goTo() jump then fought over the same frames,
+              // which is what read as the scroll stuttering/snagging.
+              syncCurrentIndex();
+              var target = targetIndexForDirection(dy > 0 ? 1 : -1, sectionTops());
+
+              // See the identical check in onWheel — nothing to snap to means
+              // let native touch-scroll continue normally, even during the
+              // lock, so a swipe that crosses from the last section on into
+              // the footer's reveal doesn't just stop dead for ~700ms.
+              if (target === null) return;
+
+              e.preventDefault();
+
+              if (Math.abs(dy) <= TOUCH_THRESHOLD) return;
+              if (locked || touchGestureHandled) return;
+
+              touchGestureHandled = true;
+              goTo(target);
+              // Rebase instead of clearing: while `locked` is true the very next
+              // touchmove is already caught by the earlier `if (locked)` branch
+              // above, which keeps calling preventDefault() for the rest of this
+              // same physical drag. Nulling touchStartY here used to make that
+              // branch unreachable instead (the `touchStartY === null` check
+              // above it returns first), so native touch-scrolling silently
+              // resumed for whatever distance the finger kept moving after the
+              // threshold fired — landing short of or past the section the jump
+              // had just aimed for instead of exactly on it.
+              touchStartY = e.touches[0].clientY;
+            }
+            window.addEventListener('touchstart', onTouchStart, { passive: true });
+            window.addEventListener('touchmove', onTouchMove, { passive: false });
+
+            // Keyboard: without this, ArrowDown/PageDown/Space fall through to
+            // the browser's own native scroll (uncontrolled distance, not
+            // intercepted at all), which is exactly the "half landed between
+            // two sections" state this whole feature exists to prevent.
+            function onKeyDown(e) {
+              var tag = (e.target && e.target.tagName || '').toLowerCase();
+              if (tag === 'input' || tag === 'textarea' || tag === 'select' || (e.target && e.target.isContentEditable)) return;
+
+              var dir = null;
+              if (e.key === 'ArrowDown' || e.key === 'PageDown') dir = 1;
+              else if (e.key === 'ArrowUp' || e.key === 'PageUp') dir = -1;
+              else if (e.key === ' ') dir = e.shiftKey ? -1 : 1;
+              if (dir === null) return;
+
+              if (isOverlayOpen()) return;
+              if (stops().length < 2) return;
+
+              syncCurrentIndex();
+              var target = targetIndexForDirection(dir, sectionTops());
+
+              // See the identical check in onWheel — nothing to snap to means
+              // let native keyboard scroll (ArrowDown/PageDown/Space's own
+              // default behavior) continue normally, even during the lock,
+              // rather than swallowing the keypress AND having nothing to
+              // queue it as either (a keypress right at the last-section
+              // boundary used to just vanish for ~700ms this way).
+              if (target === null) return;
+
+              if (locked) {
+                e.preventDefault();
+                pendingKeyDir = dir; // see releaseLock() — acted on automatically the moment the current animation's cooldown clears, no re-press needed
+                return;
+              }
+
+              e.preventDefault();
+              goTo(target, KEYBOARD_COOLDOWN_MS);
+            }
+            window.addEventListener('keydown', onKeyDown);
+
+            // Mouse drag: press the main button and drag up to turn to the next section, drag down for the previous
+            // one — the mouse's version of the swipe above. It uses the same pieces as the finger does: the same
+            // 40px threshold, the same axis lock (a mostly-sideways drag is left to the sliders), the same target
+            // and the same cooldown, and one turn per press. Only a real mouse (pointerType 'mouse'); fingers keep
+            // using the touch handlers. Past the last section, dragging up scrolls on into the footer.
+            var mouseStartX = null;
+            var mouseStartY = null;
+            var mouseAxis = null;
+            var mouseDragging = false;
+            var mouseGestureHandled = false;
+            var suppressNextClick = false;
+
+            function endMouseDrag() {
+              if (mouseDragging) {
+                // The click that follows the release belongs to the drag, not to whatever is under the pointer
+                suppressNextClick = true;
+                setTimeout(function () { suppressNextClick = false; }, 60);
+              }
+              mouseStartX = null;
+              mouseStartY = null;
+              mouseAxis = null;
+              mouseDragging = false;
+              mouseGestureHandled = false;
+              document.documentElement.classList.remove('home-dragging');
+            }
+
+            function onPointerDown(e) {
+              if (e.pointerType !== 'mouse' || e.button !== 0) return;
+              if (stops().length < 2 || isOverlayOpen()) return;
+              // Fields and widgets that use the drag themselves
+              if (e.target && e.target.closest && e.target.closest('input, textarea, select, option, video[controls], [contenteditable="true"], .pswp')) return;
+
+              mouseStartX = e.clientX;
+              mouseStartY = e.clientY;
+              mouseAxis = null;
+              mouseDragging = false;
+              mouseGestureHandled = false;
+            }
+
+            function onPointerMove(e) {
+              if (mouseStartY === null || e.pointerType !== 'mouse') return;
+              // Released outside the window: the button is no longer down
+              if ((e.buttons & 1) === 0) { endMouseDrag(); return; }
+              if (isOverlayOpen()) return;
+
+              var dx = mouseStartX - e.clientX;
+              var dy = mouseStartY - e.clientY;
+
+              if (mouseAxis === null && (Math.abs(dx) >= AXIS_LOCK_PX || Math.abs(dy) >= AXIS_LOCK_PX)) {
+                mouseAxis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+              }
+              // Undecided, or sideways: not ours (a slider drags itself)
+              if (mouseAxis !== 'y') return;
+
+              if (!mouseDragging) {
+                mouseDragging = true;
+                document.documentElement.classList.add('home-dragging');
+                // The press may have started selecting text before the axis was known
+                var selection = window.getSelection && window.getSelection();
+                if (selection && selection.removeAllRanges) selection.removeAllRanges();
+              }
+
+              if (Math.abs(dy) <= TOUCH_THRESHOLD) return;
+              if (locked || mouseGestureHandled) return;
+
+              syncCurrentIndex();
+              var target = targetIndexForDirection(dy > 0 ? 1 : -1, sectionTops());
+              mouseGestureHandled = true;
+
+              if (target !== null) {
+                goTo(target);
+              } else if (dy > 0) {
+                // Past the last section: on into the footer, as the wheel and the keys do natively
+                window.scrollBy({ top: Math.round(window.innerHeight * 0.8), left: 0, behavior: 'smooth' });
+              }
+              mouseStartY = e.clientY;
+            }
+
+            window.addEventListener('pointerdown', onPointerDown, { passive: true });
+            window.addEventListener('pointermove', onPointerMove, { passive: true });
+            window.addEventListener('pointerup', endMouseDrag, { passive: true });
+            window.addEventListener('pointercancel', endMouseDrag, { passive: true });
+            window.addEventListener('blur', endMouseDrag);
+            // A native image or link drag would take the gesture away from us
+            window.addEventListener('dragstart', function (e) {
+              if (mouseStartY !== null) e.preventDefault();
+            });
+            window.addEventListener('click', function (e) {
+              if (!suppressNextClick) return;
+              suppressNextClick = false;
+              e.preventDefault();
+              e.stopPropagation();
+            }, true);
+
+            // Section indicator: "2 / 5" at the bottom centre of the screen, a small tick under it and a hairline
+            // along the bottom edge, telling which section of the home is on screen. The total counts the sections
+            // (not the footer's own stop). White over the photo sections, black over the light ones; it fades out in
+            // the footer and while a menu or drawer is open. It only reads what the script above already knows.
+            var indicator = document.createElement('div');
+            indicator.className = 'home-indicator is-hidden';
+            indicator.setAttribute('aria-hidden', 'true');
+            indicator.innerHTML = '<span class="home-indicator__count"></span><span class="home-indicator__tick"></span>';
+            document.body.appendChild(indicator);
+            var indicatorCount = indicator.firstChild;
+            var indicatorFrame = 0;
+
+            function updateIndicator() {
+              indicatorFrame = 0;
+              var list = stops();
+              var footerStop = list.length > 1 && list[list.length - 1].el && list[list.length - 1].el === document.querySelector('.shopify-section.footer__parent');
+              var total = footerStop ? list.length - 1 : list.length;
+              if (total < 2) { indicator.classList.add('is-hidden'); return; }
+
+              // The stop nearest to where the page really is (not the script's own currentIndex, which can be a step
+              // behind while a turn is running on some devices)
+              var tops = sectionTops();
+              var y = window.scrollY;
+              var index = 0;
+              for (var i = 1; i < tops.length; i++) {
+                if (Math.abs(tops[i] - y) < Math.abs(tops[index] - y)) index = i;
+              }
+
+              // Not shown over the first section (which still counts: the second one reads "2 / N"), nor in the footer
+              if (index === 0 || index >= total) { indicator.classList.add('is-hidden'); return; }
+
+              var text = (index + 1) + ' / ' + total;
+              if (indicatorCount.textContent !== text) indicatorCount.textContent = text;
+
+              var sectionEl = list[index] && (list[index].sectionEl || list[index].el);
+              var light = !!(sectionEl && sectionEl.querySelector && sectionEl.querySelector('.image-hero, .image-hero-split, .video-hero, .slideshow, [data-indicator-tone="light"]'));
+              indicator.classList.toggle('home-indicator--light', light);
+              indicator.classList.remove('is-hidden');
+            }
+
+            function scheduleIndicator() {
+              if (!indicatorFrame) indicatorFrame = window.requestAnimationFrame(updateIndicator);
+            }
+
+            var indicatorTimer = null;
+            window.addEventListener('scroll', function () {
+              scheduleIndicator();
+              // And once more when the scrolling has stopped, so the last position is always shown
+              clearTimeout(indicatorTimer);
+              indicatorTimer = setTimeout(scheduleIndicator, 180);
+            }, { passive: true });
+            window.addEventListener('resize', scheduleIndicator);
+            window.addEventListener('load', scheduleIndicator);
+            document.addEventListener('shopify:section:load', function () { setTimeout(scheduleIndicator, 50); });
+            document.addEventListener('shopify:section:unload', function () { setTimeout(scheduleIndicator, 50); });
+            scheduleIndicator();
+          }
+
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+          } else {
+            init();
+          }
+        })();
+      </script>
+    {%- endif -%}
+  </head>
+
+  <body class="template-{{ request.page_type | handle }}">
+    <div class="page">
+      {% if settings.enable_page_transitions %}
+        {% render 'page-transition-overlay' %}
+      {% endif %}
+
+      <div class="theme-editor-scroll-offset"></div>
+
+      <div class="header__space" data-header-space></div>
+
+      {%- comment -%}
+        The home page's sections use h2-h6 for their headings, so the page had no h1 at all. This one is
+        invisible and gives search engines and screen readers the page's main title.
+      {%- endcomment -%}
+      {%- if request.page_type == 'index' -%}
+        <h1 class="visually-hidden">
+          {{- shop.name }} &ndash;
+          {%- if request.locale.iso_code == 'es' %} Joyería peruana en oro y plata{% else %} Peruvian jewelry in gold and silver{% endif -%}
+        </h1>
+      {%- endif -%}
+
+      {% sections 'header-group' %}
+      {% sections 'overlay-group' %}
+
+      {%- if settings.enable_quick_search -%}
+        {% capture quick_search_suggestions_html %}{% sections 'search-suggestions-group' %}{% endcapture %}
+        {% render 'quick-search', suggestions_html: quick_search_suggestions_html %}
+      {%- endif -%}
+
+      <div class="header-overlay" data-header-overlay>
+        <div class="header-overlay__inner"></div>
+      </div>
+
+      <main id="main" class="main">
+        {{ content_for_layout }}
+      </main>
+
+      {% sections 'footer-group' %}
+
+      {% render 'store-availability-drawer' %}
+      {% render 'quick-view-modal' %}
+      {% render 'modal' %}
+      {% render 'back-to-top' %}
+    </div>
+
+    {% # theme-check-disable ParserBlockingScript %}
+    {{ '//www.youtube.com/iframe_api' | script_tag }}
+    {% # theme-check-enable ParserBlockingScript %}
+    {{ '//cdn.shopify.com/shopifycloud/shopify-plyr/v1.0/shopify-plyr.css' | stylesheet_tag }}
+
+    {%- comment -%}
+      Smooth wheel scrolling on desktop (mouse or trackpad on a wide window). Off on touch devices, with reduced
+      motion, on the home page and in the theme editor. See the header of assets/smooth-scroll.js.
+    {%- endcomment -%}
+    <script src="{{ 'smooth-scroll.js' | asset_url }}" defer></script>
+  </body>
+  <link
+    rel="preload"
+    fetchpriority="low"
+    href="{{ 'theme-deferred.css' | asset_url }}"
+    as="style"
+    onload="this.onload=null;this.rel='stylesheet'"
+  >
+  <noscript><link rel="stylesheet" href="{{ 'theme-deferred.css' | asset_url }}"></noscript>
+</html>

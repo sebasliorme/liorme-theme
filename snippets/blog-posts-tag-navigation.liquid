@@ -1,0 +1,51 @@
+{%- doc -%}
+  Renders the blog post section's (template section) tag navigation.
+
+  @param {object} blog - The blog object.
+{%- enddoc -%}
+
+{%- liquid
+  assign article_categories = settings.article_categories | downcase
+
+  for tag in blog.all_tags
+    assign downcased_tag = tag | downcase
+
+    if article_categories contains downcased_tag or article_categories == blank
+      capture tag_list_items
+        echo tag_list_items
+        render 'blog-posts-tag-navigation-item', blog: blog, tag: tag
+      endcapture
+
+      capture tag_select_options
+        echo tag_select_options
+        render 'blog-posts-tag-navigation-option', blog: blog, tag: tag
+      endcapture
+    endif
+  endfor
+-%}
+
+{%- if tag_list_items != blank -%}
+  <div class="blog__nav">
+    <ul class="blog__nav-list" data-current="{{ current_tags }}">
+      {%- liquid
+        assign all_tag = 'blogs.general.all' | t
+
+        render 'blog-posts-tag-navigation-item', blog: blog, tag: all_tag, is_all: true
+        echo tag_list_items
+      -%}
+    </ul>
+
+    {%- if tag_select_options != blank -%}
+      <div class="blog__nav-mobile--wrapper select-wrapper">
+        <select name="blog-mobile-nav" id="blog-mobile-nav" class="blog__nav-mobile input">
+          {%- liquid
+            render 'blog-posts-tag-navigation-option', blog: blog, tag: all_tag, is_all: true
+            echo tag_select_options
+          -%}
+        </select>
+
+        {%- render 'icon', icon: 'chevron-small' -%}
+      </div>
+    {%- endif -%}
+  </div>
+{%- endif -%}

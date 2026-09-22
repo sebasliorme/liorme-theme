@@ -1,0 +1,40 @@
+{% # whitespace: normal %}
+{%- capture block_content -%}
+  {%- if block.settings.text != blank -%}
+    <div
+      class="scrolling-content__text"
+      {{ block.shopify_attributes }}
+    >
+      {{ block.settings.text }}
+    </div>
+  {%- endif -%}
+{%- endcapture -%}
+
+{%- render 'scrolling-content-item-wrapper', block_content: block_content, link: block.settings.link -%}
+
+{% schema %}
+{
+  "name": "t:blocks.scrolling_content._text.name",
+  "tag": null,
+  "settings": [
+    {
+      "type": "text",
+      "id": "text",
+      "label": "t:blocks.scrolling_content._text.settings.text.label",
+      "default": "t:blocks.scrolling_content._text.settings.text.default"
+    },
+    {
+      "type": "url",
+      "id": "link",
+      "label": "t:blocks.scrolling_content._text.settings.text_link.label"
+    }
+  ],
+  "blocks": [],
+  "presets": [
+    {
+      "name": "t:blocks.scrolling_content._text.presets.name",
+      "blocks": []
+    }
+  ]
+}
+{% endschema %}

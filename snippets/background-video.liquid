@@ -1,0 +1,169 @@
+{%- liquid
+  comment
+    Renders a muted background video that autoplays and loops wherever placed.
+    If no video is supplied, a placeholder will show. Also has the option to show mobile and desktop specific videos.
+
+    Required params:
+      - video: { Object } The video to render. If 'enable_mobile_video' is true and a mobile video is supplied, this param is treated as the desktop video.
+
+    Optional params:
+      - placeholder_name: { String: 'lifestyle-2' } The name of the Shopify placeholder SVG to use.
+      - enable_mobile_video: { Boolean: false } Whether to allow a mobile specific video, in addition to the required video.
+      - mobile_video: { Object } The mobile specific video. In order for the mobile video to show, a desktop video needs to be supplied (ie. the required 'video' paramater).
+      - enable_pause_button: { Boolean: true } Whether to render the hidden pause button.
+      - pause_button_alignment: { String: 'top-right' } The placement of play/pause button. Can be:
+        - 'top-right'
+        - 'bottom-right'
+      - pause_button_content_type: { String: 'text' } The content type for the play/pause button. Can be:
+        - 'text'
+        - 'icon'
+      - aspect_ratio: { String: 'natural' } The video's aspect ratio. When only one video is supplied, this applies to all screen sizes.
+      - aspect_ratio_mobile: { String: 'natural' } Video will cover mobile aspect ratio.
+      - focal_point: { String: 'center' } The focal point of the video. Can be:
+        - 'center'
+        - 'top'
+        - 'bottom'
+        - 'left'
+        - 'right'
+      - focal_point_mobile: { String: 'center' } The focal point of the video. Can be:
+        - 'center'
+        - 'top'
+        - 'bottom'
+        - 'left'
+        - 'right'
+      - class: { String } A custom class.
+      - animate: { Boolean } Whether the video should be animated.
+  endcomment
+
+  # Video
+  assign has_video = false
+
+  if video != blank
+    assign has_video = true
+
+    assign aspect_ratio = aspect_ratio | default: 'natural'
+    assign focal_point = focal_point | default: 'center'
+
+    capture video_aspect_ratio
+      if aspect_ratio == 'natural'
+        echo video.aspect_ratio
+      else
+        echo 'var(--aspect-ratio-[[ar]])' | replace: '[[ar]]', aspect_ratio
+      endif
+    endcapture
+
+    assign video_html = video | video_tag: image_size: '1800x', class: 'background-video__video', data-background-video: '', data-video-loaded: 'false', data-a11y-priority-pause: 'false', tabindex: '-1', autoplay: true, loop: true, muted: true, controls: false, playsinline: true
+  endif
+
+  # Mobile video
+  assign has_mobile_video = false
+
+  if enable_mobile_video and mobile_video != blank
+    assign has_mobile_video = true
+    assign aspect_ratio_mobile = aspect_ratio_mobile | default: 'natural'
+    assign focal_point_mobile = focal_point_mobile | default: 'center'
+
+    capture video_aspect_ratio_mobile
+      if aspect_ratio_mobile == 'natural'
+        echo mobile_video.aspect_ratio
+      else
+        echo 'var(--aspect-ratio-[[ar]])' | replace: '[[ar]]', aspect_ratio_mobile
+      endif
+    endcapture
+
+    assign video_html_mobile = mobile_video | video_tag: image_size: '720x', class: 'background-video__video background-video__video--mobile', data-background-video: '', data-video-loaded: 'false', data-a11y-priority-pause: 'false', tabindex: '-1', autoplay: true, loop: true, muted: true, controls: false, playsinline: true
+  endif
+
+  assign enable_pause_button = enable_pause_button | default: true, allow_false: true
+  assign pause_button_alignment = pause_button_alignment | default: 'top-right'
+  assign pause_button_content_type = pause_button_content_type | default: 'text'
+  assign class = class | default: ''
+
+  capture class
+    echo class
+
+    if animate
+      if class != blank
+        echo ' '
+      endif
+
+      echo 'animation--video'
+    endif
+  endcapture
+
+  capture video_class
+    echo 'background-video'
+
+    if class != blank
+      echo ' '
+      echo class
+    endif
+  endcapture
+
+  assign placeholder_name = placeholder_name | default: 'lifestyle-2'
+-%}
+
+{%- if has_video -%}
+  <background-video
+    class="{{ video_class }}"
+    js-background-video
+    data-has-video="{{ has_video }}"
+    data-has-mobile-video="{{ has_mobile_video }}"
+
+    style="
+      {%- if has_video  -%}
+        --background-video-preview-image: url({{ video.preview_image | image_url }});
+        --background-video-aspect-ratio: {{ video_aspect_ratio }};
+        --background-video-focal-point: {{ focal_point }};
+      {%- endif -%}
+      {%- if has_mobile_video %}
+        --background-video-preview-image-mobile: url({{ mobile_video.preview_image | image_url }});
+        --background-video-aspect-ratio-mobile: {{ video_aspect_ratio_mobile }};
+        --background-video-focal-point-mobile: {{ focal_point_mobile }};
+      {%- endif -%}
+    "
+  >
+    {%- if has_mobile_video -%}
+      {%- # Only applies when two videos enabled and a mobile video is present -%}
+      <template id="mobile-video-template" js-mobile-background-video-template>
+        {{ video_html_mobile }}
+      </template>
+    {%- endif -%}
+
+    <template id="video-template" js-background-video-template>
+      {{ video_html }}
+    </template>
+
+    <div class="current-video__container" js-current-background-video-container></div>
+
+    {% if enable_pause_button -%}
+      <button
+        type="button"
+        class="btn btn--style-icon video__pause video__pause-alignment--{{ pause_button_alignment }}"
+        data-pause-button-content="{{ pause_button_content }}"
+        js-video-pause-button
+        js-update-carousel-tabindex
+      >
+        {%- if pause_button_content_type == 'text' -%}
+          {{ 'general.accessibility.pause' | t }}
+        {%- elsif pause_button_content_type == 'icon' -%}
+          {%- render 'icon', icon: 'pause' -%}
+        {%- endif -%}
+      </button>
+    {%- endif %}
+  </background-video>
+{%- else -%}
+  <div
+    class="background-video__placeholder {%- if class!= blank %} {{ class }}{%- endif -%}"
+    js-background-video-placeholder
+  >
+    {%- render 'image',
+      sizes: sizes,
+      include_placeholder: true,
+      placeholder_natural_fallback_ratio: video_aspect_ratio,
+      placeholder_name: placeholder_name,
+      animate: true,
+      object_fit: 'cover'
+    -%}
+  </div>
+{%- endif -%}

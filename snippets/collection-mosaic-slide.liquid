@@ -1,0 +1,175 @@
+{%- doc -%}
+  Renders one slide (tile) of the "Mosaico de slides" section. The slide can come from a section block or from an
+  entry of the collection's `custom.editorial_slides` metafield (the section decides and passes the final values).
+
+  @param {number} column_span - Columns the slide spans (clamped to the grid's columns here).
+  @param {number} row_span - Rows the slide spans.
+  @param {object} [image] - Photo (image object).
+  @param {object} [image_mobile] - Photo for phones.
+  @param {string} [focal_point] - Which part of the photo stays in view when the slide crops it: image_presentation
+    (the focal point saved on the image itself), center, top, bottom, left, right or custom (with focal_x / focal_y).
+  @param {number} [focal_x] - custom: horizontal position in % (0 = left edge).
+  @param {number} [focal_y] - custom: vertical position in % (0 = top edge).
+  @param {string} [mobile_focal_point] - The same, for phones (the desktop photo also shows on phones when there is no phone photo).
+  @param {number} [mobile_focal_x] - custom, phones.
+  @param {number} [mobile_focal_y] - custom, phones.
+  @param {string} [background_color] - Colour of the slide (a colour panel when there is no photo).
+  @param {string} [label] - Small tag, top-left.
+  @param {string} [label_color] - "dark" or "light".
+  @param {string} [heading] - Title.
+  @param {string} [text] - Text under the title.
+  @param {string} [button_label] - Underlined link text (only shown when the slide has a link).
+  @param {string} [link] - Where the whole slide goes.
+  @param {string} [text_position] - top_left, center_left, bottom_left or center.
+  @param {string} [text_color] - "white" or "black".
+  @param {number} [column_start] - Desktop only: the column the slide starts on (0 or blank = automatic, by list order).
+  @param {number} [row_start] - Desktop only: the row the slide starts on (0 or blank = automatic, by list order).
+    A slide with both is fixed in place before the automatic ones are laid out, so it does not depend on the list order.
+  @param {string} [mobile_order] - Phones only: "first" puts the slide before all the others, "last" after all of them,
+    anything else keeps the list order. Slides with the same choice keep their list order among themselves.
+  @param {number} cols - Desktop columns of the grid.
+  @param {number} cols_m - Phone columns of the grid.
+  @param {number} ratio - Height / width of one grid cell.
+  @param {boolean} [eager] - Load the photo right away (first slides).
+  @param {string} [sizes] - The photo's `sizes` attribute, when the caller knows the real size of the slide (the product grid does). By default it is worked out from the mosaic's columns and cell shape.
+  @param {string} [attributes] - The block's shopify_attributes (theme editor selection).
+{%- enddoc -%}
+
+{%- liquid
+  assign span_c = column_span | default: 1 | plus: 0 | at_least: 1 | at_most: cols
+  assign span_c_m = column_span | default: 1 | plus: 0 | at_least: 1 | at_most: cols_m
+  assign span_r = row_span | default: 1 | plus: 0 | at_least: 1
+
+  # Fixed position on desktop (0 = automatic). The start column is kept inside the grid (start + span <= columns).
+  assign col_start_max = cols | minus: span_c | plus: 1
+  assign col_start = column_start | plus: 0 | at_most: col_start_max
+  assign row_start_n = row_start | plus: 0
+  assign position_vars = ''
+
+  if mobile_order == 'first'
+    assign position_vars = position_vars | append: ' --order-m: -1;'
+  elsif mobile_order == 'last'
+    assign position_vars = position_vars | append: ' --order-m: 1;'
+  endif
+
+  if col_start > 0
+    assign position_vars = position_vars | append: ' --col-start: ' | append: col_start | append: ';'
+  endif
+
+  if row_start_n > 0
+    assign position_vars = position_vars | append: ' --row-start: ' | append: row_start_n | append: ';'
+  endif
+
+  # A button that goes nowhere would only look clickable: shown only when the slide has a link
+  if link == blank
+    assign button_label = nil
+  endif
+
+  assign has_text = false
+  if heading != blank or text != blank or button_label != blank
+    assign has_text = true
+  endif
+
+  assign text_position = text_position | default: 'top_left'
+  assign text_hex = '#ffffff'
+  if text_color == 'black'
+    assign text_hex = '#111111'
+  endif
+
+  assign tile_classes = 'collection-mosaic__tile'
+  if image != blank and has_text and text_position == 'top_left' and text_color != 'black'
+    assign tile_classes = tile_classes | append: ' collection-mosaic__tile--shade'
+  endif
+  if image_mobile != blank
+    assign tile_classes = tile_classes | append: ' collection-mosaic__tile--has-mobile-image'
+  endif
+
+  # Focal point: desktop, and phones (with no phone photo the desktop photo is what shows there)
+  assign focal_mode = focal_point | default: 'image_presentation'
+  assign focal_mode_m = mobile_focal_point | default: 'image_presentation'
+  assign focal_image_m = image_mobile | default: image
+
+  capture object_position
+    render 'liorme-focal-position', mode: focal_mode, image: image, x: focal_x, y: focal_y
+  endcapture
+
+  capture object_position_m
+    render 'liorme-focal-position', mode: focal_mode_m, image: focal_image_m, x: mobile_focal_x, y: mobile_focal_y
+  endcapture
+
+  assign tile_bg = background_color | default: '#e9e6df'
+
+  # Sizes: the photo is cropped to the slide (object-fit: cover), so it is scaled by whichever side needs
+  # more: the file has to be at least as wide as the slide, and as wide as the slide's height x its aspect.
+  assign width_vw = span_c | times: 100.0 | divided_by: cols
+  assign height_vw = span_r | times: ratio | times: 100.0 | divided_by: cols
+  assign width_vw_m = span_c_m | times: 100.0 | divided_by: cols_m
+  assign height_vw_m = span_r | times: ratio | times: 100.0 | divided_by: cols_m
+
+  assign accessible_name = heading | default: label | default: button_label | default: image.alt
+
+  assign image_ratio = image.aspect_ratio | default: 1
+  capture image_sizes
+    echo '(min-width: 720px) max(' | append: width_vw | append: 'vw, calc(' | append: height_vw | append: 'vw * ' | append: image_ratio | append: ')), max(' | append: width_vw_m | append: 'vw, calc(' | append: height_vw_m | append: 'vw * ' | append: image_ratio | append: '))'
+  endcapture
+
+  if sizes != blank
+    assign image_sizes = sizes
+  endif
+
+  assign text_classes = 'collection-mosaic__text collection-mosaic__text--' | append: text_position
+  if label != blank and text_position == 'top_left'
+    assign text_classes = text_classes | append: ' collection-mosaic__text--below-label'
+  endif
+-%}
+
+<div
+  class="{{ tile_classes }}"
+  style="--span-c: {{ span_c }}; --span-c-m: {{ span_c_m }}; --span-r: {{ span_r }}; --mosaic-text: {{ text_hex }}; --mosaic-position: {{ object_position }}; --mosaic-position-m: {{ object_position_m }};{{ position_vars }} background: {{ tile_bg }};"
+  {{ attributes }}
+>
+  {%- if link != blank -%}
+    <a class="collection-mosaic__link" href="{{ link }}"{% if accessible_name != blank %} aria-label="{{ accessible_name | strip_html | escape }}"{% endif %}></a>
+  {%- endif -%}
+
+  {%- if image != blank -%}
+    <div class="collection-mosaic__media collection-mosaic__media--desktop">
+      {%- render 'image',
+        image: image,
+        sizes: image_sizes,
+        no_crop: true,
+        prioritize_loading: eager
+      -%}
+    </div>
+  {%- endif -%}
+
+  {%- if image_mobile != blank -%}
+    <div class="collection-mosaic__media collection-mosaic__media--mobile">
+      {%- render 'image',
+        image: image_mobile,
+        sizes: '100vw',
+        no_crop: true
+      -%}
+    </div>
+  {%- endif -%}
+
+  {%- if label != blank -%}
+    <span class="collection-mosaic__label collection-mosaic__label--{{ label_color | default: 'dark' }}">
+      {{- label | escape -}}
+    </span>
+  {%- endif -%}
+
+  {%- if has_text -%}
+    <div class="{{ text_classes }}">
+      {%- if heading != blank -%}
+        <h2 class="collection-mosaic__heading">{{ heading | escape }}</h2>
+      {%- endif -%}
+      {%- if text != blank -%}
+        <p class="collection-mosaic__body">{{ text | escape | newline_to_br }}</p>
+      {%- endif -%}
+      {%- if button_label != blank -%}
+        <span class="collection-mosaic__cta">{{ button_label | escape }}</span>
+      {%- endif -%}
+    </div>
+  {%- endif -%}
+</div>

@@ -1,0 +1,420 @@
+{%- liquid
+  comment
+    Saves all global color and typography settings, along with other related values, to CSS
+    variables on the :root to be used throughout the theme.
+  endcomment
+
+  # Logo font
+  assign font_logo = settings.font_logo
+
+  if settings.uppercase_logo
+    assign logo_text_transform = 'uppercase'
+  else
+    assign logo_text_transform = 'none'
+  endif
+
+  # Body font
+  #
+  # We need the other variants to suppoort standard RTE functionality
+  assign font_body = settings.font_body
+  assign font_body_bold = font_body | font_modify: 'weight', '+300'
+  assign font_body_italic = font_body | font_modify: 'style', 'italic'
+  assign font_body_bold_italic = font_body_bold | font_modify: 'style', 'italic'
+
+  # Heading font
+  #
+  # We need the 'light' variant to suppoort standard RTE functionality
+  assign font_heading = settings.font_heading
+  assign font_heading_light = font_heading | font_modify: 'weight', '-300'
+
+  if settings.uppercase_headings
+    assign heading_text_transform = 'uppercase'
+  else
+    assign heading_text_transform = 'none'
+  endif
+
+  # Subheading font
+  if settings.font_type_subheading == 'body'
+    assign font_subheading = settings.font_body | font_modify: 'weight', settings.font_weight_subheading | default: settings.font_body
+  else
+    assign font_subheading = settings.font_heading | font_modify: 'weight', settings.font_weight_subheading | default: settings.font_heading
+  endif
+
+  if settings.uppercase_subheadings
+    assign subheading_text_transform = 'uppercase'
+  else
+    assign subheading_text_transform = 'none'
+  endif
+
+  # Navigation font
+  if settings.font_type_navigation == 'body'
+    assign font_navigation = settings.font_body | font_modify: 'weight', settings.font_weight_navigation | default: settings.font_body
+  else
+    assign font_navigation = settings.font_heading | font_modify: 'weight', settings.font_weight_navigation | default: settings.font_heading
+  endif
+
+  if settings.uppercase_navigation
+    assign navigation_text_transform = 'uppercase'
+  else
+    assign navigation_text_transform = 'none'
+  endif
+
+  # Mobile navigation font
+  if settings.font_type_mobile_navigation == 'body'
+    assign font_mobile_navigation = settings.font_body | font_modify: 'weight', settings.font_weight_mobile_navigation | default: settings.font_body
+  else
+    assign font_mobile_navigation = settings.font_heading | font_modify: 'weight', settings.font_weight_mobile_navigation | default: settings.font_heading
+  endif
+
+  if settings.uppercase_mobile_navigation
+    assign mobile_navigation_text_transform = 'uppercase'
+  else
+    assign mobile_navigation_text_transform = 'none'
+  endif
+
+  if settings.uppercase_secondary_mobile_navigation
+    assign secondary_mobile_navigation_text_transform = 'uppercase'
+  else
+    assign secondary_mobile_navigation_text_transform = 'none'
+  endif
+
+  # Product listing title font
+  if settings.font_type_product_listing_title == 'body'
+    assign font_product_listing_title = settings.font_body | font_modify: 'weight', settings.font_weight_product_listing_title | default: settings.font_body
+  else
+    assign font_product_listing_title = settings.font_heading | font_modify: 'weight', settings.font_weight_product_listing_title | default: settings.font_heading
+  endif
+
+  if settings.uppercase_product_listing_titles
+    assign product_listing_title_text_transform = 'uppercase'
+  else
+    assign product_listing_title_text_transform = 'none'
+  endif
+
+  # Button font
+  if settings.font_type_button == 'body'
+    assign font_button = settings.font_body | font_modify: 'weight', settings.font_weight_button | default: settings.font_body
+  else
+    assign font_button = settings.font_heading | font_modify: 'weight', settings.font_weight_button | default: settings.font_heading
+  endif
+
+  if settings.uppercase_buttons
+    assign button_text_transform = 'uppercase'
+  else
+    assign button_text_transform = 'none'
+  endif
+
+  # Product badge text transform
+  if settings.uppercase_badges
+    assign product_badge_text_transform = 'uppercase'
+  else
+    assign product_badge_text_transform = 'none'
+  endif
+-%}
+
+<style>
+  {{ font_logo | font_face: font_display: 'swap' }}
+  {{ font_heading | font_face: font_display: 'swap' }}
+  {{ font_heading_light | font_face: font_display: 'swap' }}
+  {{ font_subheading | font_face: font_display: 'swap' }}
+  {{ font_body | font_face: font_display: 'swap' }}
+  {{ font_body_bold | font_face: font_display: 'swap' }}
+  {{ font_body_italic | font_face: font_display: 'swap' }}
+  {{ font_body_bold_italic | font_face: font_display: 'swap' }}
+
+  :root {
+    --max-width: {{ settings.max_page_width }}px;
+
+    /* --------------------------------------------------------------------------
+      Colors
+    -------------------------------------------------------------------------- */
+    {%- liquid
+      # Color schemes
+      render 'color-scheme-to-vars', color_scheme: settings.default_color_scheme
+      render 'color-scheme-to-vars', color_scheme: settings.popover_modal_color_scheme, prefix: 'popup-modal'
+      render 'color-scheme-to-vars', color_scheme: settings.drawer_color_scheme, prefix: 'drawer'
+
+      # General color settings
+      render 'color-global-category-to-vars', category: 'products', setting_ids: 'sale, rating_star, in_stock, low_stock, out_of_stock'
+      render 'color-global-category-to-vars', category: 'notifications', setting_ids: 'success, error'
+
+      # Product badge colors
+      echo '--color-sale-badge-background: [[sbcb]];' | replace: '[[sbcb]]', settings.sale_badge_color_background
+      echo '--color-sale-badge-border: [[sbcb]];' | replace: '[[sbcb]]', settings.sale_badge_color_border
+      echo '--color-sale-badge-text: [[sbct]];' | replace: '[[sbct]]', settings.sale_badge_color_text
+      echo '--color-sold-out-badge-background: [[sobcb]];' | replace: '[[sobcb]]', settings.sold_out_badge_color_background
+      echo '--color-sold-out-badge-border: [[sobcb]];' | replace: '[[sobcb]]', settings.sold_out_badge_color_border
+      echo '--color-sold-out-badge-text: [[sobct]];' | replace: '[[sobct]]', settings.sold_out_badge_color_text
+
+      for i in (1..4)
+        capture setting_id_prefix
+          echo 'custom_product_badge_group_[[i]]' | replace: '[[i]]', i
+        endcapture
+
+        capture tag_setting_id
+          echo '[[sip]]_tag_names' | replace: '[[sip]]', setting_id_prefix
+        endcapture
+
+        # If tags exist, save the color settings to variables
+        if settings[tag_setting_id] != blank
+          capture background_setting_id
+            echo '[[sip]]_color_background' | replace: '[[sip]]', setting_id_prefix
+          endcapture
+
+          capture border_setting_id
+            echo '[[sip]]_color_border' | replace: '[[sip]]', setting_id_prefix
+          endcapture
+
+          capture text_setting_id
+            echo '[[sip]]_color_text' | replace: '[[sip]]', setting_id_prefix
+          endcapture
+
+          capture var_name_prefix
+            echo '--color-custom-product-badge-group-[[i]]' | replace: '[[i]]', i
+          endcapture
+
+          echo '[[vnp]]-background: [[bs]];' | replace: '[[vnp]]', var_name_prefix | replace: '[[bs]]', settings[background_setting_id]
+          echo '[[vnp]]-border: [[bs]];' | replace: '[[vnp]]', var_name_prefix | replace: '[[bs]]', settings[border_setting_id]
+          echo '[[vnp]]-text: [[ts]];' | replace: '[[vnp]]', var_name_prefix | replace: '[[ts]]', settings[text_setting_id]
+        endif
+      endfor
+
+      # Hardcoded colors
+      echo '--color-header-shadow: rgba(0, 0, 0, 0.05);'
+      echo '--color-overlay: rgba(0, 0, 0, 0.7);'
+      echo '--color-white: #ffffff;'
+    -%}
+
+    /* --------------------------------------------------------------------------
+      Typography
+    -------------------------------------------------------------------------- */
+    /* Logo */
+    --font-logo: {{ font_logo.family }}, {{ font_logo.fallback_families }};
+    --font-weight-logo: {{ font_logo.weight }};
+    --font-style-logo: {{ font_logo.style }};
+    --text-transform-logo: {{ logo_text_transform }};
+    --letter-spacing-logo: {{ settings.logo_letter_spacing | times: 0.001 | append: 'em' }};
+    --font-size-logo: {% render 'font-size-clamp', multiplier: 1, desktop_size: settings.logo_base_size, mobile_scale: settings.logo_mobile_base_scale %};
+
+    /* Body */
+    --font-body: {{ font_body.family }}, {{ font_body.fallback_families }};
+    --font-weight-body: {{ font_body.weight }};
+    --font-style-body: {{ font_body.style }};
+    --font-body-italic: {{ font_body_italic.style | default: 'italic' }};
+    --font-weight-body-bold: {{ font_body_bold.weight | default: 'bold' }};
+    --letter-spacing-body: {{ settings.body_letter_spacing | times: 0.001 | append: 'em' }};
+    --font-size-body-base: {{ settings.body_base_size | append: 'px' }};
+    --line-height-body: 1.5;
+    --font-size-body-400: {% render 'font-size-clamp', multiplier: 1.666, desktop_size: settings.body_base_size, mobile_scale: settings.body_mobile_base_scale %};
+    --font-size-body-350: {% render 'font-size-clamp', multiplier: 1.555, desktop_size: settings.body_base_size, mobile_scale: settings.body_mobile_base_scale %};
+    --font-size-body-300: {% render 'font-size-clamp', multiplier: 1.444, desktop_size: settings.body_base_size, mobile_scale: settings.body_mobile_base_scale %};
+    --font-size-body-250: {% render 'font-size-clamp', multiplier: 1.333, desktop_size: settings.body_base_size, mobile_scale: settings.body_mobile_base_scale %};
+    --font-size-body-200: {% render 'font-size-clamp', multiplier: 1.222, desktop_size: settings.body_base_size, mobile_scale: settings.body_mobile_base_scale %};
+    --font-size-body-150: {% render 'font-size-clamp', multiplier: 1.111, desktop_size: settings.body_base_size, mobile_scale: settings.body_mobile_base_scale %};
+    --font-size-body-100: {% render 'font-size-clamp', multiplier: 1, desktop_size: settings.body_base_size, mobile_scale: settings.body_mobile_base_scale %};
+    --font-size-body-75: {% render 'font-size-clamp', multiplier: 0.888, desktop_size: settings.body_base_size, mobile_scale: settings.body_mobile_base_scale %};
+    --font-size-body-60: {% render 'font-size-clamp', multiplier: 0.8222, desktop_size: settings.body_base_size, mobile_scale: settings.body_mobile_base_scale %};
+    --font-size-body-50: {% render 'font-size-clamp', multiplier: 0.777, desktop_size: settings.body_base_size, mobile_scale: settings.body_mobile_base_scale %};
+    --font-size-body-25: {% render 'font-size-clamp', multiplier: 0.722, desktop_size: settings.body_base_size, mobile_scale: settings.body_mobile_base_scale %};
+    --font-size-body-20: {% render 'font-size-clamp', multiplier: 0.666, desktop_size: settings.body_base_size, mobile_scale: settings.body_mobile_base_scale %};
+
+    /* Headings */
+    --font-heading: {{ font_heading.family }}, {{ font_heading.fallback_families }};
+    --font-weight-heading: {{ font_heading.weight }};
+    --font-style-heading: {{ font_heading.style }};
+    --text-transform-heading: {{ heading_text_transform }};
+    --letter-spacing-heading: {{ settings.heading_letter_spacing | times: 0.001 | append: 'em' }};
+    --line-height-heading: 1.1;
+    --font-size-heading-1-base: {% render 'font-size-clamp', multiplier: 1, desktop_size: settings.heading_base_size, mobile_scale: settings.heading_mobile_base_scale %};
+    --font-size-heading-2-base: {% render 'font-size-clamp', multiplier: 0.875, desktop_size: settings.heading_base_size, mobile_scale: settings.heading_mobile_base_scale %};
+    --font-size-heading-3-base: {% render 'font-size-clamp', multiplier: 0.75, desktop_size: settings.heading_base_size, mobile_scale: settings.heading_mobile_base_scale %};
+    --font-size-heading-4-base: {% render 'font-size-clamp', multiplier: 0.583, desktop_size: settings.heading_base_size, mobile_scale: settings.heading_mobile_base_scale %};
+    --font-size-heading-5-base: {% render 'font-size-clamp', multiplier: 0.5, desktop_size: settings.heading_base_size, mobile_scale: settings.heading_mobile_base_scale %};
+    --font-size-heading-6-base: {% render 'font-size-clamp', multiplier: 0.416, desktop_size: settings.heading_base_size, mobile_scale: settings.heading_mobile_base_scale %};
+
+    /* Display headings */
+    --font-size-heading-display-1: {% render 'font-size-clamp', multiplier: 1.333, desktop_size: settings.display_heading_base_size, mobile_scale: settings.display_heading_mobile_base_scale %};
+    --font-size-heading-display-2: {% render 'font-size-clamp', multiplier: 1.1666, desktop_size: settings.display_heading_base_size, mobile_scale: settings.display_heading_mobile_base_scale %};
+    --font-size-heading-display-3: {% render 'font-size-clamp', multiplier: 1, desktop_size: settings.display_heading_base_size, mobile_scale: settings.display_heading_mobile_base_scale %};
+
+    /* Subheadings */
+    --font-subheading: {{ font_subheading.family }}, {{ font_subheading.fallback_families }};
+    --font-weight-subheading: {{ font_subheading.weight }};
+    --font-style-subheading: {{ font_subheading.style }};
+    --text-transform-subheading: {{ subheading_text_transform }};
+    --letter-spacing-subheading: {{ settings.subheading_letter_spacing | times: 0.001 | append: 'em' }};
+    --line-height-subheading: 1.33;
+
+    /* Navigation */
+    --font-navigation: {{ font_navigation.family }}, {{ font_navigation.fallback_families }};
+    --font-weight-navigation: {{ font_navigation.weight }};
+    --font-style-navigation: {{ font_navigation.style }};
+    --letter-spacing-navigation: {{ settings.navigation_letter_spacing | times: 0.001 | append: 'em' }};
+    --text-transform-navigation: {{ navigation_text_transform }};
+    --font-size-navigation: {{ settings.navigation_base_size | append: 'px' }};
+
+    {% if settings.apply_navigation_font_styles_to_mega_menu %}
+      --font-size-mega-menu: {{ settings.navigation_base_size | times: settings.mega_menu_link_scale | divided_by: 100.00 | append: 'px' }};
+    {% endif %}
+
+    /* Mobile navigation */
+    --font-mobile-navigation: {{ font_mobile_navigation.family }}, {{ font_mobile_navigation.fallback_families }};
+    --font-weight-mobile-navigation: {{ font_mobile_navigation.weight }};
+    --font-style-mobile-navigation: {{ font_mobile_navigation.style }};
+
+    {% if settings.apply_letter_spacing_to_uppercase_mobile_navigation_links_only %}
+      {% if settings.uppercase_mobile_navigation %}
+        --letter-spacing-mobile-navigation: {{ settings.mobile_navigation_letter_spacing | times: 0.001 | append: 'em' }};
+      {% endif %}
+
+      {% if settings.uppercase_secondary_mobile_navigation %}
+        --letter-spacing-secondary-mobile-navigation: {{ settings.mobile_navigation_letter_spacing | times: 0.001 | append: 'em' }};
+      {% endif %}
+    {% else %}
+      --letter-spacing-mobile-navigation: {{ settings.mobile_navigation_letter_spacing | times: 0.001 | append: 'em' }};
+      --letter-spacing-secondary-mobile-navigation: var(--letter-spacing-mobile-navigation);
+    {% endif %}
+
+    --text-transform-mobile-navigation: {{ mobile_navigation_text_transform }};
+    --text-transform-secondary-mobile-navigation: {{ secondary_mobile_navigation_text_transform }};
+    --font-size-mobile-navigation: {{ settings.mobile_navigation_base_size | append: 'px' }};
+    --font-size-secondary-mobile-navigation: {{ settings.secondary_mobile_navigation_base_size | append: 'px' }};
+
+    /* Product listing titles */
+    --font-product-listing-title: {{ font_product_listing_title.family }}, {{ font_product_listing_title.fallback_families }};
+    --font-weight-product-listing-title: {{ font_product_listing_title.weight }};
+    --font-style-product-listing-title: {{ font_product_listing_title.style }};
+    --letter-spacing-product-listing-title: {{ settings.product_listing_title_letter_spacing | times: 0.001 | append: 'em' }};
+    --text-transform-product-listing-title: {{ product_listing_title_text_transform }};
+    --font-size-product-listing-title: {% render 'font-size-clamp', multiplier: 1, desktop_size: settings.product_listing_title_base_size, mobile_scale: settings.product_listing_title_mobile_base_scale %};
+
+    /* Buttons */
+    --font-button: {{ font_button.family }}, {{ font_button.fallback_families }};
+    --font-weight-button: {{ font_button.weight }};
+    --font-style-button: {{ font_button.style }};
+    --letter-spacing-button: {{ settings.button_letter_spacing | times: 0.001 | append: 'em' }};
+    --text-transform-button: {{ button_text_transform }};
+    --font-size-button-x-small: {% render 'font-size-clamp', multiplier: 0.9, desktop_size: settings.button_base_size, mobile_scale: settings.button_mobile_base_scale %};
+    --font-size-button-small: {% render 'font-size-clamp', multiplier: 0.95, desktop_size: settings.button_base_size, mobile_scale: settings.button_mobile_base_scale %};
+    --font-size-button: {% render 'font-size-clamp', multiplier: 1, desktop_size: settings.button_base_size, mobile_scale: settings.button_mobile_base_scale %};
+    --line-height-button: 1.45;
+
+    {% if settings.uppercase_buttons %}
+      --button-padding-multiplier: 1;
+    {% else %}
+      --button-padding-multiplier: 0.7;
+    {% endif %}
+
+    /* Product badges */
+    {% if settings.uppercase_badges %}
+      --font-size-product-badge: var(--font-size-body-20);
+    {% else %}
+      --font-size-product-badge: var(--font-size-body-25);
+    {% endif %}
+
+    --text-transform-product-badge-text: {{ product_badge_text_transform }};
+
+    /* Shopify pay specific */
+    --payment-terms-background-color: var(--color-text-alpha-05);
+
+    /* --------------------------------------------------------------------------
+      Corner rounding
+    -------------------------------------------------------------------------- */
+    --corner-radius-drawers-and-modals: {{ settings.corner_radius_drawers_and_modals }}px;
+    --corner-radius-popovers: {{ settings.corner_radius_popovers }}px;
+    --corner-radius-small-cards-and-containers: {{ settings.corner_radius_small_cards_and_containers }}px;
+    --corner-radius-cards-and-images: {{ settings.corner_radius_cards_and_images }}px;
+    --corner-radius-image-thumbnails: {{ settings.corner_radius_image_thumbnails }}px;
+
+    {%- liquid
+      case settings.corner_radius_type_buttons
+        when 'square'
+          echo '--corner-radius-buttons: 0px;'
+          echo '--corner-radius-slider-navigation: 0px;'
+        when 'rounded'
+          echo '--corner-radius-buttons: [[crb]]px;' | replace: '[[crb]]', settings.corner_radius_buttons
+          echo '--corner-radius-slider-navigation: [[crb]]px;' | replace: '[[crb]]', settings.corner_radius_buttons
+        when 'pill'
+          # We use a large number to get a "pill" shape.
+          echo '--corner-radius-buttons: 500px;'
+
+          echo '--corner-radius-slider-navigation: [[crsn]]px;' | replace: '[[crsn]]', settings.corner_radius_slider_navigation
+
+          # We need to adjust the horizontal padding for pill-shaped buttons
+          echo '--button-pill-shape-multiplier-x-small: 1.2;'
+          echo '--button-pill-shape-multiplier-small: 1.1;'
+          echo '--button-pill-shape-multiplier-normal: 1.1;'
+      endcase
+
+      case settings.corner_radius_type_form_inputs
+        when 'square'
+          echo '--corner-radius-form-inputs: 0px;'
+          echo '--corner-radius-swatches: 0px;'
+          echo '--corner-radius-top-bar-filters: 0px;'
+          echo '--corner-radius-checkbox-inputs: 0px;'
+          echo '--corner-radius-textarea-inputs: 0px;'
+        when 'rounded'
+          assign checkbox_input_radius = settings.corner_radius_form_inputs | times: 0.5 | at_most: 12
+
+          echo '--corner-radius-form-inputs: [[crfi]]px;' | replace: '[[crfi]]', settings.corner_radius_form_inputs
+          echo '--corner-radius-swatches: [[crfi]]px;' | replace: '[[crfi]]', settings.corner_radius_form_inputs
+          echo '--corner-radius-top-bar-filters: [[crfi]]px;' | replace: '[[crfi]]', settings.corner_radius_form_inputs
+          echo '--corner-radius-checkbox-inputs: [[crfi]]px;' | replace: '[[crfi]]', checkbox_input_radius
+          echo '--corner-radius-textarea-inputs: [[crfi]]px;' | replace: '[[crfi]]', settings.corner_radius_form_inputs
+        when 'pill'
+          # We use a large number to get a "pill" shape.
+          echo '--corner-radius-form-inputs: 500px;'
+
+          # We need to adjust the horizontal padding for pill-shaped inputs
+          echo '--form-input-pill-shape-multiplier: 1.4;'
+
+          # Some elements don't support the "pill" shape, so we use a custom radius setting
+          echo '--corner-radius-swatches: [[crs]]px;' | replace: '[[crs]]', settings.corner_radius_swatches
+          echo '--corner-radius-top-bar-filters: [[crtbf]]px;' | replace: '[[crtbf]]', settings.corner_radius_top_bar_filters
+          echo '--corner-radius-checkbox-inputs: [[crci]]px;' | replace: '[[crci]]', settings.corner_radius_checkbox_inputs
+          echo '--corner-radius-textarea-inputs: [[crti]]px;' | replace: '[[crti]]', settings.corner_radius_textarea_inputs
+      endcase
+
+      case settings.corner_radius_type_badges
+        when 'square'
+          echo '--corner-radius-badges: 0px;'
+        when 'rounded'
+          echo '--corner-radius-badges: [[crb]]px;' | replace: '[[crb]]', settings.corner_radius_badges
+        when 'pill'
+          # We use a large number to get a "pill" shape.
+          echo '--corner-radius-badges: 500px;'
+
+          # We need to adjust the horizontal padding for pill-shaped badges
+          echo '--badge-pill-shape-multiplier: 2;'
+      endcase
+    -%}
+  }
+
+  /* Fallback when clamp isn't supported */
+  @supports not (font-size: clamp(10px, 3.3vw, 20px)) {
+    :root {
+      --font-size-logo: {% render 'font-size-clamp-fallback', multiplier: 1, desktop_size: settings.logo_base_size, mobile_scale: settings.logo_mobile_base_scale %};
+      --font-size-heading-display-1: {% render 'font-size-clamp-fallback', multiplier: 1.333, desktop_size: settings.display_heading_base_size, mobile_scale: settings.display_heading_mobile_base_scale %};
+      --font-size-heading-display-2: {% render 'font-size-clamp-fallback', multiplier: 1.1666, desktop_size: settings.display_heading_base_size, mobile_scale: settings.display_heading_mobile_base_scale %};
+      --font-size-heading-display-3: {% render 'font-size-clamp-fallback', multiplier: 1, desktop_size: settings.display_heading_base_size, mobile_scale: settings.display_heading_mobile_base_scale %};
+      --font-size-heading-1-base: {% render 'font-size-clamp-fallback', multiplier: 1, desktop_size: settings.heading_base_size, mobile_scale: settings.heading_mobile_base_scale %};
+      --font-size-heading-2-base: {% render 'font-size-clamp-fallback', multiplier: 0.875, desktop_size: settings.heading_base_size, mobile_scale: settings.heading_mobile_base_scale %};
+      --font-size-heading-3-base: {% render 'font-size-clamp-fallback', multiplier: 0.75, desktop_size: settings.heading_base_size, mobile_scale: settings.heading_mobile_base_scale %};
+      --font-size-heading-4-base: {% render 'font-size-clamp-fallback', multiplier: 0.583, desktop_size: settings.heading_base_size, mobile_scale: settings.heading_mobile_base_scale %};
+      --font-size-heading-5-base: {% render 'font-size-clamp-fallback', multiplier: 0.5, desktop_size: settings.heading_base_size, mobile_scale: settings.heading_mobile_base_scale %};
+      --font-size-heading-6-base: {% render 'font-size-clamp-fallback', multiplier: 0.416, desktop_size: settings.heading_base_size, mobile_scale: settings.heading_mobile_base_scale %};
+      --font-size-body-400: {% render 'font-size-clamp-fallback', multiplier: 1.666, desktop_size: settings.body_base_size, mobile_scale: settings.body_mobile_base_scale %};
+      --font-size-body-350: {% render 'font-size-clamp-fallback', multiplier: 1.555, desktop_size: settings.body_base_size, mobile_scale: settings.body_mobile_base_scale %};
+      --font-size-body-300: {% render 'font-size-clamp-fallback', multiplier: 1.444, desktop_size: settings.body_base_size, mobile_scale: settings.body_mobile_base_scale %};
+      --font-size-body-250: {% render 'font-size-clamp-fallback', multiplier: 1.333, desktop_size: settings.body_base_size, mobile_scale: settings.body_mobile_base_scale %};
+      --font-size-body-200: {% render 'font-size-clamp-fallback', multiplier: 1.222, desktop_size: settings.body_base_size, mobile_scale: settings.body_mobile_base_scale %};
+      --font-size-body-150: {% render 'font-size-clamp-fallback', multiplier: 1.111, desktop_size: settings.body_base_size, mobile_scale: settings.body_mobile_base_scale %};
+      --font-size-body-100: {% render 'font-size-clamp-fallback', multiplier: 1, desktop_size: settings.body_base_size, mobile_scale: settings.body_mobile_base_scale %};
+      --font-size-body-75: {% render 'font-size-clamp-fallback', multiplier: 0.888, desktop_size: settings.body_base_size, mobile_scale: settings.body_mobile_base_scale %};
+      --font-size-body-60: {% render 'font-size-clamp-fallback', multiplier: 0.8222, desktop_size: settings.body_base_size, mobile_scale: settings.body_mobile_base_scale %};
+      --font-size-body-50: {% render 'font-size-clamp-fallback', multiplier: 0.777, desktop_size: settings.body_base_size, mobile_scale: settings.body_mobile_base_scale %};
+      --font-size-body-25: {% render 'font-size-clamp-fallback', multiplier: 0.722, desktop_size: settings.body_base_size, mobile_scale: settings.body_mobile_base_scale %};
+      --font-size-body-20: {% render 'font-size-clamp-fallback', multiplier: 0.666, desktop_size: settings.body_base_size, mobile_scale: settings.body_mobile_base_scale %};
+    }
+  }
+</style>

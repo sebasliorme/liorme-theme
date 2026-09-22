@@ -1,0 +1,73 @@
+{%- doc -%}
+  Renders a navigation submenu (ie. dropdown).
+
+  @param {object} menu - The linklist object to render links from.
+  @param {number} depth - The current depth of the menu.
+  @param {string} [menu_id] - A unique ID for the menu.
+{%- enddoc -%}
+
+<div
+  class="
+    navigation__submenu
+    ff-body
+    fs-body-100
+    {% if settings.enable_section_animations -%}
+      animation
+      animation--dropdown
+    {%- endif -%}
+  "
+  {% if menu_id != blank -%}
+    id="{{ menu_id }}"
+  {%- endif %}
+  data-submenu
+  data-depth="{{ depth }}"
+  aria-hidden="true"
+>
+  <ul class="navigation__submenu-list" tabindex="-1">
+    {%- assign depth = depth | plus: 1 -%}
+
+    {%- for link in menu -%}
+      {%- liquid
+        if link.links.size > 0
+          assign has_children = true
+        else
+          assign has_children = false
+        endif
+      -%}
+
+      <li class="navigation__submenu-item">
+        {%- if has_children -%}
+          {%- assign child_is_active = link.child_active -%}
+
+          <a
+            class="navigation__submenu-trigger no-transition has-icon {% if child_is_active -%} active{%- endif -%}"
+            data-dropdown-trigger
+            data-link
+            aria-haspopup="true"
+            aria-expanded="false"
+            href="{{ link.url }}"
+          >
+            <span class="navigation__submenu-child-link">
+              <label>{{ link.title }}</label>
+
+              {%- render 'icon', icon: 'chevron-small', class: 'navigation__submenu-icon' -%}
+            </span>
+          </a>
+
+          {%- render 'navigation-submenu', menu: link.links, depth: depth -%}
+        {%- else -%}
+          <a
+            href="{{ link.url }}"
+            class="{% if link.active %}active{% endif %}"
+            {% if link.active -%}
+              aria-current="page"
+            {%- endif %}
+            data-link
+          >
+            {{ link.title }}
+          </a>
+        {%- endif -%}
+      </li>
+    {%- endfor -%}
+  </ul>
+</div>

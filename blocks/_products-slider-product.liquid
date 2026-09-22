@@ -1,0 +1,32 @@
+{% render 'products-slider-product', local_settings: block.settings, shopify_attributes: block.shopify_attributes %}
+
+{% schema %}
+{
+  "name": "t:blocks._products_slider_product.name",
+  "tag": null,
+  "settings": [
+    {
+      "type": "product",
+      "id": "product",
+      "label": "t:blocks._products_slider_product.settings.product.label"
+    },
+    {
+      "type": "image_picker",
+      "id": "custom_product_image",
+      "label": "t:blocks._products_slider_product.settings.custom_product_image.label"
+    },
+    {
+      "type": "text",
+      "id": "subtitle",
+      "label": "t:blocks._products_slider_product.settings.subtitle.label"
+    }
+  ],
+  "blocks": [],
+  "presets": [
+    {
+      "name": "t:blocks._products_slider_product.presets.name",
+      "blocks": []
+    }
+  ]
+}
+{% endschema %}

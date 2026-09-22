@@ -1,0 +1,831 @@
+{%- comment -%}
+  Colecciones (formerly "Featured Collection Slider")
+  - Rebuilt as a static row of image cards, one per block: an image the
+    merchant picks + a link to a collection + an optional title overlaid
+    at the bottom. No more per-product carousel, no price, no quick view.
+  - Hover state: 1px black border via a ::after overlay (see below).
+{%- endcomment -%}
+
+<style>
+  #shopify-section-{{ section.id }} .section {
+    padding-left: 0;
+    padding-right: 0;
+    box-sizing: border-box;
+  }
+
+  #shopify-section-{{ section.id }} .featured-collection-slider__heading {
+    /* Overrides the theme-wide "Uppercase headings" setting (Theme settings
+       > Typography), which would otherwise render this as UNIQUE CONTRAST.
+       Scoped to just this section's heading — every other heading on the
+       site keeps whatever the global setting says. */
+    text-transform: capitalize;
+  }
+
+  #shopify-section-{{ section.id }} .featured-collection-slider__inner {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  #shopify-section-{{ section.id }} .featured-collection-slider__grid {
+    display: flex;
+    gap: 1px;
+  }
+
+  #shopify-section-{{ section.id }} .featured-collection-slider__slider {
+    position: relative;
+  }
+
+  #shopify-section-{{ section.id }} .featured-collection-slider__arrow {
+    display: none;
+  }
+
+  #shopify-section-{{ section.id }} .featured-collection-slider__progress {
+    display: none;
+  }
+
+  #shopify-section-{{ section.id }} .featured-collection-slider__card {
+    flex: 1 1 0;
+    display: block;
+    position: relative;
+  }
+
+  /*
+    Hover border, drawn on a ::after overlay instead of `outline`/`box-shadow`
+    directly on the card: this card's only child (.card-inner) is an opaque,
+    100%-width/100%-height box (it holds the product image). Children paint
+    on top of their parent's own box decorations, so an outline/box-shadow
+    drawn on .card itself — even with a negative offset meant to inset it —
+    sat UNDER .card-inner and was completely covered, invisible in every
+    browser regardless of hover state (confirmed via automated screenshot
+    testing: getComputedStyle reported the hover color correctly, but no
+    pixel on screen ever changed). A ::after pseudo-element is always
+    painted last, above the element's real children, so it's the one
+    layering approach that's guaranteed to actually be visible on top of
+    the image.
+  */
+  #shopify-section-{{ section.id }} .featured-collection-slider__card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1px solid transparent;
+    transition: border-color 0.3s ease;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  #shopify-section-{{ section.id }} .featured-collection-slider__card:hover::after {
+    border-color: #111111;
+  }
+
+  #shopify-section-{{ section.id }} .featured-collection-slider__card-inner {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    {% unless section.settings.image_aspect_ratio == 'natural' %}
+      aspect-ratio: var(--aspect-ratio-{{ section.settings.image_aspect_ratio | replace: '_', '-' }});
+    {% endunless %}
+  }
+
+  #shopify-section-{{ section.id }} .featured-collection-slider__card-shadow {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 35%;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0));
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  #shopify-section-{{ section.id }} .featured-collection-slider__card-title {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 24px;
+    margin: 0;
+    text-align: center;
+    color: #ffffff;
+    font-size: var(--type-micro, 11px);
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: capitalize;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  #shopify-section-{{ section.id }} .featured-collection-slider__card-inner .image,
+  #shopify-section-{{ section.id }} .featured-collection-slider__card-inner .placeholder-svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  #shopify-section-{{ section.id }} .featured-collection-slider__card-inner .image > * {
+    -o-object-fit: cover;
+       object-fit: cover;
+    width: 100%;
+    height: 100%;
+  }
+
+  /*
+    Exactly 3 cards (desktop): the cards keep the size they have in the 4-column row (a quarter of the screen
+    each, 4:5) and the row of three is centred at 75% of the width — Miu Miu's "New Balance x Miu Miu" row —
+    instead of stretching to a third of the screen each, edge to edge (640px-wide cards at 1920px, which also
+    ran into the page indicator at the bottom). 1px between images is the row's own gap. Below 960px the
+    row keeps filling the width. Set by the `featured-collection-slider--three` class further down.
+  */
+  @media (min-width: 960px) {
+    #shopify-section-{{ section.id }} .featured-collection-slider--three .featured-collection-slider__slider {
+      width: 75%;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+
+  @media (max-width: 767px) {
+    #shopify-section-{{ section.id }} .featured-collection-slider__grid {
+      /* Without this, dragging past the first/last card (rubber-banding at
+         the scroll boundary) can bubble up into the browser's own edge-swipe
+         gesture — Chrome reads it as "swipe from the edge to go back" and
+         navigates away from the page entirely. Confirmed by reproducing it:
+         swiping right while already on the first slide left the site.
+         contain stops the overscroll at this element instead of letting it
+         escape to any ancestor/browser-level gesture. */
+      overflow-x: auto;
+      overscroll-behavior: contain;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    #shopify-section-{{ section.id }} .featured-collection-slider__grid::-webkit-scrollbar {
+      display: none;
+    }
+
+    #shopify-section-{{ section.id }} .featured-collection-slider__slider {
+      /* The padding lives here, on the OUTER, non-scrolling wrapper, not on
+         the scrolling track or its cards. Padding on a card only guarantees
+         an inset AT REST (once scroll-snap has settled on that card's own
+         boundary) — mid-drag, the scroll position sits between two cards,
+         and the viewport just shows whatever raw content is under it at
+         that instant, padding included. Since each card is exactly one
+         scrollport-width wide, that raw content is a blend of the tail of
+         one card and the head of the next, so mid-drag it visually reads
+         as "no padding, images touching the very edge of the screen" — the
+         padding hadn't disappeared, it just doesn't mean anything until
+         the scroll settles. Making this wrapper the one that's padded, and
+         clipping it with overflow:hidden, means the visible window itself
+         never moves and never grows past this inset — the blend between
+         two cards mid-drag still happens, but only ever inside this fixed,
+         already-padded frame, so the frame itself never looks like it's
+         gone. */
+      overflow: hidden;
+      padding-left: var(--space-outer);
+      padding-right: var(--space-outer);
+      box-sizing: border-box;
+    }
+
+    #shopify-section-{{ section.id }} .featured-collection-slider__card {
+      flex: 0 0 100%;
+      scroll-snap-align: start;
+    }
+
+    #shopify-section-{{ section.id }} .featured-collection-slider__card-inner {
+      aspect-ratio: 4 / 5;
+    }
+
+    #shopify-section-{{ section.id }} .featured-collection-slider__card::after,
+    #shopify-section-{{ section.id }} .featured-collection-slider__card:hover::after {
+      border-color: transparent;
+    }
+
+    #shopify-section-{{ section.id }} .featured-collection-slider__arrow {
+      /* pointer-events: none on the whole hit area (not just visually) is
+         load-bearing: the button sits directly on top of the swipeable
+         track, right where an edge-swipe naturally starts. A touch that
+         starts on this button is never a descendant of
+         [data-slider-track], so the browser can't hand it off to the
+         track's own native scroll no matter what JS does afterwards —
+         confirmed by reproducing the exact "swipe does nothing" bug with a
+         touch-start landing here. Re-enabling pointer-events only on the
+         small .icon inside (below) keeps the button precisely tappable
+         while letting a swipe starting anywhere else in this circle pass
+         straight through to the track underneath. */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: absolute;
+      top: 50%;
+      z-index: 2;
+      width: 36px;
+      height: 36px;
+      margin-top: 0;
+      transform: translateY(-50%);
+      border-radius: 100%;
+      background-color: rgba(255, 255, 255, 0.85);
+      color: #111111;
+      transition: opacity 0.2s ease, visibility 0.2s ease;
+      pointer-events: none;
+    }
+
+    #shopify-section-{{ section.id }} .featured-collection-slider__arrow .icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      pointer-events: auto;
+    }
+
+    #shopify-section-{{ section.id }} .featured-collection-slider__arrow .icon svg {
+      width: 11px;
+      height: 11px;
+    }
+
+    #shopify-section-{{ section.id }} .featured-collection-slider__arrow--prev {
+      /* left is measured from .featured-collection-slider__slider's own
+         padding edge (the nearest positioned ancestor), not from the
+         card/image itself — that wrapper has its own side padding
+         (var(--space-outer), the peek-of-next-card gutter), so a plain
+         12px here landed the button straddling the card's left edge,
+         hanging noticeably outside the actual photo instead of sitting
+         inset on it. Adding that same padding back centers the "12px
+         inset" on the card's own edge instead of the wrapper's. */
+      left: calc(var(--space-outer) + 12px);
+    }
+
+    #shopify-section-{{ section.id }} .featured-collection-slider__arrow--prev .icon {
+      transform: rotate(90deg);
+    }
+
+    #shopify-section-{{ section.id }} .featured-collection-slider__arrow--next {
+      right: calc(var(--space-outer) + 12px);
+    }
+
+    #shopify-section-{{ section.id }} .featured-collection-slider__arrow--next .icon {
+      transform: rotate(-90deg);
+    }
+
+    #shopify-section-{{ section.id }} .featured-collection-slider__arrow[disabled] {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    #shopify-section-{{ section.id }} .featured-collection-slider__progress {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 12px var(--space-outer) 0;
+    }
+
+    #shopify-section-{{ section.id }} .featured-collection-slider__progress-bar {
+      display: flex;
+      gap: 4px;
+      width: 100%;
+    }
+
+    #shopify-section-{{ section.id }} .featured-collection-slider__progress-segment {
+      flex: 1 1 0;
+      height: 2px;
+      background-color: rgba(17, 17, 17, 0.2);
+      transition: background-color 0.2s ease;
+    }
+
+    #shopify-section-{{ section.id }} .featured-collection-slider__progress-segment.is-active {
+      background-color: #111111;
+    }
+
+  }
+</style>
+
+<div
+  class="
+    section
+    section--divider-{{ section.settings.divider_style }}
+    section--divider-full-width-{{ section.settings.enable_full_width_divider }}
+    featured-collection-slider
+    {% if section.blocks.size == 3 -%}
+      featured-collection-slider--three
+    {%- endif %}
+    {% if settings.enable_section_animations -%}
+      animation
+      animation--featured-collection-slider
+    {%- endif %}
+  "
+  data-section-id="{{ section.id }}"
+  data-transparent-header="{{ section.settings.enable_transparent_header }}"
+  data-transparent-header-dark="{{ section.settings.dark_logo_on_transparent }}"
+  style="
+    {%- render 'color-scheme-to-vars', color_scheme: section.settings.color_scheme -%}
+    {%- render 'section-padding-vars' -%}
+  "
+>
+  <div class="featured-collection-slider__inner section-inner section-inner--width-{{ section.settings.section_width }}">
+    <div class="featured-collection-slider__meta">
+      {%- render 'section-header', local_settings: section.settings, custom_class_prefix: 'featured-collection-slider' -%}
+    </div>
+
+    <div class="featured-collection-slider__slider" data-slider>
+      <div class="featured-collection-slider__grid" data-slider-track data-horizontal-scroll>
+        {%- liquid
+          assign desktop_card_vw = 100.0 | divided_by: section.blocks.size
+          assign card_sizes = '(min-width: 768px) ' | append: desktop_card_vw | append: 'vw, calc(100vw - 36px)'
+          if section.blocks.size == 3
+            assign card_sizes = '(min-width: 960px) 25vw, (min-width: 768px) 33.34vw, calc(100vw - 36px)'
+          endif
+        -%}
+        {%- for block in section.blocks -%}
+          {%- liquid
+            assign card_tag = 'div'
+            if block.settings.collection != blank
+              assign card_tag = 'a'
+            endif
+          -%}
+          <{{ card_tag }}
+            class="featured-collection-slider__card"
+            {% if block.settings.collection != blank %}href="{{ block.settings.collection.url }}"{% endif %}
+            {{ block.shopify_attributes }}
+          >
+            <div class="featured-collection-slider__card-inner">
+              {%- if block.settings.image != blank -%}
+                {%- render 'image',
+                  image: block.settings.image,
+                  wrapper_class: 'featured-collection-slider__image',
+                  aspect_ratio: section.settings.image_aspect_ratio,
+                  focal_point: 'image_presentation',
+                  object_fit: 'cover',
+                  include_placeholder: true,
+                  sizes: card_sizes
+                -%}
+              {%- else -%}
+                {{ 'collection-1' | placeholder_svg_tag: 'placeholder-svg featured-collection-slider__image' }}
+              {%- endif -%}
+              {%- if block.settings.title != blank -%}
+                <span class="featured-collection-slider__card-shadow"></span>
+                <p class="featured-collection-slider__card-title">{{ block.settings.title }}</p>
+              {%- endif -%}
+            </div>
+          </{{ card_tag }}>
+        {%- endfor -%}
+      </div>
+
+      <button
+        type="button"
+        class="featured-collection-slider__arrow featured-collection-slider__arrow--prev"
+        data-slider-prev
+        aria-label="{{ 'general.accessibility.carousel_previous' | t }}"
+      >
+        {%- render 'icon', icon: 'chevron-small' -%}
+      </button>
+      <button
+        type="button"
+        class="featured-collection-slider__arrow featured-collection-slider__arrow--next"
+        data-slider-next
+        aria-label="{{ 'general.accessibility.carousel_next' | t }}"
+      >
+        {%- render 'icon', icon: 'chevron-small' -%}
+      </button>
+    </div>
+
+    {%- if section.blocks.size > 1 -%}
+      <div class="featured-collection-slider__progress" data-slider-progress>
+        <div class="featured-collection-slider__progress-bar">
+          {%- for block in section.blocks -%}
+            <span class="featured-collection-slider__progress-segment{% if forloop.first %} is-active{% endif %}" data-slider-segment></span>
+          {%- endfor -%}
+        </div>
+      </div>
+    {%- endif -%}
+  </div>
+</div>
+
+<script>
+  (function () {
+    var root = document.querySelector('[data-section-id="{{ section.id }}"]');
+    if (!root) return;
+    var track = root.querySelector('[data-slider-track]');
+    var prevBtn = root.querySelector('[data-slider-prev]');
+    var nextBtn = root.querySelector('[data-slider-next]');
+    if (!track || !prevBtn || !nextBtn) return;
+
+    function getStep() {
+      var card = track.querySelector('.featured-collection-slider__card');
+      return card ? card.getBoundingClientRect().width + 1 : track.clientWidth;
+    }
+
+    function updateArrows() {
+      var maxScroll = track.scrollWidth - track.clientWidth;
+      var hasOverflow = maxScroll > 2;
+      prevBtn.disabled = !hasOverflow || track.scrollLeft <= 2;
+      nextBtn.disabled = !hasOverflow || track.scrollLeft >= maxScroll - 2;
+    }
+
+    var segments = Array.prototype.slice.call(root.querySelectorAll('[data-slider-segment]'));
+    function updateProgress() {
+      if (!segments.length) return;
+      var step = getStep();
+      var index = step > 0 ? Math.round(track.scrollLeft / step) : 0;
+      index = Math.max(0, Math.min(segments.length - 1, index));
+      segments.forEach(function (segment, i) {
+        segment.classList.toggle('is-active', i === index);
+      });
+    }
+
+    prevBtn.addEventListener('click', function () {
+      track.scrollBy({ left: -getStep(), behavior: 'smooth' });
+    });
+    nextBtn.addEventListener('click', function () {
+      track.scrollBy({ left: getStep(), behavior: 'smooth' });
+    });
+
+    function update() {
+      updateArrows();
+      updateProgress();
+    }
+
+    track.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    update();
+  })();
+</script>
+
+{% if settings.enable_section_animations %}
+  <script>
+    (function () {
+      var el = document.querySelector('[data-section-id="{{ section.id }}"]');
+      if (!el) return;
+      if (!window.IntersectionObserver) {
+        el.classList.add('is-visible');
+        return;
+      }
+      var margin = window.matchMedia('(min-width: 720px)').matches ? 200 : 100;
+      var threshold = Math.min(margin / el.offsetHeight, 0.5);
+      var observer = new IntersectionObserver(function (entries) {
+        if (entries[0].isIntersecting) {
+          el.classList.add('is-visible');
+          observer.disconnect();
+        }
+      }, { threshold: threshold });
+      observer.observe(el);
+    })();
+  </script>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Colecciones",
+  "tag": "section",
+  "class": "featured-collections-slider-wrap",
+  "disabled_on": {
+    "groups": [
+      "header",
+      "custom.overlay"
+    ],
+    "templates": [
+      "password"
+    ]
+  },
+  "settings": [
+    {
+      "type": "header",
+      "content": "t:shared.section_header.header.content"
+    },
+    {
+      "type": "select",
+      "id": "header_alignment",
+      "label": "t:shared.settings.alignment_horizontal.header.label",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:shared.options.alignment.horizontal.left"
+        },
+        {
+          "value": "center",
+          "label": "t:shared.options.alignment.horizontal.center"
+        },
+        {
+          "value": "right",
+          "label": "t:shared.options.alignment.horizontal.right"
+        }
+      ],
+      "default": "left"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:sections.shared.collections.settings.title.label",
+      "default": "Colecciones"
+    },
+    {
+      "type": "select",
+      "id": "heading_font_class",
+      "label": "t:shared.settings.heading_font_class.label",
+      "options": [
+        {
+          "value": "fs-heading-6-base",
+          "label": "t:shared.settings.heading_font_class.options.xx_small"
+        },
+        {
+          "value": "fs-heading-5-base",
+          "label": "t:shared.settings.heading_font_class.options.x_small"
+        },
+        {
+          "value": "fs-heading-4-base",
+          "label": "t:shared.settings.heading_font_class.options.small"
+        },
+        {
+          "value": "fs-heading-3-base",
+          "label": "t:shared.settings.heading_font_class.options.medium"
+        },
+        {
+          "value": "fs-heading-2-base",
+          "label": "t:shared.settings.heading_font_class.options.large"
+        },
+        {
+          "value": "fs-heading-1-base",
+          "label": "t:shared.settings.heading_font_class.options.x_large"
+        },
+        {
+          "value": "fs-heading-display-3",
+          "label": "t:shared.settings.heading_font_class.options.display_regular"
+        },
+        {
+          "value": "fs-heading-display-2",
+          "label": "t:shared.settings.heading_font_class.options.display_large"
+        },
+        {
+          "value": "fs-heading-display-1",
+          "label": "t:shared.settings.heading_font_class.options.display_x_large"
+        }
+      ],
+      "default": "fs-heading-3-base"
+    },
+    {
+      "type": "select",
+      "id": "heading_tag",
+      "label": "t:shared.settings.heading_tag.heading.label",
+      "options": [
+        {
+          "value": "h2",
+          "label": "t:shared.settings.heading_tag.options.h2"
+        },
+        {
+          "value": "h3",
+          "label": "t:shared.settings.heading_tag.options.h3"
+        },
+        {
+          "value": "h4",
+          "label": "t:shared.settings.heading_tag.options.h4"
+        },
+        {
+          "value": "h5",
+          "label": "t:shared.settings.heading_tag.options.h5"
+        },
+        {
+          "value": "h6",
+          "label": "t:shared.settings.heading_tag.options.h6"
+        }
+      ],
+      "default": "h2"
+    },
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "t:sections.shared.collections.settings.text.label"
+    },
+    {
+      "type": "select",
+      "id": "text_font_class",
+      "label": "t:shared.settings.text_font_class.label",
+      "options": [
+        {
+          "value": "fs-body-25",
+          "label": "t:shared.settings.text_font_class.options.xx_small"
+        },
+        {
+          "value": "fs-body-50",
+          "label": "t:shared.settings.text_font_class.options.x_small"
+        },
+        {
+          "value": "fs-body-75",
+          "label": "t:shared.settings.text_font_class.options.small"
+        },
+        {
+          "value": "fs-body-100",
+          "label": "t:shared.settings.text_font_class.options.regular"
+        },
+        {
+          "value": "fs-body-150",
+          "label": "t:shared.settings.text_font_class.options.large"
+        },
+        {
+          "value": "fs-body-200",
+          "label": "t:shared.settings.text_font_class.options.x_large"
+        },
+        {
+          "value": "fs-body-250",
+          "label": "t:shared.settings.text_font_class.options.2x_large"
+        },
+        {
+          "value": "fs-body-300",
+          "label": "t:shared.settings.text_font_class.options.3x_large"
+        },
+        {
+          "value": "fs-body-350",
+          "label": "t:shared.settings.text_font_class.options.4x_large"
+        },
+        {
+          "value": "fs-body-400",
+          "label": "t:shared.settings.text_font_class.options.5x_large"
+        }
+      ],
+      "default": "fs-body-100"
+    },
+    {
+      "type": "url",
+      "id": "link",
+      "label": "t:shared.settings.button_link.label"
+    },
+    {
+      "type": "text",
+      "id": "link_text",
+      "label": "t:shared.settings.button_link_text.label"
+    },
+    {
+      "type": "select",
+      "id": "button_style",
+      "label": "t:shared.settings.button_style.label",
+      "options": [
+        {
+          "value": "btn--primary",
+          "label": "t:shared.settings.button_style.options.solid"
+        },
+        {
+          "value": "btn--secondary",
+          "label": "t:shared.settings.button_style.options.outline"
+        },
+        {
+          "value": "btn--callout",
+          "label": "t:shared.settings.button_style.options.text"
+        }
+      ],
+      "default": "btn--callout"
+    },
+    {
+      "type": "header",
+      "content": "Imágenes"
+    },
+    {
+      "type": "select",
+      "id": "image_aspect_ratio",
+      "label": "Formato de imagen",
+      "options": [
+        {
+          "value": "natural",
+          "label": "t:shared.options.aspect_ratio.natural"
+        },
+        {
+          "value": "square",
+          "label": "t:shared.options.aspect_ratio.square"
+        },
+        {
+          "value": "portrait",
+          "label": "t:shared.options.aspect_ratio.portrait"
+        },
+        {
+          "value": "portrait_alt",
+          "label": "t:shared.options.aspect_ratio.portrait_alt"
+        },
+        {
+          "value": "landscape",
+          "label": "t:shared.options.aspect_ratio.landscape"
+        }
+      ],
+      "default": "portrait_alt"
+    },
+    {
+      "type": "header",
+      "content": "Encabezado transparente"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_transparent_header",
+      "label": "Header transparente sobre esta sección",
+      "info": "Mientras el scroll esté sobre esta sección, el header se muestra transparente.",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "dark_logo_on_transparent",
+      "label": "Logo negro",
+      "info": "Usa el logo y los colores oscuros del header (en vez de los blancos) mientras esta sección esté activa. Útil si el fondo de esta sección es claro.",
+      "default": false
+    },
+    {
+      "type": "header",
+      "content": "t:shared.settings.section_style.header.content"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:shared.settings.color_scheme.label"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "t:shared.settings.section_style.section_width.label",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "t:shared.settings.section_style.section_width.options.page_width"
+        },
+        {
+          "value": "full-width-padded",
+          "label": "t:shared.settings.section_style.section_width.options.full_width"
+        }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "range",
+      "id": "section_padding_top",
+      "label": "t:shared.settings.section_style.section_padding.top.label",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "section_padding_bottom",
+      "label": "t:shared.settings.section_style.section_padding.bottom.label",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "select",
+      "id": "divider_style",
+      "label": "t:shared.settings.section_style.divider_style.label",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:shared.settings.section_style.divider_style.options.none"
+        },
+        {
+          "value": "solid",
+          "label": "t:shared.settings.section_style.divider_style.options.solid"
+        }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_full_width_divider",
+      "label": "t:shared.settings.section_style.enable_full_width_divider.label",
+      "visible_if": "{{ section.settings.divider_style == 'solid' }}"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "collection",
+      "name": "Tarjeta",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Imagen"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Título"
+        },
+        {
+          "type": "collection",
+          "id": "collection",
+          "label": "Enlaza a la colección"
+        }
+      ]
+    }
+  ],
+  "max_blocks": 6,
+  "presets": [
+    {
+      "name": "Colecciones",
+      "blocks": [
+        { "type": "collection" },
+        { "type": "collection" }
+      ]
+    }
+  ]
+}
+{% endschema %}

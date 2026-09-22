@@ -1,0 +1,146 @@
+{%- doc -%}
+  Renders a footer block.
+
+  @param {object} block - The block.
+  @param {number} forloop_index - The index of the current block loop iteration.
+  @param {boolean} has_non_spacer_blocks - Whether there are non-spacer blocks in the footer.
+  @param {number} last_non_spacer_block_index - The index of the last block that isn't a spacer. Allows us to remove the bottom border on mobile.
+{%- enddoc -%}
+
+{%- liquid
+  capture footer_group_class
+    echo 'footer__group footer__group--[[bt]] footer__group--[[fi]]' | replace: '[[bt]]', block.type | replace: '[[fi]]', forloop_index
+
+    if has_non_spacer_blocks and forloop_index == last_non_spacer_block_index
+      echo ' footer__group--last'
+    endif
+
+    if block.settings.collapse_on_mobile and block.settings.title != blank
+      echo ' footer__group--collapse'
+    endif
+
+    unless block.settings.show_title_on_desktop
+      echo ' hide-title-on-desktop'
+    endunless
+  endcapture
+
+  capture follow_on_shop_content
+    echo shop | login_button: action: 'follow'
+  endcapture
+
+  capture follow_on_shop
+    echo '<div class="footer__follow-on-shop">[[fos]]</div>' | replace: '[[fos]]', follow_on_shop_content
+  endcapture
+-%}
+
+<div
+  class="{{ footer_group_class }}"
+  style="
+    --desktop-width: {{ block.settings.desktop_width }}%;
+    --desktop-padding: {{ block.settings.desktop_padding }}%;
+    {% if block.settings.image_max_width -%}--image-max-width: {{ block.settings.image_max_width }}px;{%- endif -%}
+  "
+  data-enable-image-corner-rounding="{{ block.settings.enable_corner_rounding }}"
+  {{ block.shopify_attributes }}
+>
+  {%- if block.settings.title != blank -%}
+    <h4 class="footer__header ff-body {%- if block.settings.collapse_on_mobile %} footer__header--collapsed{%- endif -%}">
+      <span class="footer__heading fs-accent">{{ block.settings.title }}</span>
+    </h4>
+
+    {%- if block.settings.collapse_on_mobile -%}
+      <button type="button" class="footer__header ff-body" data-header>
+        <span class="footer__heading fs-accent">{{ block.settings.title }}</span>
+        <span class="footer__arrow">{% render 'icon', icon: 'chevron-small' %}</span>
+      </button>
+    {%- endif -%}
+  {%- endif -%}
+
+  <div class="footer__group-content">
+    {%- case block.type -%}
+      {%- when 'text' -%}
+        {%- liquid
+          capture rendered_image
+            if block.settings.image != blank
+              render 'image', image: block.settings.image, wrapper_class: 'footer__image', sizes_px: block.settings.image_max_width
+            endif
+          endcapture
+
+          if block.settings.image_placement == 'above_text'
+            echo rendered_image
+          endif
+
+          echo '<div class="footer__text [[bstfc]]">[[bst]]</div>' | replace: '[[bstfc]]', block.settings.text_font_class | replace: '[[bst]]', block.settings.text
+
+          if block.settings.image_placement == 'below_text'
+            echo rendered_image
+          endif
+
+          if block.settings.show_social_icons
+            render 'social-icons'
+          endif
+
+          if shop.features.follow_on_shop? and block.settings.enable_follow_on_shop
+            echo follow_on_shop
+          endif
+        -%}
+
+      {%- when 'links' -%}
+        <div class="footer__links fs-body-100">
+          {%- if linklists[block.settings.link_list].links.size > 0 -%}
+            <ul>
+              {%- for link in linklists[block.settings.link_list].links -%}
+                <li>
+                  <a href="{{ link.url }}">{{ link.title }}</a>
+                </li>
+              {%- endfor -%}
+            </ul>
+          {%- endif -%}
+        </div>
+
+      {%- when 'liquid' -%}
+        <div class="footer__liquid fs-body-100">
+          {{ block.settings.liquid }}
+        </div>
+
+      {%- when 'newsletter' -%}
+        <div class="footer__newsletter">
+          <div class="footer__text {{ block.settings.text_font_choice }} {{ block.settings.text_font_class }}">
+            {{ block.settings.text }}
+          </div>
+
+          {%- capture custom_button_label -%}
+            {%- render 'icon', icon: 'arrow-short' -%}
+          {%- endcapture -%}
+
+          {%- render 'newsletter-form',
+            form_id: 'footer-subscribe',
+            base_class: 'footer__newsletter',
+            enable_collect_customer_name: block.settings.enable_collect_customer_name,
+            custom_button: true,
+            custom_button_id: 'Subscribe-footer',
+            custom_button_class: 'footer__newsletter-button',
+            custom_button_label: custom_button_label,
+            email_placeholder: 'E-mail address'
+          -%}
+
+          {%- if block.settings.consent_text != blank -%}
+            <div class="footer__newsletter-consent fs-body-25">
+              {{ block.settings.consent_text }}
+            </div>
+          {%- endif -%}
+
+          {%- liquid
+            if block.settings.show_social_icons
+              echo '<p class="footer__newsletter-follow">Follow us</p>'
+              render 'social-icons'
+            endif
+
+            if shop.features.follow_on_shop? and block.settings.enable_follow_on_shop
+              echo follow_on_shop
+            endif
+          -%}
+        </div>
+    {%- endcase -%}
+  </div>
+</div>

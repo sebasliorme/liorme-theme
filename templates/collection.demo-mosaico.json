@@ -1,0 +1,168 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "slides-mosaic": {
+      "type": "collection-slides-mosaic",
+      "blocks": {
+        "s1": {
+          "type": "slide",
+          "settings": {
+            "column_span": 1,
+            "row_span": 1,
+            "image": "shopify://shop_images/bags.avif",
+            "label": "New in",
+            "link": "/collections/all"
+          }
+        },
+        "s2": {
+          "type": "slide",
+          "settings": {
+            "column_span": 1,
+            "row_span": 1,
+            "image": "shopify://shop_images/dresses.avif",
+            "label": "From the runway",
+            "link": "/collections/all"
+          }
+        },
+        "s3": {
+          "type": "slide",
+          "settings": {
+            "column_span": 2,
+            "row_span": 2,
+            "image": "shopify://shop_images/eyewear.avif",
+            "focal_point": "top",
+            "label": "From the runway",
+            "heading": "Fw26 collection",
+            "button_label": "Shop",
+            "link": "/collections/all",
+            "text_position": "top_left",
+            "text_color": "white"
+          }
+        },
+        "s4": {
+          "type": "slide",
+          "settings": {
+            "column_span": 1,
+            "row_span": 1,
+            "image": "shopify://shop_images/shoes.avif",
+            "link": "/collections/all"
+          }
+        },
+        "s5": {
+          "type": "slide",
+          "settings": {
+            "column_span": 1,
+            "row_span": 1,
+            "image": "shopify://shop_images/readytowear.avif",
+            "label": "Ready to wear",
+            "link": "/collections/all"
+          }
+        },
+        "s6": {
+          "type": "slide",
+          "settings": {
+            "column_span": 2,
+            "row_span": 1,
+            "image": "shopify://shop_images/eyewear_DT.avif",
+            "link": "/collections/all"
+          }
+        },
+        "s7": {
+          "type": "slide",
+          "settings": {
+            "column_span": 2,
+            "row_span": 1,
+            "background_color": "#1d0805",
+            "heading": "Eyewear",
+            "text": "New volumes and refined transparencies",
+            "button_label": "Shop",
+            "link": "/collections/all",
+            "text_position": "center_left",
+            "text_color": "white"
+          }
+        }
+      },
+      "block_order": [
+        "s1",
+        "s2",
+        "s3",
+        "s4",
+        "s5",
+        "s6",
+        "s7"
+      ],
+      "settings": {
+        "columns_desktop": 4,
+        "columns_mobile": "2",
+        "tile_ratio": "1.5",
+        "gap": "1",
+        "padding_top": 0,
+        "padding_bottom": 0
+      }
+    },
+    "product-grid-editorial": {
+      "type": "collection-editorial-grid",
+      "custom_css": [
+        ".product-item__quick-view--hoverless {display: none !important;}"
+      ],
+      "settings": {
+        "enable_custom_subnav": true,
+        "subnav_collections": [
+          "liorme",
+          "anillos",
+          "aretes",
+          "dijes",
+          "pulseras",
+          "cadenas-y-collares-1"
+        ],
+        "columns_desktop": "4",
+        "columns_mobile": "2",
+        "rows": "4",
+        "card_gap": 1,
+        "card_gap_mobile": 6,
+        "product_aspect_ratio": "portrait_alt",
+        "enable_filter_bar_border": true,
+        "filter_bar_border_color": "#1111112e",
+        "enable_custom_section_padding": true,
+        "section_padding_left": 0,
+        "section_padding_right": 0,
+        "section_padding_left_mobile": 0,
+        "section_padding_right_mobile": 0,
+        "show_item_count": true,
+        "show_sort": true,
+        "show_filters": true,
+        "enable_sticky_filter_bar": false,
+        "desktop_filter_location": "filter_bar",
+        "collapse_filter_bar": true,
+        "enable_sticky_filter_sidebar": true,
+        "collapse_filter_groups_desktop": true,
+        "collapse_filter_groups_mobile": true,
+        "show_swatch_filters": true,
+        "show_chip_filters": true,
+        "chip_layout": "3col",
+        "pagination": "infinite",
+        "color_scheme": "scheme_3",
+        "section_width": "full-width-padded",
+        "section_padding_top": 0,
+        "section_padding_bottom": 40,
+        "divider_style": "none",
+        "enable_full_width_divider": true,
+        "enable_animation": true,
+        "use_collection_slides": true,
+        "show_collection_slide_text": false
+      }
+    }
+  },
+  "order": [
+    "slides-mosaic",
+    "product-grid-editorial"
+  ]
+}

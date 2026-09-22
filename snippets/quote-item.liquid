@@ -1,0 +1,50 @@
+{%- doc -%}
+  Render a quote item.
+
+  @param {object} block - The block object.
+  @param {boolean} has_multiple_blocks - Whether there are multiple blocks.
+  @param {object} forloop - The forloop obejct for looping through the blocks.
+  @param {string} pagination_style - The pagination style (ie. 'dots', or 'logos').
+{%- enddoc -%}
+
+<div
+  class="quote__item slider-slide swiper-slide animation--item"
+  data-index="{{ forloop.index0 }}"
+  data-slide
+  {{ block.shopify_attributes }}
+>
+  <div class="quote__item-inner">
+    {%- unless pagination_style == 'logos' and has_multiple_blocks -%}
+      <div class="quote__item-logo-wrapper">
+        {%- render 'quote-item-logo', logo: block.settings.logo, class: 'quote__item-logo' -%}
+      </div>
+    {%- endunless -%}
+
+    {%- unless block.settings.quote == blank -%}
+      {%- liquid
+        if block.settings.quote_font == 'ff-heading'
+          assign font_class_key = 'heading_quote_font_class'
+        else
+          assign font_class_key = 'text_quote_font_class'
+        endif
+      -%}
+
+      <{{ block.settings.quote_tag }}
+        class="
+          quote__item-text
+          rte
+          {{ block.settings.quote_font }}
+          {{ block.settings[font_class_key] }}
+        "
+      >
+        <span>{{ block.settings.quote }}</span>
+      </{{ block.settings.quote_tag }}>
+    {%- endunless -%}
+
+    {%- unless block.settings.title == blank -%}
+      <div class="quote__item-author ff-body fs-body-75 fs-body-100-ns">
+        &ndash;&ensp;<span>{{ block.settings.title }}</span>
+      </div>
+    {%- endunless -%}
+  </div>
+</div>

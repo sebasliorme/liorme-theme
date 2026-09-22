@@ -1,0 +1,43 @@
+{%- doc -%}
+  Renders the play button block.
+
+  @param {object} block - The block object.
+  @param {string} button_alignment - The horizontal alignment of the button.
+  @param {string} [button_alignment_mobile] - The horizontal alignment of the button on mobile.
+  @param {string} wrapper_class - A class to be added to the container.
+  @param {object} [shopify_attributes] - The block's shopify attributes.
+{%- enddoc -%}
+
+{%- liquid
+  assign button_alignment_mobile = button_alignment_mobile | default: button_alignment
+
+  assign video_source = block.settings.video_source
+  assign shopify_video = block.settings.video
+  assign external_video = block.settings.video_url
+  assign poster_image = block.settings.image
+
+  if video_source == 'shopify' and shopify_video != blank
+    assign has_video = true
+    assign video = shopify_video
+    assign poster_image = shopify_video.preview_image
+  elsif video_source == 'external' and external_video != blank
+    assign has_video = true
+    assign video = external_video
+  else
+    assign has_video = false
+  endif
+-%}
+
+{%- render 'play-button',
+  label: block.settings.text,
+  icon_style: block.settings.icon_style,
+  button_alignment: button_alignment,
+  button_alignment_mobile: button_alignment_mobile,
+  wrapper_class: wrapper_class,
+  has_video: has_video,
+  video_type: video_source,
+  video: video,
+  poster_image: poster_image,
+  poster_aspect: block.settings.aspect_ratio,
+  shopify_attributes: shopify_attributes
+-%}

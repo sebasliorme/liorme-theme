@@ -1,0 +1,44 @@
+{%- doc -%}
+  Renders a flat list of top-level menu links (no dropdowns/meganavs — that
+  hover-driven system was retired in favor of the single hamburger button +
+  drawer-menu drill-down panel used at every viewport width now; see
+  sections/header.liquid's primary_nav capture and snippets/drawer-menu.liquid).
+  Only ever called today for the header's secondary nav, which was always a
+  flat link list on its own (never part of the retired dropdown system).
+
+  @param {object} menu - The linklist object for the menu.
+  @param {string} [featured_link_label] - The featured link label.
+{%- enddoc -%}
+
+{%- liquid
+  assign featured_link_label_handle = featured_link_label | handleize
+-%}
+
+<ul class="header__links-list fs-body-50">
+  {%- for link in menu.links -%}
+    {%- liquid
+      capture link_class
+        if link.active
+          echo 'active'
+        endif
+        if link.handle == featured_link_label_handle
+          echo ' featured-link'
+        endif
+      endcapture
+    -%}
+    <li>
+      <a
+        href="{{ link.url }}"
+        class="{{ link_class | strip }}"
+        data-link
+        {% if link.active -%}
+          aria-current="page"
+        {%- endif %}
+      >
+        <span class="link-hover">
+          {{- link.title -}}
+        </span>
+      </a>
+    </li>
+  {%- endfor -%}
+</ul>

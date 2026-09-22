@@ -1,0 +1,36 @@
+{%- doc -%}
+  Renders a modal with given content.
+
+  @param {object} block - The block object.
+  @param {object} popup_page - The page to use for the modal content.
+  @param {string} icon - The name of the icon for the modal trigger.
+  @param {object} [custom_icon_image] - A custom image to be used instead of the selected icon.
+  @param {string} text - Text for the modal trigger
+{%- enddoc -%}
+
+<a
+  class="product__information-popup product__block product__block--medium fs-body-75"
+  data-popup-trigger
+  data-modal-content-id="modal-{{ popup_page }}-{{ block.id }}"
+  href="{{ popup_page.url }}"
+>
+  {%- liquid
+    if custom_icon_image != blank
+      render 'image', wrapper_class: 'product__information-popup-custom-icon', image: custom_icon_image, sizes: '32px'
+    elsif icon != 'none'
+      render 'icon-editorial', icon: icon
+    endif
+
+    echo text
+  -%}
+</a>
+
+<div
+  id="modal-{{ popup_page }}-{{ block.id }}"
+  class="information-popup__content modal-content"
+  aria-modal="true"
+>
+  <h2 class="ff-heading fs-heading-2-base">{{ popup_page.title }}</h2>
+
+  {{- popup_page.content -}}
+</div>

@@ -1,0 +1,11 @@
+{%- doc -%}
+  Renders the amount discount based on a product with non-varying price and compare price.
+
+  @param {object} prod - The product object. We use 'prod' to avoid collision with the global 'product' object.
+{%- enddoc -%}
+
+{%- liquid
+  if prod.price and prod.compare_at_price and prod.price < prod.compare_at_price
+    echo prod.compare_at_price | minus: prod.price
+  endif
+-%}

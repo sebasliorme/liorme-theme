@@ -1,0 +1,246 @@
+{%- liquid
+  comment
+    Renders the mobile drawer navigation and nests further mobile drawers as needed.
+    Can show menu images up to the 2nd level if the mobile menu image block is included in the header.
+
+    Required parameters:
+      - links: { Object } A list of links to render.
+
+    Optional parameters:
+      - parents_only: { Boolean: false } Whether to include any child links of the current level.
+        - Eg. used for secondary links in the menu drawer
+      - depth: { Number } Tracking menu depth per iteration of the drawer-menu-list snippet.
+      - has_mobile_menu_images: { Boolean } Whether links should show an image (determined by "Mobile menu image" blocks).
+      - mobile_menu_image_blocks: { Object } An array of "Mobile menu image" blocks.
+      - mobile_menu_image_link_handles: { Object } A list of all link handles that have a mobile menu image block.
+      - mobile_menu_image_aspect_ratio: { String } The aspect ratio of mobile menu images. Can be:
+        - 'natural'
+        - 'square'
+        - 'portrait'
+        - 'landscape'
+      - mobile_menu_image_width: { Number } The width (in pixels) of mobile menu images.
+  endcomment
+
+  assign handleized_featured_link_label = featured_link_label | handleize
+  assign menu_depth = depth | plus: 1 | default: 1
+
+  assign children_allowed = true
+
+  if parents_only
+    assign children_allowed = false
+  endif
+-%}
+
+{%- for link in links -%}
+  {%- liquid
+    assign child_has_mobile_menu_images = false
+    assign child_mobile_menu_image_aspect_ratio = blank
+    assign child_mobile_menu_image_width = blank
+    assign own_custom_image = blank
+    assign own_custom_image_2 = blank
+    assign own_custom_image_3 = blank
+    assign own_aspect_ratio = blank
+    assign own_thumbnail_width = blank
+
+    if mobile_menu_image_link_handles contains link.handle
+      for block in mobile_menu_image_blocks
+        assign current_menu_handle = block.settings.menu_name | handle
+
+        if current_menu_handle == link.handle
+          assign child_has_mobile_menu_images = true
+          assign child_mobile_menu_image_aspect_ratio = block.settings.aspect_ratio
+          assign child_mobile_menu_image_width = block.settings.thumbnail_width
+          # Same block match also carries this link's OWN custom image
+          # (block.settings.custom_image) — an explicit, merchant-uploaded
+          # override for the large category image captured below, taking
+          # priority over the collection/product/metafield fallback chain
+          # in 'mobile-menu-image-thumbnail'. own_aspect_ratio/
+          # own_thumbnail_width ride along from this SAME block — needed
+          # because a named (non-blank menu_name) block never populates
+          # the has_mobile_menu_images/mobile_menu_image_aspect_ratio pair
+          # received below (those only come from a separate BLANK-menu_name
+          # block); without this, the image rendered blank aspect_ratio
+          # and lost its aspect-ratio/object-fit CSS class entirely.
+          assign own_aspect_ratio = block.settings.aspect_ratio
+          assign own_thumbnail_width = block.settings.thumbnail_width
+          assign own_custom_image = block.settings.custom_image
+          # Optional 2nd/3rd images (desktop-only grid in column 3) — no
+          # fallback chain of their own, unlike own_custom_image above:
+          # there's no natural "2nd product image" default that makes
+          # sense for a purely curated, merchant-picked extra tile.
+          assign own_custom_image_2 = block.settings.custom_image_2
+          assign own_custom_image_3 = block.settings.custom_image_3
+          break
+        endif
+      endfor
+    endif
+
+    assign has_children = false
+
+    if link.levels > 0 and children_allowed
+      assign has_children = true
+    endif
+
+    assign child_is_active = false
+
+    assign submenu_id = 'drawer-submenu-' | append: menu_depth | append: '-' | append: forloop.index
+
+    for link in link.links
+      if link.active
+        assign child_is_active = true
+        break
+      elsif link.links.size > 0
+        for link in link.links
+          if link.active
+            assign child_is_active = true
+            break
+          endif
+        endfor
+      endif
+    endfor
+  -%}
+
+  {%- capture link_title_cased -%}
+    {%- render 'liorme-title-case', text: link.title -%}
+  {%- endcapture -%}
+
+  <li
+    class="
+      drawer-menu__item
+      {% if emphasized -%}
+        drawer-menu__item--emphasized
+      {%- endif %}
+      {% if emphasized and forloop.last -%}
+        drawer-menu__item--emphasized-last
+      {%- endif %}
+    "
+    data-list-item
+  >
+    <a
+      data-item="{% if has_children %}parent{% else %}link{% endif %}"
+      class="drawer-menu__link {%- if has_children %} no-transition{%- endif -%} {%- if link.active or child_is_active %} active{%- endif -%} {%- if link.handle == handleized_featured_link_label %} featured-link{%- endif -%}"
+      href="{{ link.url }}"
+      {% if has_children -%}
+        data-link="primary"
+        aria-haspopup="true"
+        aria-expanded="false"
+        aria-controls="{{ submenu_id }}"
+      {%- endif %}
+    >
+      <div class="drawer-menu__link-title">
+        <span class="">
+          {{ link_title_cased }}
+        </span>
+      </div>
+
+      {%- if has_children -%}
+        {%- render 'icon', icon: 'chevron', class: 'menu-icon' -%}
+      {%- endif -%}
+    </a>
+
+    {% # Render sub navigation %}
+    {%- if link.links.size > 0 -%}
+      {%- liquid
+        # The category being drilled into (this `link`) gets ONE large image
+        # in its own second-level view — has_mobile_menu_images/
+        # mobile_menu_image_aspect_ratio/mobile_menu_image_width here are
+        # already the values resolved FOR `link` itself by the caller (see
+        # drawer-menu-list.liquid's own doc comment above), so this reuses
+        # the exact same image-resolution data that used to drive the small
+        # per-row thumbnail — only where/how large it renders has changed.
+        assign resolved_aspect_ratio = own_aspect_ratio | default: mobile_menu_image_aspect_ratio
+        assign resolved_thumbnail_width = own_thumbnail_width | default: mobile_menu_image_width
+
+        capture category_image
+          if own_custom_image != blank or has_mobile_menu_images
+            render 'mobile-menu-image-thumbnail', link: link, aspect_ratio: resolved_aspect_ratio, thumbnail_width: resolved_thumbnail_width, size: 'large', custom_image: own_custom_image
+          endif
+        endcapture
+
+        # 2nd/3rd images: desktop-only grid tiles, no fallback chain (blank
+        # own_custom_image_2/3 just means "not configured" — nothing renders,
+        # same 'mobile-menu-image-thumbnail' snippet, just always passed an
+        # explicit custom_image so its own fallback logic never triggers).
+        capture category_image_2
+          if own_custom_image_2 != blank
+            render 'mobile-menu-image-thumbnail', link: link, aspect_ratio: resolved_aspect_ratio, thumbnail_width: resolved_thumbnail_width, size: 'large', custom_image: own_custom_image_2
+          endif
+        endcapture
+        capture category_image_3
+          if own_custom_image_3 != blank
+            render 'mobile-menu-image-thumbnail', link: link, aspect_ratio: resolved_aspect_ratio, thumbnail_width: resolved_thumbnail_width, size: 'large', custom_image: own_custom_image_3
+          endif
+        endcapture
+
+        assign category_image_count = 0
+        if category_image != blank
+          assign category_image_count = category_image_count | plus: 1
+        endif
+        if category_image_2 != blank
+          assign category_image_count = category_image_count | plus: 1
+        endif
+        if category_image_3 != blank
+          assign category_image_count = category_image_count | plus: 1
+        endif
+      -%}
+
+      <ul
+        id="{{ submenu_id }}"
+        class="
+          drawer-menu__list drawer-menu__list--sub drawer-menu-list--{{ menu_depth }}
+          {%- if category_image_count > 0 %} drawer-menu__list--sub--with-image{% endif -%}
+        "
+        aria-hidden="true"
+      >
+        {%- liquid
+          if link.url != '#nolink'
+            assign header_has_link = true
+          else
+            assign header_has_link = false
+          endif
+        -%}
+
+        <li class="drawer-menu__item drawer-menu__item--heading">
+          <span
+            class="drawer-menu__item--heading-back-link"
+            data-item="back"
+            aria-label="{{ 'general.accessibility.back' | t }}"
+          >
+            {%- render 'icon', icon: 'arrow-long', class: 'back-link-icon' -%}
+          </span>
+
+          <a
+            class="drawer-menu__link"
+            data-heading="true"
+            {% if header_has_link -%}
+              href="{{ link.url }}"
+            {%- endif %}
+          >
+            <span class="drawer-menu__link-text ff-heading fs-heading-3-base">{{ link_title_cased }}</span>
+          </a>
+        </li>
+
+        {%- if category_image_count > 0 -%}
+          <li class="drawer-menu__item drawer-menu__item--category-image" aria-hidden="true">
+            <div class="drawer-menu__category-images" data-image-count="{{ category_image_count }}">
+              {{- category_image -}}
+              {{- category_image_2 -}}
+              {{- category_image_3 -}}
+            </div>
+            <p class="drawer-menu__category-image-caption">{{ link_title_cased }}</p>
+          </li>
+        {%- endif -%}
+
+        {%- render 'drawer-menu-list',
+          links: link.links,
+          depth: menu_depth,
+          has_mobile_menu_images: child_has_mobile_menu_images,
+          mobile_menu_image_aspect_ratio: child_mobile_menu_image_aspect_ratio,
+          mobile_menu_image_width: child_mobile_menu_image_width,
+          mobile_menu_image_link_handles: mobile_menu_image_link_handles,
+          mobile_menu_image_blocks: mobile_menu_image_blocks
+        -%}
+      </ul>
+    {%- endif -%}
+  </li>
+{%- endfor -%}

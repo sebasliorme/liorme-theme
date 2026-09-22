@@ -1,0 +1,285 @@
+{%- doc -%}
+  Renders the product media structure.
+
+  @param {object} prod - The product object. We use 'prod' to avoid collision with the global 'product' object.
+  @param {string} breakpoint - The breakpoint where the structure is being rendered (ie. 'desktop', or 'mobile').
+  @param {string} gallery_style - The media gallery style (ie. 'carousel', 'grid', 'list', or 'thumbnails').
+  @param {object} featured_media - The featured (default selected) media.
+  @param {string} aspect_ratio - The aspect ratio of the media.
+  @param {string} image_sizes - A list of responsive image sizes (for the 'sizes' attribute).
+  @param {boolean} [full_height_photos] - Whether each desktop photo takes the full window height (100vh).
+  @param {boolean} enable_product_lightbox - Whether the lightbox is enabled.
+  @param {boolean} enable_video_looping - Whether videos should loop.
+  @param {string} gallery_overflow - The gallery overflow mode.
+  @param {number} [media_limit] - The number of media items to show before truncating.
+  @param {number} [media_show_limit] - The number of media items, plus 1, to show before truncating. We need this because the first hidden row peeks a little.
+  @param {boolean} [over_media_show_limit] - Whether there's more media than the media limit. Applies to 'grid' and 'list' styles.
+  @param {string} [overflow_gallery_aspect_ratio] - The aspect ratio of the gallery overflow.
+  @param {number} [transition_multiplier] - The gallery overflow transition multiplier.
+  @param {number} initial_variant_media_position - The index of the first media item associated with the current variant in the broader media list.
+  @param {number} next_variant_media_index - The index of the first media item associated with the next variant grouping in the broader media list. This value, minus 1, gives us the index of the last media for the current variant.
+{%- enddoc -%}
+
+{%- liquid
+  assign over_media_show_limit = over_media_show_limit | default: false, allow_false: true
+
+  # Marco de la galería. Como la foto cubre el marco (object-fit: cover), una foto más
+  # ancha que el marco (p. ej. cuadrada en un marco 4:5) se pinta más ancha que él.
+  # Si el 'sizes' no lo tiene en cuenta, el navegador descarga un archivo demasiado
+  # pequeño y lo estira (borroso). Se calcula por foto más abajo.
+  case aspect_ratio
+    when 'portrait'
+      assign frame_ratio = 0.66666
+    when 'portrait_alt'
+      assign frame_ratio = 0.8
+    when 'square'
+      assign frame_ratio = 1
+    when 'landscape'
+      assign frame_ratio = 1.5
+    else
+      assign frame_ratio = blank
+  endcase
+
+  capture container_class
+    echo 'product__media-container'
+
+    if breakpoint == 'desktop'
+      echo ' above-mobile'
+    else
+      echo ' below-mobile'
+
+      if gallery_style == 'carousel'
+        echo ' carousel swiper'
+      endif
+    endif
+
+    if enable_product_lightbox
+      echo ' lightbox-media-container'
+    endif
+  endcapture
+-%}
+
+<div
+  class="{{ container_class }}"
+  data-media-count="{{ prod.media.size | default: 0 }}"
+  data-gallery-style="{{ gallery_style }}"
+>
+  {%- if breakpoint == 'desktop' and gallery_style == 'thumbnails' -%}
+    {%- render 'product-thumbnails',
+      prod: prod,
+      orientation: 'vertical',
+      featured_media: featured_media,
+      aspect_ratio: aspect_ratio,
+      initial_variant_media_position: initial_variant_media_position,
+      next_variant_media_index: next_variant_media_index
+    -%}
+  {%- endif -%}
+
+  <div
+    class="
+      product__media
+      {% if gallery_style == 'carousel' -%}
+        carousel__wrapper
+        swiper-wrapper
+      {%- endif -%}
+    "
+    {% if breakpoint == 'desktop' and media_limit != blank -%}
+      data-media-limit="{{ media_limit }}"
+    {%- endif %}
+    {% if gallery_style != 'carousel' and over_media_show_limit -%}
+      data-product-media="closed"
+      style="
+        --overflow-gallery-aspect-ratio: {{ overflow_gallery_aspect_ratio }};
+        --overflow-gallery-transition-multiplier: {{ transition_multiplier }};
+      "
+    {%- endif -%}
+  >
+    {%- assign media_loop_index = 0 -%}
+
+    {% liquid
+      if gallery_overflow != 'never' and media_show_limit != blank and gallery_style == 'grid' or gallery_style == 'list'
+        assign preload_count = media_show_limit
+      elsif gallery_style == 'grid'
+        assign preload_count = 4
+      elsif gallery_style == 'list'
+        assign preload_count = 2
+      else
+        assign preload_count = 0
+      endif
+    %}
+
+    {%- for media in prod.media -%}
+      {%- liquid
+        if gallery_style == 'carousel' or gallery_style == 'thumbnails'
+          if media == featured_media
+            assign is_featured_media = true
+          else
+            assign is_featured_media = false
+          endif
+        endif
+
+        if gallery_style == 'carousel' and forloop.first or is_featured_media or forloop.index == initial_variant_media_position
+          assign prioritize_loading = true
+        elsif gallery_style == 'thumbnails' and is_featured_media or forloop.index == initial_variant_media_position
+          assign prioritize_loading = true
+        elsif preload_count > 0 and gallery_style == 'grid' or gallery_style == 'list'
+          assign prioritize_loading = true
+          assign preload_count = preload_count | minus: 1
+        else
+          assign prioritize_loading = false
+        endif
+
+        if forloop.index < initial_variant_media_position or forloop.index > next_variant_media_index
+          continue
+        endif
+
+        if media.media_type == 'model'
+          assign media_aspect_ratio = 'square'
+        else
+          assign media_aspect_ratio = aspect_ratio
+        endif
+
+        assign media_sizes = image_sizes
+
+        if full_height_photos and breakpoint == 'desktop' and media.media_type == 'image'
+          # Frame = column width x 100vh, photo covers it: it is painted at least as wide as the
+          # column, and as wide as 100vh x its own ratio when it is a wide photo.
+          assign media_ratio_rounded = media.aspect_ratio | round: 3
+          assign media_sizes = 'max(' | append: image_sizes | append: ', calc(100vh * ' | append: media_ratio_rounded | append: '))'
+        elsif frame_ratio != blank and media.media_type == 'image' and media.aspect_ratio > frame_ratio
+          assign cover_scale = media.aspect_ratio | divided_by: frame_ratio | round: 2
+          assign media_sizes = 'calc((' | append: image_sizes | append: ') * ' | append: cover_scale | append: ')'
+        endif
+
+        # The desktop and mobile galleries are both in the page and one of them is always hidden.
+        # A hidden gallery still fetches its photos, and the browser then reuses the biggest file it
+        # already has for the visible one, so tell each gallery to ask for a thumbnail where it is hidden.
+        if breakpoint == 'desktop'
+          assign media_sizes = '(max-width: 959px) 100px, ' | append: media_sizes
+        else
+          assign media_sizes = '(min-width: 960px) 100px, ' | append: media_sizes
+        endif
+
+        capture media_item_class
+          echo 'product__media-item'
+
+          if gallery_style == 'carousel'
+            echo ' carousel_slide swiper-slide'
+          else
+            if media_show_limit != blank and media_loop_index >= media_show_limit
+              echo ' product__media-item--hide-on-load'
+            endif
+
+            unless media.id == featured_media.id or gallery_style != 'thumbnails'
+              echo ' hidden'
+            endunless
+
+            echo ' animation--product-media'
+          endif
+        endcapture
+      -%}
+
+      <div
+        class="{{ media_item_class }}"
+        data-product-media-wrapper
+        data-media-item-id="{{ media.id }}"
+        data-media-type="{{ media.media_type }}"
+        {% if gallery_style == 'carousel' -%}
+          data-is-featured="{{ is_featured_media }}"
+          data-slide-index="{{ media_loop_index }}"
+        {%- endif %}
+        {% if gallery_style == 'grid' or media.media_type == 'image' or media.media_type == 'model' -%}
+          data-aspect-ratio="{{ media_aspect_ratio }}"
+        {%- endif -%}
+        {% if breakpoint == 'mobile' and gallery_style != 'list' -%}
+          data-aspect-ratio-mobile="{{ media_aspect_ratio }}"
+        {%- endif %}
+      >
+        {%- liquid
+          if gallery_style == 'carousel'
+            assign within_carousel = true
+            assign animate = false
+          else
+            assign within_carousel = false
+            assign animate = true
+          endif
+
+          comment
+            Photos without their own alt text used to all say just the product title. Number them so each photo
+            of the same product reads differently ("Major Impact – foto 2").
+          endcomment
+          assign media_fallback_alt = prod.title
+          if prod.media.size > 1
+            assign photo_number = media_loop_index | plus: 1
+            if request.locale.iso_code == 'es'
+              assign photo_word = 'foto'
+            else
+              assign photo_word = 'photo'
+            endif
+            assign media_fallback_alt = prod.title | append: ' – ' | append: photo_word | append: ' ' | append: photo_number
+          endif
+        -%}
+
+        {%- render 'media',
+          media: media,
+          enable_product_lightbox: enable_product_lightbox,
+          loop_video: enable_video_looping,
+          aspect_ratio: media_aspect_ratio,
+          sizes: media_sizes,
+          prioritize_loading: prioritize_loading,
+          fallback_alt: media_fallback_alt,
+          within_carousel: within_carousel,
+          animate: animate
+        -%}
+      </div>
+
+      {%- assign media_loop_index = media_loop_index | plus: 1 -%}
+    {%- else -%}
+      {%- render 'placeholder-image',
+        wrapper_class: 'product__media-item',
+        aspect_ratio: aspect_ratio,
+        natural_fallback_ratio: 'square'
+      -%}
+
+      {%- # Add another placeholder so we have a full grid row -%}
+      {%- if gallery_style == 'grid' -%}
+        {%- render 'placeholder-image',
+          wrapper_class: 'product__media-item',
+          aspect_ratio: aspect_ratio,
+          natural_fallback_ratio: 'square'
+        -%}
+      {%- endif -%}
+    {%- endfor -%}
+  </div>
+
+  {%- if gallery_style != 'carousel' and gallery_style != 'thumbnails' and over_media_show_limit -%}
+    <div class="product__media-show-more" data-more-media-bar>
+      <button
+        class="btn btn--tertiary btn--small"
+        type="button"
+        data-more-media
+        data-lang-more-media="{{ 'products.product.more_media' | t | escape }}"
+        data-lang-less-media="{{ 'products.product.less_media' | t | escape }}"
+      >
+        {{- 'products.product.more_media' | t -}}
+      </button>
+    </div>
+  {%- endif %}
+
+  {%- if breakpoint == 'mobile' -%}
+    {%- if gallery_style == 'carousel' -%}
+      <div class="swiper-pagination"></div>
+    {%- endif -%}
+
+    {%- if gallery_style == 'thumbnails' -%}
+      {%- render 'product-thumbnails',
+        prod: prod,
+        orientation: 'horizontal',
+        featured_media: featured_media,
+        aspect_ratio: aspect_ratio,
+        initial_variant_media_position: initial_variant_media_position,
+        next_variant_media_index: next_variant_media_index
+      -%}
+    {%- endif -%}
+  {%- endif -%}
+</div>

@@ -1,0 +1,160 @@
+{%- doc %}
+  Renders a grid item for the "Grid" section.
+
+  @param {object} block - The block object.
+  @param {number} [column_start] - The grid column line the item should start on. Set on the
+    first item of each row so partial rows stay centered.
+  @param {boolean} [row_is_full_width] - Whether the item belongs to a row that fills the grid.
+{%- enddoc %}
+
+{%- liquid
+  assign text_position = block.settings.text_position | split: '_'
+  assign horizontal_position = text_position | first
+  assign vertical_position = text_position | last
+
+  if horizontal_position == 'flex-start'
+    assign text_position_modifier = 'left'
+  elsif horizontal_position == 'flex-end'
+    assign text_position_modifier = 'right'
+  else
+    assign text_position_modifier = 'center'
+  endif
+
+  if block.settings.width == '33' or block.settings.width == '25'
+    assign use_small_button_above_960 = true
+  else
+    assign use_small_button_above_960 = false
+  endif
+
+  assign media_background_color = 'rgba(0,0,0,0)'
+
+  if block.settings.media_type == 'color'
+    assign color_scheme = block.settings.media_color_scheme
+    assign needs_overlay = false
+  else
+    assign color_scheme = block.settings.overlay_color_scheme
+    assign needs_overlay = true
+
+    if block.settings.media_fit == 'contain'
+      assign media_background_color = block.settings.color_media_background
+    endif
+  endif
+-%}
+
+<div
+  class="
+    grid-item
+    grid-item--width-{{ block.settings.width }}
+    grid-item--text-{{ text_position_modifier }}
+    grid-item--media-fit-{{ block.settings.media_fit }}
+    {% if row_is_full_width -%}
+      grid-item--row-full-width
+    {%- endif %}
+  "
+  style="
+    {%- render 'color-scheme-to-vars', color_scheme: color_scheme, output_placeholder_colors: false -%}
+    {%- if column_start -%}--grid-col-start: {{ column_start }};{%- endif -%}
+    --color-media-background: {{ media_background_color }};
+    --height: {{ block.settings.height }}px;
+    --mobile-height: {{ block.settings.mobile_height }}px;
+    --media-fit: {{ block.settings.media_fit }};
+    --text-horizontal-position: {{ horizontal_position }};
+    --text-vertical-position: {{ vertical_position }};
+    --overlay-opacity: {{ block.settings.overlay_opacity | divided_by: 100.0 }};
+  "
+  {{ block.shopify_attributes }}
+>
+  <div
+    class="grid-item__inner"
+  >
+    {%- if block.settings.link != blank -%}
+      <a
+        class="grid-item__link-overlay"
+        href="{{ block.settings.link }}"
+      ></a>
+    {%- endif -%}
+
+    {%- case block.settings.media_type -%}
+      {%- when 'image' -%}
+        {%- liquid
+          capture image_sizes
+            assign block_width_percentage = block.settings.width | divided_by: 100.00
+            echo '(min-width: 960px) calc(calc(100vw - calc(2 * clamp(18px, 3.3vw, 3.3vw))) * [[bwp]]), calc(100vw - calc(2 * 3.3vw))' | replace: '[[bwp]]', block_width_percentage
+          endcapture
+        -%}
+
+        {%- if block.settings.mobile_image != blank -%}
+          {%- render 'image',
+            wrapper_class: 'grid-item__image grid-item__image--mobile',
+            focal_point: block.settings.mobile_focal_point,
+            image: block.settings.mobile_image,
+            sizes: '100vw',
+            animate: true
+          -%}
+        {% endif %}
+
+        {%- render 'image',
+          wrapper_class: 'grid-item__image',
+          focal_point: block.settings.focal_point,
+          image: block.settings.image,
+          sizes: image_sizes,
+          animate: true,
+          include_placeholder: true,
+          placeholder_name: 'lifestyle-1',
+          placeholder_natural_fallback_ratio: 'natural'
+        -%}
+
+      {%- when 'video' -%}
+        {%- render 'background-video',
+          video: block.settings.background_video,
+          enable_mobile_video: true,
+          mobile_video: block.settings.mobile_background_video,
+          focal_point: block.settings.video_focal_point,
+          focal_point_mobile: block.settings.mobile_video_focal_point,
+          class: 'grid-item__video',
+          placeholder_name: 'image'
+        -%}
+    {%- endcase -%}
+
+    <div class="grid-item__overlay grid-item__overlay--use-opacity-{{ needs_overlay }}"></div>
+
+    <div class="grid-item__text-container-wrapper">
+      <div class="grid-item__text-container">
+        <div class="grid-item__text-container-inner  section-blocks animation--section-blocks">
+          {%- render 'section-block-accent', accent: block.settings.accent, custom_class: 'grid-item__accent' -%}
+
+          {%- render 'section-block-heading',
+            heading_tag: block.settings.heading_tag,
+            heading: block.settings.title,
+            heading_font_class: block.settings.heading_font_class,
+            custom_class: 'grid-item__heading'
+          -%}
+
+          {%- render 'section-block-subheading',
+            subheading_tag: block.settings.subheading_tag,
+            subheading: block.settings.subheading,
+            subheading_font_class: block.settings.subheading_font_class,
+            custom_class: 'grid-item__subheading rte'
+          -%}
+
+          {%- render 'section-block-text',
+            text: block.settings.text,
+            text_font_class: block.settings.text_font_class,
+            custom_class: 'grid-item__text rte'
+          -%}
+
+          {%- if block.settings.link_text != blank and block.settings.link != blank -%}
+            <div class="grid-item__button section-blocks__button">
+              <a
+                href="{{ block.settings.link }}"
+                class="btn {{ block.settings.button_style }} {%- if use_small_button_above_960 %} btn--small-above-960{%- endif -%}"
+              >
+                <span>{{ block.settings.link_text }}</span>
+              </a>
+            </div>
+          {%- endif -%}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

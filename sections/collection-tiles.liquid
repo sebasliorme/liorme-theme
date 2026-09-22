@@ -1,0 +1,489 @@
+{%- comment -%}
+  Colección en tiles — copies Miu Miu's category page (miumiu.com/us/en/accessories/c/10259US):
+  - a full-width banner (image, title top-left, underlined "Shop" link), 2.4:1 by default;
+  - straight under it the collection's PRODUCTS as square tiles, 3 across from 768px (2 on phones) with 2px
+    between them; each tile is the product photo with its name top-left and an underlined "Shop" link;
+  - "Home / Collection" centred under the grid with a hairline (same component as the product page breadcrumbs).
+  Used by templates/collection.coleccion-predeterminada-2.json: assign that template to a collection in the admin
+  (Collections > the collection > Theme template) or try it with ?view=coleccion-predeterminada-2.
+  Nothing in here changes the normal collection template.
+{%- endcomment -%}
+
+{%- liquid
+  assign hero_image = section.settings.hero_image | default: collection.image
+  assign hero_title = section.settings.hero_title | default: collection.title
+  assign hero_link = section.settings.hero_link
+  assign hero_mobile_image = section.settings.hero_image_mobile
+
+  if section.settings.hero_aspect_ratio == 'natural' and hero_image != blank
+    assign hero_ratio = hero_image.aspect_ratio
+  elsif section.settings.hero_aspect_ratio == 'natural'
+    assign hero_ratio = '12 / 5'
+  else
+    assign hero_ratio = section.settings.hero_aspect_ratio
+  endif
+
+  comment
+    Sharpness on phones: the banner is cropped to 4:5 there (object-fit: cover), so the picture is scaled by its
+    HEIGHT (125vw): a wide banner needs a file as wide as 125vw x its aspect ratio, not 100vw.
+  endcomment
+  if hero_mobile_image != blank
+    assign hero_sizes = '100vw'
+  else
+    assign hero_image_ratio = hero_image.aspect_ratio | default: 2.4
+    assign hero_sizes = '(max-width: 767px) max(100vw, calc(125vw * ' | append: hero_image_ratio | append: ')), 100vw'
+  endif
+
+  if section.settings.tile_aspect_ratio == 'portrait_alt'
+    assign tile_ratio = '4 / 5'
+  else
+    assign tile_ratio = '1 / 1'
+  endif
+
+  if section.settings.text_color == 'black'
+    assign text_color = '#111111'
+  else
+    assign text_color = '#ffffff'
+  endif
+
+  assign mobile_columns = section.settings.mobile_columns | default: 2
+-%}
+
+<style>
+  #shopify-section-{{ section.id }} .collection-tiles {
+    --collection-tiles-text: {{ text_color }};
+    background: #ffffff;
+    color: #111111;
+  }
+
+  /* text on the images: 14/12px on phones, 16/12px on tablets, 20/14px on desktop (the reference's sizes) */
+  #shopify-section-{{ section.id }} .collection-tiles__text {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 2;
+    padding: 12px;
+    color: var(--collection-tiles-text);
+    pointer-events: none;
+  }
+
+  #shopify-section-{{ section.id }} .collection-tiles__title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 18px;
+    letter-spacing: 0;
+    text-transform: capitalize;
+  }
+
+  #shopify-section-{{ section.id }} .collection-tiles__cta {
+    position: relative;
+    display: inline-block;
+    margin-top: 12px;
+    padding-bottom: 1px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 14px;
+    letter-spacing: 0;
+  }
+
+  #shopify-section-{{ section.id }} .collection-tiles__cta::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 1px;
+    background: currentColor;
+  }
+
+  /* a soft shade behind white text so it reads on light photos too */
+  #shopify-section-{{ section.id }} .collection-tiles--light-text .collection-tiles__hero::before,
+  #shopify-section-{{ section.id }} .collection-tiles--light-text .collection-tiles__tile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 1;
+    height: 38%;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0));
+    pointer-events: none;
+  }
+
+  /* banner */
+  #shopify-section-{{ section.id }} .collection-tiles__hero {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    aspect-ratio: 4 / 5;
+    background: #e9e6df;
+  }
+
+  #shopify-section-{{ section.id }} .collection-tiles__hero-image--mobile {
+    display: none;
+  }
+
+  #shopify-section-{{ section.id }} .collection-tiles__hero-image--desktop {
+    display: block;
+  }
+
+  {%- if hero_mobile_image != blank %}
+  @media (max-width: 767px) {
+    #shopify-section-{{ section.id }} .collection-tiles__hero-image--desktop {
+      display: none;
+    }
+
+    #shopify-section-{{ section.id }} .collection-tiles__hero-image--mobile {
+      display: block;
+    }
+  }
+  {%- endif %}
+
+  /* tiles */
+  #shopify-section-{{ section.id }} .collection-tiles__grid {
+    display: grid;
+    grid-template-columns: repeat({{ mobile_columns }}, minmax(0, 1fr));
+    gap: 2px;
+  }
+
+  {%- if mobile_columns == '1' %}
+  @media (max-width: 767px) {
+    #shopify-section-{{ section.id }} .collection-tiles__text {
+      padding: 16px;
+    }
+
+    #shopify-section-{{ section.id }} .collection-tiles__title {
+      font-size: 16px;
+      line-height: 20px;
+    }
+
+    #shopify-section-{{ section.id }} .collection-tiles__cta {
+      margin-top: 16px;
+    }
+  }
+  {%- endif %}
+
+  #shopify-section-{{ section.id }} .collection-tiles__tile {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    aspect-ratio: {{ tile_ratio }};
+    background: #e9e6df;
+  }
+
+  #shopify-section-{{ section.id }} .collection-tiles__tile:focus-visible {
+    outline: 2px solid #111111;
+    outline-offset: -2px;
+  }
+
+  /* the picture always fills its box */
+  #shopify-section-{{ section.id }} .collection-tiles__media,
+  #shopify-section-{{ section.id }} .collection-tiles__media .image,
+  #shopify-section-{{ section.id }} .collection-tiles__media .placeholder-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  #shopify-section-{{ section.id }} .collection-tiles__media .image > * {
+    -o-object-fit: cover;
+       object-fit: cover;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* "Home / Collection": 14px medium in the ink colour, an 85px band, as on the reference */
+  #shopify-section-{{ section.id }} .collection-tiles .product-breadcrumbs {
+    padding: 32px 16px;
+  }
+
+  #shopify-section-{{ section.id }} .collection-tiles .product-breadcrumbs__list {
+    font-size: 14px;
+    line-height: 21px;
+  }
+
+  #shopify-section-{{ section.id }} .collection-tiles .product-breadcrumbs__link {
+    color: #111111;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  #shopify-section-{{ section.id }} .collection-tiles__pagination {
+    padding: 24px 16px;
+    background: #ffffff;
+  }
+
+  #shopify-section-{{ section.id }} .collection-tiles__empty {
+    padding: 80px 16px;
+    text-align: center;
+  }
+
+  @media (min-width: 768px) {
+    #shopify-section-{{ section.id }} .collection-tiles__hero {
+      aspect-ratio: {{ hero_ratio }};
+    }
+
+    #shopify-section-{{ section.id }} .collection-tiles__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    #shopify-section-{{ section.id }} .collection-tiles__text {
+      padding: 16px;
+    }
+
+    #shopify-section-{{ section.id }} .collection-tiles__title {
+      font-size: 16px;
+      line-height: 20px;
+    }
+
+    #shopify-section-{{ section.id }} .collection-tiles__cta {
+      margin-top: 16px;
+    }
+  }
+
+  @media (min-width: 960px) {
+    #shopify-section-{{ section.id }} .collection-tiles__title {
+      font-size: 20px;
+      line-height: 24px;
+    }
+
+    #shopify-section-{{ section.id }} .collection-tiles__cta {
+      margin-top: 24px;
+      font-size: 14px;
+      line-height: 16px;
+    }
+  }
+</style>
+
+<div
+  class="collection-tiles{% if section.settings.text_color != 'black' %} collection-tiles--light-text{% endif %}"
+  data-section-id="{{ section.id }}"
+>
+  <h1 class="visually-hidden">{{ collection.title }}</h1>
+
+  {%- if hero_image != blank -%}
+    {%- capture hero_inner -%}
+      <div class="collection-tiles__media collection-tiles__hero-image--desktop">
+        {%- render 'image',
+          image: hero_image,
+          sizes: hero_sizes,
+          no_crop: true,
+          src_set_type: 'full-width',
+          prioritize_loading: true,
+          focal_point: 'image_presentation'
+        -%}
+      </div>
+      {%- if hero_mobile_image != blank -%}
+        <div class="collection-tiles__media collection-tiles__hero-image--mobile">
+          {%- render 'image',
+            image: hero_mobile_image,
+            sizes: '100vw',
+            no_crop: true,
+            src_set_type: 'full-width',
+            prioritize_loading: true,
+            focal_point: 'image_presentation'
+          -%}
+        </div>
+      {%- endif -%}
+      <div class="collection-tiles__text">
+        {%- if hero_title != blank -%}
+          <h2 class="collection-tiles__title">{{ hero_title }}</h2>
+        {%- endif -%}
+        {%- if hero_link != blank and section.settings.hero_link_label != blank -%}
+          <span class="collection-tiles__cta">{{ section.settings.hero_link_label }}</span>
+        {%- endif -%}
+      </div>
+    {%- endcapture -%}
+
+    {%- if hero_link != blank -%}
+      <a class="collection-tiles__hero" href="{{ hero_link }}">{{ hero_inner }}</a>
+    {%- else -%}
+      <div class="collection-tiles__hero">{{ hero_inner }}</div>
+    {%- endif -%}
+  {%- endif -%}
+
+  {%- paginate collection.products by section.settings.products_per_page -%}
+    {%- if collection.products.size > 0 -%}
+      <div class="collection-tiles__grid">
+        {%- for product in collection.products -%}
+          {%- liquid
+            # Portada: an optional photo of its own for listings, when set (custom.cover_image, created in the admin)
+            assign tile_image = product.metafields.custom.cover_image.value | default: product.featured_image
+          -%}
+
+          <a class="collection-tiles__tile" href="{{ product.url }}">
+            <div class="collection-tiles__media">
+              {%- if tile_image != blank -%}
+                {%- render 'image',
+                  image: tile_image,
+                  sizes: '(min-width: 768px) 33.34vw, 50vw',
+                  aspect_ratio: section.settings.tile_aspect_ratio,
+                  focal_point: 'image_presentation',
+                  object_fit: 'cover',
+                  src_set_type: 'grid'
+                -%}
+              {%- else -%}
+                {{ 'product-1' | placeholder_svg_tag: 'placeholder-svg' }}
+              {%- endif -%}
+            </div>
+            <div class="collection-tiles__text">
+              <h2 class="collection-tiles__title">{{ product.title }}</h2>
+              {%- if section.settings.link_label != blank -%}
+                <span class="collection-tiles__cta">{{ section.settings.link_label }}</span>
+              {%- endif -%}
+            </div>
+          </a>
+        {%- endfor -%}
+      </div>
+
+      {%- if paginate.pages > 1 -%}
+        <div class="collection-tiles__pagination">
+          {%- render 'pagination', paginate: paginate, type: 'general.pagination.products', show_item_count: true -%}
+        </div>
+      {%- endif -%}
+    {%- else -%}
+      <p class="collection-tiles__empty fs-body-100">{{ 'collections.general.no_matches' | t }}</p>
+    {%- endif -%}
+  {%- endpaginate -%}
+
+  {%- if section.settings.show_breadcrumb -%}
+    <nav class="product-breadcrumbs" aria-label="{{ section.settings.home_label | escape }}">
+      <ol class="product-breadcrumbs__list">
+        <li class="product-breadcrumbs__item">
+          <a class="product-breadcrumbs__link" href="{{ routes.root_url }}">{{ section.settings.home_label | escape }}</a>
+        </li>
+        <li class="product-breadcrumbs__item">
+          <a class="product-breadcrumbs__link" href="{{ collection.url }}">{{ collection.title | escape }}</a>
+        </li>
+      </ol>
+    </nav>
+  {%- endif -%}
+</div>
+
+{% schema %}
+{
+  "name": "Colección en tiles",
+  "enabled_on": {
+    "templates": ["collection"]
+  },
+  "settings": [
+    {
+      "type": "header",
+      "content": "Banner superior"
+    },
+    {
+      "type": "image_picker",
+      "id": "hero_image",
+      "label": "Imagen del banner",
+      "info": "Si la dejas vacía se usa la imagen de la colección (si tiene); sin ninguna, no hay banner."
+    },
+    {
+      "type": "image_picker",
+      "id": "hero_image_mobile",
+      "label": "Imagen del banner en móvil (opcional)",
+      "info": "Mejor vertical (4:5). Sin ella, en móvil se recorta la de escritorio."
+    },
+    {
+      "type": "select",
+      "id": "hero_aspect_ratio",
+      "label": "Proporción del banner (escritorio)",
+      "options": [
+        { "value": "12 / 5", "label": "2,4:1 (como Miu Miu)" },
+        { "value": "16 / 9", "label": "16:9" },
+        { "value": "3 / 2", "label": "3:2" },
+        { "value": "natural", "label": "La de la imagen" }
+      ],
+      "default": "12 / 5"
+    },
+    {
+      "type": "text",
+      "id": "hero_title",
+      "label": "Título del banner",
+      "info": "Vacío = nombre de la colección."
+    },
+    {
+      "type": "url",
+      "id": "hero_link",
+      "label": "Enlace del banner"
+    },
+    {
+      "type": "text",
+      "id": "hero_link_label",
+      "label": "Texto del enlace del banner",
+      "default": "Shop",
+      "info": "Solo se muestra si el banner tiene enlace."
+    },
+    {
+      "type": "header",
+      "content": "Tiles (productos)"
+    },
+    {
+      "type": "select",
+      "id": "tile_aspect_ratio",
+      "label": "Forma de cada tile",
+      "options": [
+        { "value": "square", "label": "Cuadrado (1:1)" },
+        { "value": "portrait_alt", "label": "Vertical (4:5)" }
+      ],
+      "default": "square"
+    },
+    {
+      "type": "text",
+      "id": "link_label",
+      "label": "Texto del enlace de cada tile",
+      "default": "Shop",
+      "info": "Vacío = sin enlace subrayado (el tile entero sigue siendo un enlace)."
+    },
+    {
+      "type": "select",
+      "id": "text_color",
+      "label": "Color del texto sobre las imágenes",
+      "options": [
+        { "value": "white", "label": "Blanco (como Miu Miu, con una sombra suave arriba)" },
+        { "value": "black", "label": "Negro" }
+      ],
+      "default": "white"
+    },
+    {
+      "type": "select",
+      "id": "mobile_columns",
+      "label": "Columnas en móvil",
+      "options": [
+        { "value": "2", "label": "2 columnas" },
+        { "value": "1", "label": "1 columna (tiles más grandes)" }
+      ],
+      "default": "2"
+    },
+    {
+      "type": "range",
+      "id": "products_per_page",
+      "label": "Productos por página",
+      "info": "Como en Miu Miu, lo normal es que salgan todos en una página (máximo 48); solo si hay más aparece la paginación.",
+      "min": 6,
+      "max": 48,
+      "step": 3,
+      "default": 48
+    },
+    {
+      "type": "header",
+      "content": "Migas de pan"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_breadcrumb",
+      "label": "Mostrar «Inicio / Colección»",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "home_label",
+      "label": "Texto de «Inicio»",
+      "default": "Inicio"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,159 @@
+{% doc %}
+  Renders a responsive image.
+
+  @param {object} image - The image to be rendered.
+  @param {string} sizes - A list of responsive image sizes (for the 'sizes' attribute).
+  @param {string} [src_set_type] - The kind of environment the image is being rendered in. The types are listed below. This helps with more performant srcset generation. If this parameter isn't specified, a comprehensive srcset range will be used.
+  @param {string} [object_fit] - The 'object-fit' CSS property to use for the image.
+  @param {string} [aspect_ratio] - The aspect ratio to render the image. Used for cropping.
+  @param {string} [focal_point] - The source of the focal point of the image.
+  @param {string} [focal_alignment] - The focal alignment ('object-position') of the image (based on the focal point source). Used for cropping.
+  @param {boolean} [no_crop] - Whether we should allow Shopify to serve a cropped image. If 'true', we load the full image and crop in CSS.
+  @param {boolean} [prioritize_loading] - Whether to add 'loading="lazy"' to the image.
+  @param {string} [fallback_alt] - Alt text to use if the image doesn't have any.
+{% enddoc %}
+
+{%- liquid
+  comment
+    srcset types:
+    - 'grid'
+    - 'full-width'
+    - 'thumbnail'
+  endcomment
+
+  case src_set_type
+    when 'grid'
+      # Assumption: even with a 2-per row grid on large screen, grid item will not be more than 700px @2x wide
+      assign src_set_widths_raw = '150,200,240,280,300,360,400,450,500,550,600,650,700,750,800,850,900,950,1000,1100,1200,1300,1400'
+    when 'full-width'
+      # Assumption: even smallest phone will be  350px @ 2x = 700 at least
+      assign src_set_widths_raw = '700,750,800,850,900,950,1000,1100,1200,1300,1400,1500,1600,1800,2000,2200,2400,2600,2800,3000,3500,4000,4500,5000,5500,6000'
+    when 'thumbnail'
+      # Assumption: even desktop thumbnails shouldn't be more 300px @2x wide = 600 max
+      assign src_set_widths_raw = '150,200,240,280,300,360,400,450,500,550,600'
+    else
+      assign src_set_widths_raw = '100,150,200,240,280,300,360,400,450,500,550,600,650,700,750,800,850,900,950,1000,1100,1200,1300,1400,1500,1600,1800,2000,2200,2400,2600,2800,3000,3500,4000,4500,5000,5500,6000'
+  endcase
+
+  assign src_set_widths = src_set_widths_raw | split: ','
+
+  if object_fit == 'contain' or no_crop == true or aspect_ratio == 'natural' or aspect_ratio == blank
+    assign enable_image_crop = false
+  else
+    assign enable_image_crop = true
+
+    case aspect_ratio
+      when 'portrait'
+        assign crop_aspect_ratio = 0.66666
+      when 'portrait_alt'
+        assign crop_aspect_ratio = 0.8
+      when 'square'
+        assign crop_aspect_ratio = 1
+      when 'landscape_alt'
+        assign crop_aspect_ratio = 1.25
+      when 'landscape'
+        assign crop_aspect_ratio = 1.5
+      when 'landscape_wide_alt'
+        assign crop_aspect_ratio = 1.77777
+    endcase
+
+    if focal_point == 'image_presentation'
+      assign crop_type = 'region'
+
+      if image.aspect_ratio > crop_aspect_ratio
+        assign crop_height = image.height
+        assign crop_width = crop_height | times: crop_aspect_ratio
+        assign crop_width_halved = crop_width | divided_by: 2
+
+        assign focal_alignment_x = focal_alignment | split: ' ' | first | remove: '%' | divided_by: 100.0
+        assign focal_x = image.width | times: focal_alignment_x
+        assign at_most_crop_left = image.width | minus: crop_width
+
+        assign crop_left = focal_x | minus: crop_width_halved | at_most: at_most_crop_left | at_least: 0
+        assign crop_top = 0
+
+      elsif image.aspect_ratio < crop_aspect_ratio
+        assign crop_width = image.width
+        assign crop_height = crop_width | divided_by: crop_aspect_ratio
+        assign crop_height_halved = crop_height | divided_by: 2
+
+        assign focal_alignment_y = focal_alignment | split: ' ' | last | remove: '%' | divided_by: 100.0
+        assign focal_y = image.height | times: focal_alignment_y
+        assign at_most_crop_top = image.height | minus: crop_height
+
+        assign crop_left = 0
+        assign crop_top = focal_y | minus: crop_height_halved | at_most: at_most_crop_top | at_least: 0
+
+      else
+        # If the image is already exactly the aspect ratio specified, then don't crop.
+        # Need to set the crop parameter to anything other than region, in order to have the crop variables ignored.
+        assign crop_type = 'center'
+      endif
+    else
+      assign crop_type = focal_alignment | default: 'center'
+    endif
+  endif
+
+  capture src_set_string
+    for width_string in src_set_widths
+      assign width = width_string | plus: 0
+
+      if image.width < width
+        break
+      endif
+
+      if enable_image_crop
+        assign height = width | divided_by: crop_aspect_ratio
+        if image.height < height
+          break
+        endif
+      endif
+
+      unless forloop.first
+        echo ', '
+      endunless
+
+      if enable_image_crop
+        if crop_type == 'region'
+          echo image | image_url: width: width, height: height, crop: crop_type, crop_left: crop_left, crop_top: crop_top, crop_width: crop_width, crop_height: crop_height
+        else
+          echo image | image_url: width: width, height: height, crop: crop_type
+        endif
+      else
+        echo image | image_url: width: width
+      endif
+
+      echo ' [[width]]w' | replace: '[[width]]', width
+    endfor
+  endcapture
+
+  capture lazy_loading_attribute
+    if prioritize_loading
+      echo 'fetchpriority="high"'
+    else
+      echo 'loading="lazy"'
+    endif
+  endcapture
+-%}
+
+{%- comment -%}
+  Shopify gives every product photo without its own alt text the product's title as alt, so all the photos of a
+  product read the same. When the caller passes a fallback that starts with that title plus a photo number
+  (see snippets/product-media.liquid), the numbered one is used; a custom alt written in the admin always wins.
+{%- endcomment -%}
+{%- assign image_alt = image.alt | default: fallback_alt -%}
+{%- if image.alt != blank and fallback_alt != blank and fallback_alt != image.alt and fallback_alt contains image.alt -%}
+  {%- assign image_alt = fallback_alt -%}
+{%- endif -%}
+
+<img
+  class="image__img"
+  width="{{ image.width }}"
+  height="{{ image.height }}"
+  alt="{{ image_alt | escape }}"
+  {{ lazy_loading_attribute }}
+  src="{{ image | image_url: width: 320 }}"
+  srcset="{{ src_set_string }}"
+  sizes="{{ sizes }}"
+  onload="javascript: this.closest('.image').classList.add('loaded')"
+>

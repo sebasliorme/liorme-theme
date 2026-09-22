@@ -1,0 +1,39 @@
+{%- doc -%}
+  The srcset of a photo: steps of 200-400 px up to the photo's own width, and the photo's own width as the last
+  option, so the sharpest file the browser can get is the original (it never asks for more pixels than the file has).
+
+  @param {object} image - The image.
+{%- enddoc -%}
+{%- liquid
+  assign srcset_steps = '400,600,800,1000,1200,1400,1600,1800,2000,2200,2400,2600,2800,3000,3400,3800,4200' | split: ','
+  assign last_step = 0
+
+  for srcset_step in srcset_steps
+    assign step_width = srcset_step | plus: 0
+
+    if step_width > image.width
+      break
+    endif
+
+    if last_step > 0
+      echo ', '
+    endif
+
+    echo image | image_url: width: step_width
+    echo ' '
+    echo step_width
+    echo 'w'
+    assign last_step = step_width
+  endfor
+
+  if image.width > last_step
+    if last_step > 0
+      echo ', '
+    endif
+
+    echo image | image_url: width: image.width
+    echo ' '
+    echo image.width
+    echo 'w'
+  endif
+-%}

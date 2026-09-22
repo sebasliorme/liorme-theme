@@ -1,0 +1,79 @@
+{%- doc -%}
+  Renders the filter sidebar display.
+
+  @param {object} resource - The collection or search object.
+  @param {boolean} show_filters - Whether to show filters.
+  @param {boolean} collapse_filter_bar - Whether the filter bar should be collapsed by default.
+  @param {boolean} collapse_filter_groups - Whether the filter groups should be collapsed by default.
+  @param {boolean} show_swatch_filters - Whether to show matching filters as swatches.
+  @param {string} swatch_options - The product options that should be used for swatches.
+  @param {string} custom_color_key_map - A list of custom color names for swatches.
+  @param {string} custom_color_value_map - A list of custom color values for swatches.
+  @param {boolean} show_chip_filters - Whether to show matching filters as chips.
+  @param {string} chip_options - The product options that should be used for chips.
+  @param {string} chip_layout - How chip filters should be laid out (ie. "Grid 3 columns", "Grid 2 columns", or "Natural").
+{%- enddoc -%}
+
+{%- liquid
+  if resource.filters != empty and show_filters
+    assign filters_valid = true
+  else
+    assign filters_valid = false
+  endif
+-%}
+
+{%- if filters_valid -%}
+  <form
+    class="filter-sidebar"
+    id="filter-sidebar"
+    data-filter-form
+    data-filter-sidebar
+    aria-expanded="{% if collapse_filter_bar %}false{% else %}true{% endif %}"
+  >
+    <div class="filter-sidebar-inner" data-sticky-container>
+      {%- if resource.terms -%}
+        <input
+          type="hidden"
+          name="q"
+          id="SearchFilters--FilterDrawer"
+          value="{{ resource.terms | escape }}"
+        >
+      {%- endif -%}
+
+      {%- comment -%} Keep search term within form {%- endcomment -%}
+      {%- if resource.terms -%}
+        <input type="hidden" name="q" value="{{ resource.terms | escape }}">
+        <input name="options[prefix]" type="hidden" value="last">
+      {%- endif -%}
+
+      {%- comment -%} Keep product type within form {%- endcomment -%}
+      {%- if resource.current_type -%}
+        <input type="hidden" name="q" value="{{ resource.current_type | escape }}">
+      {%- endif -%}
+
+      {%- comment -%} Keep product vendor within form {%- endcomment -%}
+      {%- if resource.current_vendor -%}
+        <input type="hidden" name="q" value="{{ resource.current_vendor | escape }}">
+      {%- endif -%}
+
+      {%- if resource.sort_by -%}
+        <input type="hidden" name="sort_by" value="{{ resource.sort_by | escape }}">
+      {%- endif -%}
+
+      {%- for filter in resource.filters -%}
+        {%- render 'filter-drawer-group',
+          scope: 'sidebar',
+          filter: filter,
+          collapse_filter_groups: collapse_filter_groups,
+          show_swatch_filters: show_swatch_filters,
+          swatch_options: swatch_options,
+          custom_color_key_map: custom_color_key_map,
+          custom_color_value_map: custom_color_value_map,
+          show_chip_filters: show_chip_filters,
+          chip_options: chip_options,
+          chip_layout: chip_layout
+        -%}
+      {%- endfor -%}
+    </div>
+  </form>
+{%- endif -%}

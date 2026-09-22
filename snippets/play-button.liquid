@@ -1,0 +1,134 @@
+{%- doc -%}
+  Renders a play button.
+
+  Used in the 'Video' section as remote, as well as for the base structure for the play button block.
+
+  @param {boolean} [is_remote] - Whether the button acts as a remote to play an external video (ie. the "Video" section).
+  @param {string} label - The button text.
+  @param {string} icon_style - The button's icon style (ie. 'dark', 'light', or 'outline').
+  @param {boolean} [enable_custom_button_color] - Whether a custom color should be used for the button.
+  @param {string} [custom_button_color] - The custom button color.
+  @param {string} [button_layout] - The button layout (ie. 'full', or 'minimal'). Defaults to 'full'.
+  @param {string} button_alignment - The horizontal alignment of the button.
+  @param {string} [button_alignment_mobile] - The horizontal alignment of the button on mobile.
+  @param {string} wrapper_class - A class to be added to the container.
+  @param {boolean} has_video - Whether the button just acts as a remote, or there's an associated video to launch as a modal.
+  @param {string} video_type - The type of video (ie. 'shopify', or 'external')
+  @param {object} video - The video.
+  @param {object} poster_image - A preview image for the video.
+  @param {string} poster_aspect - The aspect ratio for the poster image.
+  @param {string} shopify_attributes - Block attributes from 'block.shopify_attributes'.
+{%- enddoc -%}
+
+{%- liquid
+  assign is_remote = is_remote | default: false, allow_false: true
+  assign enable_custom_button_color = enable_custom_button_color | default: false, allow_false: true
+  assign button_layout = button_layout | default: 'full'
+  assign button_alignment_mobile = button_alignment_mobile | default: button_alignment
+
+  capture play_button_class
+    echo 'play-button-block'
+
+    if poster_image != blank
+      echo ' play-button-block--has-poster'
+    endif
+
+    if label != blank
+      echo ' play-button-block--has-label'
+    endif
+
+    echo ' play-button-block--layout-[[bl]]' | replace: '[[bl]]', button_layout
+    echo ' play-button-block--icon-style-[[is]]' | replace: '[[is]]', icon_style
+    echo ' button-block--justify-[[ba]]' | replace: '[[ba]]', button_alignment
+    echo ' button-block--justify-mobile-[[bam]]' | replace: '[[bam]]', button_alignment_mobile
+    echo ' ff-body'
+
+    if wrapper_class != blank
+      echo ' '
+      echo wrapper_class
+    endif
+  endcapture
+-%}
+
+<div
+  class="{{ play_button_class }}"
+  {% if enable_custom_button_color -%}
+    style="
+      --custom-button-color: {{ custom_button_color }};
+      --custom-button-color-alpha-60: {{ custom_button_color | color_modify: 'alpha', 0.6 }};
+    "
+  {%- endif %}
+  {{ shopify_attributes }}
+>
+  <button
+    class="play-button-block__inner"
+    type="button"
+    {%- # When it is a remote, we don't want the play button JS to apply, so we prevent this selector from being included -%}
+    {% unless is_remote -%}
+      data-play-button-block
+    {%- endunless %}
+    {% if label == blank -%}
+      aria-label="{{ 'general.accessibility.play_video' | t }}"
+    {%- endif %}
+    {% if has_video == false and is_remote == false -%}
+      data-flash-trigger data-flash-message="{{ 'general.flash_alert.no_video' | t }}"
+    {%- endif -%}
+  >
+    <div class="play-button-block-left">
+      {%- if has_video and poster_image != blank -%}
+        {%- render 'image',
+          image: poster_image,
+          sizes: '100px',
+          focal_point: 'image_presentation',
+          aspect_ratio: poster_aspect
+        -%}
+      {%- endif -%}
+
+      {%- render 'icon', icon: 'play-arrow' -%}
+    </div>
+
+    {%- if label != blank and button_layout == 'full' -%}
+      <div class="play-button-block-right">
+        {{ label }}
+      </div>
+    {%- endif -%}
+
+    {%- if has_video -%}
+      <div
+        class="play-button-block-video-container"
+        data-play-button-block-video-container
+        data-video-type="{{ video_type }}"
+      >
+        {%- case video_type -%}
+          {%- when 'shopify' -%}
+            {%- assign video_html = video
+              | video_tag:
+                class: 'play-button-block-video',
+                data-play-button-block-video: '',
+                autoplay: true,
+                controls: true
+            -%}
+            {{ video_html }}
+
+          {%- when 'external' -%}
+            {%- liquid
+              capture video_class
+                echo 'play-button-block-video'
+
+                unless video.type == 'youtube'
+                  echo ' video__iframe'
+                endunless
+              endcapture
+            -%}
+
+            <div
+              class="{{ video_class }}"
+              data-play-button-block-video
+              data-video-provider="{{ video.type }}"
+              data-video-id="{{ video.id | escape }}"
+            ></div>
+        {%- endcase -%}
+      </div>
+    {%- endif -%}
+  </button>
+</div>

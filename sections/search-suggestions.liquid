@@ -1,0 +1,151 @@
+{%- doc -%}
+  Renders the quick search's "before you type anything" suggestions — up
+  to six side-by-side columns (single row), each with its own heading
+  plus a flat list of merchant-configured links (block type `link`,
+  grouped by `block.settings.column`). A column with zero blocks simply
+  renders nothing, leaving its grid track empty.
+{%- enddoc -%}
+
+{%- liquid
+  assign column_1_count = 0
+  assign column_2_count = 0
+  assign column_3_count = 0
+  assign column_4_count = 0
+  assign column_5_count = 0
+  assign column_6_count = 0
+  for block in section.blocks
+    case block.settings.column
+      when '2'
+        assign column_2_count = column_2_count | plus: 1
+      when '3'
+        assign column_3_count = column_3_count | plus: 1
+      when '4'
+        assign column_4_count = column_4_count | plus: 1
+      when '5'
+        assign column_5_count = column_5_count | plus: 1
+      when '6'
+        assign column_6_count = column_6_count | plus: 1
+      else
+        assign column_1_count = column_1_count | plus: 1
+    endcase
+  endfor
+-%}
+
+{%- for column_number in (1..6) -%}
+  {%- liquid
+    case column_number
+      when 1
+        assign column_count = column_1_count
+        assign column_heading = section.settings.heading_1
+      when 2
+        assign column_count = column_2_count
+        assign column_heading = section.settings.heading_2
+      when 3
+        assign column_count = column_3_count
+        assign column_heading = section.settings.heading_3
+      when 4
+        assign column_count = column_4_count
+        assign column_heading = section.settings.heading_4
+      when 5
+        assign column_count = column_5_count
+        assign column_heading = section.settings.heading_5
+      when 6
+        assign column_count = column_6_count
+        assign column_heading = section.settings.heading_6
+    endcase
+    assign column_number_string = column_number | append: ''
+  -%}
+
+  {%- if column_count > 0 -%}
+    <div class="quick-search__suggested-column">
+      {%- if column_heading != blank -%}
+        <h4 class="quick-search__suggested-header ff-body fs-body-100 t-subdued">
+          {{- column_heading -}}
+        </h4>
+      {%- endif -%}
+
+      {%- for block in section.blocks -%}
+        {%- if block.settings.column == column_number_string -%}
+          <a class="quick-search__result" href="{{ block.settings.url }}" {{ block.shopify_attributes }}>
+            <div class="quick-search__result-details ff-body fs-body-75">
+              <div class="quick-search__result-heading">{{ block.settings.title }}</div>
+            </div>
+          </a>
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+  {%- endif -%}
+{%- endfor -%}
+
+{% schema %}
+{
+  "name": "Sugerencias de búsqueda",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading_1",
+      "label": "Columna 1: título",
+      "default": "Destacados"
+    },
+    {
+      "type": "text",
+      "id": "heading_2",
+      "label": "Columna 2: título",
+      "default": "Tendencias"
+    },
+    {
+      "type": "text",
+      "id": "heading_3",
+      "label": "Columna 3: título"
+    },
+    {
+      "type": "text",
+      "id": "heading_4",
+      "label": "Columna 4: título"
+    },
+    {
+      "type": "text",
+      "id": "heading_5",
+      "label": "Columna 5: título"
+    },
+    {
+      "type": "text",
+      "id": "heading_6",
+      "label": "Columna 6: título"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "link",
+      "name": "Enlace",
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Título"
+        },
+        {
+          "type": "url",
+          "id": "url",
+          "label": "Enlace"
+        },
+        {
+          "type": "select",
+          "id": "column",
+          "label": "Columna",
+          "options": [
+            { "value": "1", "label": "Columna 1" },
+            { "value": "2", "label": "Columna 2" },
+            { "value": "3", "label": "Columna 3" },
+            { "value": "4", "label": "Columna 4" },
+            { "value": "5", "label": "Columna 5" },
+            { "value": "6", "label": "Columna 6" }
+          ],
+          "default": "1"
+        }
+      ]
+    }
+  ],
+  "max_blocks": 30
+}
+{% endschema %}

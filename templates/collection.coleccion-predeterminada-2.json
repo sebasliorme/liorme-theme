@@ -1,0 +1,31 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "collection-tiles",
+      "settings": {
+        "hero_image": "shopify://shop_images/eyewear_DT.avif",
+        "hero_aspect_ratio": "12 / 5",
+        "hero_link_label": "Shop",
+        "tile_aspect_ratio": "square",
+        "link_label": "Shop",
+        "text_color": "white",
+        "mobile_columns": "2",
+        "products_per_page": 48,
+        "show_breadcrumb": true,
+        "home_label": "Inicio"
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

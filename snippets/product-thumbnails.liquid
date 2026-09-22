@@ -1,0 +1,84 @@
+{%- doc -%}
+  Renders the product page media thumbnails.
+
+  @param {object} prod - The product object. We use 'prod' to avoid collision with the global 'product' object.
+  @param {string} orientation - The orientation of the thumbnails (ie. 'horizontal', or 'vertical').
+  @param {object} featured_media - The featured (default selected) media.
+  @param {string} aspect_ratio - The aspect ratio of the thumbnails.
+  @param {number} initial_variant_media_position - The index of the first media item associated with the current variant in the broader media list.
+  @param {number} next_variant_media_index - The index of the first media item associated with the next variant grouping in the broader media list. This value, minus 1, gives us the index of the last media for the current variant.
+{%- enddoc -%}
+
+{%- if prod.media.size > 1 -%}
+  <div
+    class="product-thumbnails"
+    data-product-thumbnails
+    data-scroll-container
+    data-at-start="true"
+    data-at-end="false"
+    data-axis="{{ orientation }}"
+  >
+    {%- render 'scroll-button', type: 'previous' -%}
+
+    <div class="product-thumbnails__viewport" data-scroll-container-viewport>
+      <div class="scroll-sentinal scroll-sentinal--start" data-position="start"></div>
+
+      <ul class="product-thumbnails__items">
+        {%- for media in prod.media -%}
+          {%- if forloop.index < initial_variant_media_position or forloop.index > next_variant_media_index -%}
+            {%- continue -%}
+          {%- endif -%}
+
+          <li class="product-thumbnails__item" data-thumbnail-id="{{ media.id }}">
+            <button
+              type="button"
+              class="product-thumbnails__item-link {%- if media.id == featured_media.id %} active{%- endif -%}"
+              data-thumbnail-id="{{ media.id }}"
+              data-product-thumbnail
+              aria-label="{{ 'general.accessibility.image_thumbail' | t: number: forloop.index }}"
+            >
+              {%- liquid
+                if orientation == 'horizontal'
+                  assign sizes_px = 80 | times: aspect_ratio
+                else
+                  assign sizes_px = 80
+                endif
+              -%}
+              {%- render 'image',
+                image: media,
+                id: media.id,
+                wrapper_class: 'product-thumbnails__item-image',
+                aspect_ratio: aspect_ratio,
+                focal_point: 'image_presentation',
+                sizes_px: sizes_px,
+                src_set_type: 'thumbnail'
+              -%}
+
+              {%- liquid
+                capture badge_icon_name
+                  case media.media_type
+                    when 'video', 'external_video'
+                      echo 'play-badge'
+                    when 'model'
+                      echo '3d-badge'
+                  endcase
+                endcapture
+              -%}
+
+              {%- case media.media_type -%}
+                {%- when 'video', 'external_video', 'model' -%}
+                  <div class="product-thumbnails__item-badge">
+                    {%- render 'icon', icon: badge_icon_name -%}
+                  </div>
+              {%- endcase -%}
+            </button>
+          </li>
+        {% endfor %}
+      </ul>
+
+      <div class="scroll-sentinal scroll-sentinal--end" data-position="end"></div>
+    </div>
+
+    {%- render 'scroll-button', type: 'next' -%}
+  </div>
+{%- endif -%}

@@ -1,0 +1,213 @@
+{%- doc -%}
+  Renders a slideshow slide.
+
+  @param {object} block - The block object for the current slide.
+  @param {number} index - The slide index.
+  @param {boolean} is_single_slide - Whether there's only one slide in the slideshow.
+{%- enddoc -%}
+
+{%- liquid
+  assign is_single_slide = is_single_slide | default: false, allow_false: true
+  assign overlay_opacity = block.settings.overlay_opacity | divided_by: 100.0
+
+  # Text position
+  assign text_position = block.settings.text_position | split: '_'
+  assign horizontal_position = text_position | first
+  assign vertical_position = text_position | last
+
+  case horizontal_position
+    when 'flex-start'
+      assign text_position_modifier = 'left'
+    when 'flex-end'
+      assign text_position_modifier = 'right'
+    else
+      assign text_position_modifier = 'center'
+  endcase
+
+  # Mobile text position
+  assign text_position_mobile = block.settings.text_position_mobile | split: '_'
+  assign horizontal_position_mobile = text_position_mobile | first
+  assign vertical_position_mobile = text_position_mobile | last
+
+  case horizontal_position_mobile
+    when 'flex-start'
+      assign text_position_modifier_mobile = 'left'
+    when 'flex-end'
+      assign text_position_modifier_mobile = 'right'
+    else
+      assign text_position_modifier_mobile = 'center'
+  endcase
+
+  # Placeholder aspect ratio
+  if section.settings.image_aspect == 'original'
+    assign placeholder_aspect_ratio = 'square'
+  else
+    assign placeholder_aspect_ratio = 'no-ratio'
+  endif
+
+  # Buttons
+  if block.settings.link_1 != blank and block.settings.link_text_1 != blank and block.settings.link_2 != blank and block.settings.link_text_2 != blank
+    assign has_2_buttons = true
+  else
+    assign has_2_buttons = false
+  endif
+
+  # Image loading
+  if section.index == 1 and index == 1
+    assign prioritize_loading = true
+  else
+    assign prioritize_loading = false
+  endif
+-%}
+
+<div
+  class="slideshow-slide swiper-slide {%- if is_single_slide %} slideshow-slide--single{%- endif -%}"
+  style="
+    {%- render 'color-scheme-to-vars', color_scheme: block.settings.overlay_color_scheme, output_placeholder_colors: false -%}
+    --overlay-opacity: {{ overlay_opacity }};
+    --text-horizontal-position: {{ horizontal_position }};
+    --text-vertical-position: {{ vertical_position }};
+    --text-alignment: {{ text_position_modifier }};
+    --text-horizontal-position-mobile: {{ horizontal_position_mobile }};
+    --text-vertical-position-mobile: {{ vertical_position_mobile }};
+    --text-alignment-mobile: {{ text_position_modifier_mobile }};
+  "
+  data-slide="{{ index }}"
+  data-bullet-label="{{ 'general.accessibility.carousel_select' | t: number: index }}"
+  {% unless index == 1 -%}
+    inert
+  {%- endunless %}
+  data-slide-type="{{ block.type }}"
+  {{ block.shopify_attributes }}
+>
+  <div class="slideshow-slide__inner">
+    {%- if block.type == 'slide' -%}
+      <div class="slideshow-slide__image-container">
+        {%- if block.settings.image_mobile != blank -%}
+          {%- render 'image',
+            wrapper_class: 'slideshow-slide__image slideshow-slide__image--mobile',
+            image: block.settings.image_mobile,
+            sizes: '100vw',
+            focal_point: block.settings.mobile_focal_point,
+            placeholder_name: 'lifestyle-1',
+            animate: true,
+            prioritize_loading: prioritize_loading
+          -%}
+        {%- endif -%}
+
+        {%- render 'image',
+          wrapper_class: 'slideshow-slide__image',
+          image: block.settings.image,
+          sizes: '100vw',
+          focal_point: block.settings.focal_point,
+          include_placeholder: true,
+          placeholder_natural_fallback_ratio: placeholder_aspect_ratio,
+          placeholder_name: 'lifestyle-1',
+          animate: true,
+          prioritize_loading: prioritize_loading
+        -%}
+      </div>
+    {%- else -%}
+      {%- liquid
+        if block.settings.mobile_background_video != blank
+          assign has_mobile_video = true
+        else
+          assign has_mobile_video = false
+        endif
+      -%}
+
+      <div class="slideshow-slide__video-container">
+        {%- render 'background-video',
+          video: block.settings.background_video,
+          enable_mobile_video: has_mobile_video,
+          mobile_video: block.settings.mobile_background_video,
+          focal_point: block.settings.video_focal_point,
+          focal_point_mobile: block.settings.mobile_video_focal_point,
+          class: 'slideshow-slide__video',
+          placeholder_name: 'lifestyle-1',
+          animate: true
+        -%}
+      </div>
+    {%- endif -%}
+
+    <div class="slideshow-slide__overlay"></div>
+
+    <div class="slideshow-slide__text-container-wrapper">
+      <div class="slideshow-slide__text-container">
+        {%- unless block.settings.media_link == blank -%}
+          <a
+            href="{{ block.settings.media_link }}"
+            class="slideshow-slide__image-link"
+            aria-label="{{ block.settings.media_link }}"
+          ></a>
+        {%- endunless -%}
+
+        <div class="slideshow-slide__text-container-inner section-blocks animation--section-blocks">
+          {%- render 'section-block-accent',
+            accent: block.settings.accent,
+            class_prefix: 'slideshow-slide__text-container'
+          -%}
+
+          {%- render 'section-block-heading',
+            heading_tag: block.settings.heading_tag,
+            heading: block.settings.title,
+            heading_font_class: block.settings.heading_font_class,
+            class_prefix: 'slideshow-slide__text-container'
+          -%}
+
+          {%- render 'section-block-subheading',
+            subheading_tag: block.settings.subheading_tag,
+            subheading: block.settings.subheading,
+            subheading_font_class: block.settings.subheading_font_class,
+            class_prefix: 'slideshow-slide__text-container'
+          -%}
+
+          {%- render 'section-block-text',
+            text: block.settings.text,
+            text_font_class: block.settings.text_font_class,
+            class_prefix: 'slideshow-slide__text-container'
+          -%}
+
+          {%- if has_2_buttons -%}
+            <div
+              class="
+                slideshow-slide__buttons-wrapper
+                button-block__inline-wrapper
+                button-block__inline-wrapper--break-to-mobile-at-720
+                button-block__inline-wrapper--justify-{{ text_position_modifier }}
+                button-block__inline-wrapper--justify-mobile-{{ text_position_modifier_mobile }}
+                section-blocks__inline-buttons
+              "
+            >
+          {%- endif -%}
+
+          {%- if block.settings.link_1 != blank and block.settings.link_text_1 -%}
+            {%- render 'button-block',
+              link: block.settings.link_1,
+              label: block.settings.link_text_1,
+              button_style: block.settings.button_style_1,
+              button_alignment: text_position_modifier,
+              button_alignment_mobile: text_position_modifier_mobile,
+              wrapper_class: 'slideshow-slide__text-container-image-button section-blocks__button'
+            -%}
+          {%- endif -%}
+
+          {%- if block.settings.link_2 != blank and block.settings.link_text_2 -%}
+            {%- render 'button-block',
+              link: block.settings.link_2,
+              label: block.settings.link_text_2,
+              button_style: block.settings.button_style_2,
+              button_alignment: text_position_modifier,
+              button_alignment_mobile: text_position_modifier_mobile,
+              wrapper_class: 'slideshow-slide__text-container-image-button section-blocks__button'
+            -%}
+          {%- endif -%}
+
+          {% if has_2_buttons %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

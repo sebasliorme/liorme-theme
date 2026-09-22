@@ -1,0 +1,25 @@
+{%- doc -%}
+  Renders the 'Content' block for the article page.
+
+  @param {object} block - The block object.
+  @param {object} forloop - The forloop object for the current loop through the blocks.
+  @param {object} article - The article object.
+{%- enddoc -%}
+
+<div
+  class="
+    article__block
+    article__content
+    {% if forloop.first -%}
+      article__content--top
+    {%- endif -%}
+  "
+  data-enable-image-corner-rounding="{{ block.settings.enable_corner_rounding }}"
+  {{ block.shopify_attributes }}
+>
+  <div class="article__block-inner">
+    <div class="article__rte rte rte--article">
+      {{- article.content -}}
+    </div>
+  </div>
+</div>

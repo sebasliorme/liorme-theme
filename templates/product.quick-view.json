@@ -1,0 +1,68 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "main-product--quick",
+      "blocks": {
+        "variant_picker": {
+          "type": "variant_picker",
+          "settings": {
+            "variant_popup_option": "Size",
+            "variant_popup_icon": "none",
+            "variant_popup_text": "Size guide",
+            "variant_popup_page": "",
+            "swatch_size": "medium",
+            "chip_layout": "natural"
+          }
+        },
+        "0cd908e3-4171-42e1-8b24-fee3f3e3f71f": {
+          "type": "inventory-counter",
+          "settings": {
+            "label": "",
+            "inventory_max": "100",
+            "low_inventory_threshold": "40",
+            "show_status_bar": true,
+            "show_untracked_quantity": false
+          }
+        },
+        "description": {
+          "type": "description",
+          "settings": {
+            "text_font_class": "fs-body-100"
+          }
+        }
+      },
+      "block_order": [
+        "variant_picker",
+        "0cd908e3-4171-42e1-8b24-fee3f3e3f71f",
+        "description"
+      ],
+      "settings": {
+        "show_featured_media_first": false,
+        "image_aspect_ratio": "portrait_alt",
+        "title_font_class": "fs-heading-4-base",
+        "show_divider": true,
+        "show_vendor": true,
+        "show_sku": true,
+        "price_font_class": "fs-body-150",
+        "show_discount": true,
+        "discount_format": "percent_off",
+        "show_product_rating": false,
+        "show_sale_badge": true,
+        "show_custom_badges": true,
+        "enable_gift_card_recipient": true
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

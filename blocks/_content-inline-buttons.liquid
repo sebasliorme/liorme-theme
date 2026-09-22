@@ -1,0 +1,38 @@
+<div
+  class="
+    content-blocks__inline-buttons
+    section-blocks__inline-buttons
+    button-block__inline-wrapper
+  "
+  {{ block.shopify_attributes }}
+>
+  {% content_for 'blocks' %}
+</div>
+
+{% schema %}
+{
+  "name": "t:blocks.content._inline_buttons.name",
+  "tag": null,
+  "blocks": [
+    {
+      "type": "@app"
+    },
+    {
+      "type": "_content-button"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:blocks.content._inline_buttons.presets.name",
+      "blocks": [
+        {
+          "type": "_content-button"
+        },
+        {
+          "type": "_content-button"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,69 @@
+{%- doc -%}
+  Renders the 'Heading' section block.
+
+  @param {string} heading_tag - The HTML tag to use.
+  @param {string} heading - The heading text to display.
+  @param {string} heading_font_class - The font class to apply.
+  @param {boolean} is_section_introduction - Whether the content is being rendered as part of a section introduction.
+  @param {string} [class_prefix] - A class prefix used for creating a scoped class.
+  @param {string} [custom_class] - A custom class to apply.
+  @param {object} [shopify_attributes] - The block's shopify attributes.
+{%- enddoc -%}
+
+{%- unless heading == blank -%}
+  {%- liquid
+    assign is_section_introduction = is_section_introduction | default: false, allow_false: true
+
+    if font_size_var_desktop != blank
+      assign has_font_size_var_desktop = true
+    else
+      assign has_font_size_var_desktop = false
+    endif
+
+    if font_size_var_mobile != blank
+      assign has_font_size_var_mobile = true
+    else
+      assign has_font_size_var_mobile = false
+    endif
+
+    capture class
+      if is_section_introduction
+        echo 'section-introduction__heading'
+      else
+        echo 'section-blocks__heading'
+      endif
+
+      echo ' ff-heading '
+      echo heading_font_class
+
+      if class_prefix != blank
+        echo ' [[cp]]-heading' | replace: '[[cp]]', class_prefix
+      endif
+
+      if custom_class != blank
+        echo ' '
+        echo custom_class
+      endif
+    endcapture
+  -%}
+
+  {%- # whitespace: normal -%}
+  {%- capture style -%}
+    {% if font_size_var_desktop != blank -%}
+      --heading-size-desktop: var({{ font_size_var_desktop }});
+    {%- endif %}
+    {% if font_size_var_mobile != blank -%}
+      --heading-size-mobile: var({{ font_size_var_mobile }});
+    {%- endif %}
+  {%- endcapture -%}
+
+  <{{ heading_tag }}
+    class="{{ class }}"
+    data-has-font-size-var-desktop="{{ has_font_size_var_desktop }}"
+    data-has-font-size-var-mobile="{{ has_font_size_var_mobile }}"
+    style="{{ style }}"
+    {{ shopify_attributes }}
+  >
+    {{- heading -}}
+  </{{ heading_tag }}>
+{%- endunless -%}

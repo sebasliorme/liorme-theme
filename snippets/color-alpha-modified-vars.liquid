@@ -1,0 +1,24 @@
+{%- doc -%}
+  Renders alpha-modified variations for a given color variable and alpha value list.
+
+  @param {object} color_setting - The color setting to be alpha-modified.
+  @param {string} variable_name_base - The variable name to use as a base for each alpha-modified version.
+  @param {string} alpha_values - A comma-separated list of alpha values to use.
+{%- enddoc -%}
+
+{%- liquid
+  assign alpha_values = alpha_values | remove: ' ' | split: ','
+
+  for alpha_value in alpha_values
+    capture variable_name
+      echo variable_name_base | append: '-alpha-' | append: alpha_value
+    endcapture
+
+    capture variable_value
+      assign alpha_value_decimal = alpha_value | times: 0.01
+      echo color_setting | color_modify: 'alpha', alpha_value_decimal
+    endcapture
+
+    echo ' [[vn]]: [[vv]];' | replace: '[[vn]]', variable_name | replace: '[[vv]]', variable_value
+  endfor
+-%}

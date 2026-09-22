@@ -1,0 +1,63 @@
+{%- doc -%}
+  Renders a product item.
+
+  @param {object} item - The object associated with the search item.
+  @param {string} columns_desktop - The number of columns in the grid on desktop.
+  @param {string} columns_mobile - The number of columns in the grid on mobile.
+  @param {boolean} has_grid_reveal - Whether the item should animate.
+{%- enddoc -%}
+
+{%- liquid
+  assign mobile_column_count = columns_mobile | plus: 0
+  assign item_image = item.featured_media
+
+  case columns_desktop
+    when '4'
+      assign sizes = '(max-width: 720px) calc((90vw - 12px) /[[mcc]]), (max-width: 1400px) calc((93.4vw - (12px * 3)) / 4), 304px' | replace: '[[mcc]]', mobile_column_count
+    when '5'
+      assign sizes = '(max-width: 720px) calc((90vw - 12px) /[[mcc]]), (max-width: 1400px) calc((93.4vw - (12px * 3)) / 4), 304px' | replace: '[[mcc]]', mobile_column_count
+    else
+      assign sizes = '(max-width: 720px) calc((90vw - 12px) /[[mcc]]), (max-width: 1400px) calc((93.4vw - (12px * 3)) / 4), 304px' | replace: '[[mcc]]', mobile_column_count
+  endcase
+
+  capture search_item_class
+    echo 'search-item search-item--[[iot]]' | replace: '[[iot]]', item.object_type
+
+    if item_image != blank
+      echo ' search-item--has-image'
+    endif
+
+    echo ' animation--item'
+
+    if has_grid_reveal
+      echo ' animation--item-initial'
+    endif
+  endcapture
+-%}
+
+<a
+  href="{{ item.url }}"
+  class="{{ search_item_class }}"
+>
+  {%- if item_image != blank -%}
+    <div class="search-item__image-wrapper">
+      {%- render 'image',
+        image: item_image,
+        wrapper_class: 'search-item__image',
+        aspect_ratio: 'landscape_alt',
+        focal_point: 'image_presentation',
+        sizes: sizes
+      -%}
+    </div>
+  {%- endif -%}
+
+  <div class="search-item__meta">
+    <h4 class="search-item__title ff-heading fs-heading-5-base fs-heading-4-base-ns">{{ item.title }}</h4>
+
+    <span class="search-item__link btn btn--callout">
+      <span>{{ 'search.read_now' | t }}</span>
+    </span>
+  </div>
+
+  <div class="search-item__type fs-body-75">{{ item.object_type | capitalize }}</div>
+</a>

@@ -1,0 +1,22 @@
+{%- doc -%}
+  Renders the 'Social sharing' block for the article page.
+
+  @param {object} block - The block object.
+  @param {object} article - The article object.
+{%- enddoc -%}
+
+<div class="article__block article__social-sharing" {{ block.shopify_attributes }}>
+  <div class="article__block-inner">
+    {%- capture article_url -%}
+      {{- shop.url }}{{ article.url -}}
+    {%- endcapture -%}
+
+    {% render 'social-share',
+      url: article_url,
+      title: article.title,
+      image: article.image,
+      alignment: 'left-above',
+      share_text: block.settings.share_text
+    %}
+  </div>
+</div>

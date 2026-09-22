@@ -1,0 +1,11 @@
+{%- doc -%}
+  Renders the percent discount based on a product with non-varying price and compare price.
+
+  @param {object} prod - The product object.
+{%- enddoc -%}
+
+{%- liquid
+  if prod.price and prod.compare_at_price and prod.price < prod.compare_at_price
+    echo prod.compare_at_price | minus: prod.price | times: 100.00 | divided_by: prod.compare_at_price | round
+  endif
+-%}

@@ -1,0 +1,192 @@
+{%- liquid
+  # Category trail under the product slider, taken from the store's navigation menu so it mirrors the
+  # categories the visitor sees there: Home / Parent category / Sub-category (e.g. Home / Joyas / Anillos).
+  # The product's collections are tried in order (the collection the visitor came from first); generic ones
+  # (setting "Generic collections") only count when no specific collection is in the menu. When none of the
+  # collections is in the menu, the trail falls back to Home / Collection. Titles are shown in sentence case
+  # ("JOYAS" -> "Joyas") like the reference.
+  assign skip_handles = section.settings.skip_collections | downcase | remove: ' ' | split: ','
+  assign menu = section.settings.menu
+
+  assign handles = ''
+
+  if collection != blank
+    assign handles = collection.handle | downcase
+  endif
+
+  for product_collection in product.collections
+    assign product_collection_handle = product_collection.handle | downcase
+    assign handles = handles | append: ',' | append: product_collection_handle
+  endfor
+
+  assign handle_list = handles | split: ','
+
+  assign crumb_parent_title = ''
+  assign crumb_parent_url = ''
+  assign crumb_title = ''
+  assign crumb_url = ''
+  assign found = false
+
+  if menu != blank
+    for pass in (1..2)
+      for candidate in handle_list
+        if found
+          break
+        endif
+
+        if candidate == blank
+          continue
+        endif
+
+        assign is_skipped = false
+
+        if skip_handles contains candidate
+          assign is_skipped = true
+        endif
+
+        if pass == 1 and is_skipped
+          continue
+        endif
+
+        if pass == 2 and is_skipped == false
+          continue
+        endif
+
+        assign target_url = '/collections/' | append: candidate
+
+        for parent_link in menu.links
+          if found
+            break
+          endif
+
+          if parent_link.url == target_url
+            assign crumb_title = parent_link.title
+            assign crumb_url = parent_link.url
+            assign found = true
+            break
+          endif
+
+          for child_link in parent_link.links
+            if child_link.url == target_url
+              assign crumb_parent_title = parent_link.title
+              assign crumb_parent_url = parent_link.url
+              assign crumb_title = child_link.title
+              assign crumb_url = child_link.url
+              assign found = true
+              break
+            endif
+          endfor
+        endfor
+      endfor
+    endfor
+  endif
+
+  if found == false
+    # not in the menu: Home / Collection, preferring a specific (non-generic) collection
+    assign fallback_collection = blank
+    assign context_is_generic = true
+
+    if collection != blank
+      assign context_handle = collection.handle | downcase
+
+      unless skip_handles contains context_handle
+        assign context_is_generic = false
+        assign fallback_collection = collection
+      endunless
+    endif
+
+    if fallback_collection == blank
+      for product_collection in product.collections
+        assign product_collection_handle = product_collection.handle | downcase
+
+        unless skip_handles contains product_collection_handle
+          assign fallback_collection = product_collection
+          break
+        endunless
+      endfor
+    endif
+
+    if fallback_collection == blank
+      assign fallback_collection = product.collections.first
+    endif
+
+    if fallback_collection != blank
+      assign crumb_title = fallback_collection.title
+      assign crumb_url = fallback_collection.url
+    endif
+  endif
+-%}
+
+<nav class="product-breadcrumbs" aria-label="{{ section.settings.home_label | escape }}" {{ section.shopify_attributes }}>
+  <ol class="product-breadcrumbs__list">
+    <li class="product-breadcrumbs__item">
+      <a class="product-breadcrumbs__link" href="{{ routes.root_url }}">{{ section.settings.home_label | escape }}</a>
+    </li>
+
+    {%- if crumb_parent_title != blank -%}
+      <li class="product-breadcrumbs__item">
+        <a class="product-breadcrumbs__link" href="{{ crumb_parent_url }}">{{ crumb_parent_title | downcase | capitalize | escape }}</a>
+      </li>
+    {%- endif -%}
+
+    {%- if crumb_title != blank -%}
+      <li class="product-breadcrumbs__item">
+        <a class="product-breadcrumbs__link" href="{{ crumb_url }}">{{ crumb_title | downcase | capitalize | escape }}</a>
+      </li>
+    {%- endif -%}
+
+    {%- if section.settings.show_product_type and product.type != blank -%}
+      <li class="product-breadcrumbs__item">
+        <a class="product-breadcrumbs__link" href="{{ product.type | url_for_type }}">{{ product.type | downcase | capitalize | escape }}</a>
+      </li>
+    {%- endif -%}
+  </ol>
+</nav>
+
+{% schema %}
+{
+  "name": "Product breadcrumbs",
+  "tag": "section",
+  "limit": 1,
+  "enabled_on": {
+    "templates": ["product"]
+  },
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Centred category trail (Home / Category / Sub-category) with a hairline under it. Meant to sit right under the product slider."
+    },
+    {
+      "type": "link_list",
+      "id": "menu",
+      "label": "Menu that defines the categories",
+      "info": "The trail mirrors this menu: a collection that is a sub-item of \"Joyas\" shows as Home / Joyas / Collection.",
+      "default": "main-menu"
+    },
+    {
+      "type": "text",
+      "id": "home_label",
+      "label": "Home label",
+      "default": "Home"
+    },
+    {
+      "type": "text",
+      "id": "skip_collections",
+      "label": "Generic collections",
+      "info": "Handles separated by commas. They are only used when the product has no more specific collection in the menu.",
+      "default": "all, frontpage, liorme, all-products"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_product_type",
+      "label": "Add the product type as a last step",
+      "default": false
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product breadcrumbs"
+    }
+  ]
+}
+{% endschema %}

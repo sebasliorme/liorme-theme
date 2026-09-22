@@ -1,0 +1,29 @@
+{%- doc -%}
+  Renders the 'Accent' section block.
+
+  @param {string} accent - The accent text to display.
+  @param {string} [class_prefix] - A class prefix used for creating a scoped class.
+  @param {string} [custom_class] - A custom class to apply.
+  @param {object} [shopify_attributes] - The block's shopify attributes.
+{%- enddoc -%}
+
+{%- liquid
+  capture class
+    echo 'section-blocks__accent fs-accent'
+
+    if class_prefix != blank
+      echo ' [[cp]]-accent' | replace: '[[cp]]', class_prefix
+    endif
+
+    if custom_class != blank
+      echo ' '
+      echo custom_class
+    endif
+  endcapture
+-%}
+
+{%- unless accent == blank -%}
+  <p class="{{ class }}" {{ shopify_attributes }}>
+    {{- accent -}}
+  </p>
+{%- endunless -%}

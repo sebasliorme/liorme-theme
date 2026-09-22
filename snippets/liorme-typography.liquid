@@ -1,0 +1,192 @@
+{%- doc -%}
+  Liorme typography: Work Sans, matched to the Miu Miu product-page reference.
+  Product title 25px; product copy, price and primary button 14px; navigation 16px; cards 12px.
+  The logo retains its own setting. Existing optional font declarations are preserved.
+{%- enddoc -%}
+
+
+<link rel="preload" href="{{ 'WorkSans-VariableFont_wght.ttf' | file_url }}" as="font" type="font/ttf" crossorigin>
+<style>
+  @font-face {
+    font-family: "Helvetica Neue Custom";
+    src: url("{{ 'HelveticaNeueLight.otf' | file_url }}") format("opentype");
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Helvetica Neue Custom";
+    src: url("{{ 'HelveticaNeueRoman.otf' | file_url }}") format("opentype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Helvetica Neue Custom";
+    src: url("{{ 'HelveticaNeueMedium.otf' | file_url }}") format("opentype");
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Helvetica Neue Custom";
+    src: url("{{ 'HelveticaNeueBold.otf' | file_url }}") format("opentype");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  /* Work Sans is the primary family; Lato remains available */
+  @font-face {
+    font-family: "Work Sans";
+    src: url("{{ 'WorkSans-VariableFont_wght.ttf' | file_url }}") format("truetype");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Lato";
+    src: url("{{ 'Lato-Light.ttf' | file_url }}") format("truetype");
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Lato";
+    src: url("{{ 'Lato-Regular.ttf' | file_url }}") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Lato";
+    src: url("{{ 'Lato-Bold.ttf' | file_url }}") format("truetype");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  /* html:root is more specific than the theme's own :root, so these win whatever the load order */
+  html:root {
+    --font-liorme: "Work Sans", sans-serif;
+
+    /* Family: every text role uses Work Sans. The logo keeps its own setting. */
+    --font-body: var(--font-liorme);
+    --font-heading: var(--font-liorme);
+    --font-subheading: var(--font-liorme);
+    --font-navigation: var(--font-liorme);
+    --font-mobile-navigation: var(--font-liorme);
+    --font-product-listing-title: var(--font-liorme);
+    --font-button: var(--font-liorme);
+
+    /* Weight */
+    --font-weight-body: 400;
+    --font-weight-body-bold: 500;
+    --font-weight-heading: 400;
+    --font-weight-subheading: 400;
+    --font-weight-navigation: 400;
+    --font-weight-mobile-navigation: 400;
+    --font-weight-product-listing-title: 400;
+    --font-weight-button: 600;
+
+    /* Letter-spacing */
+    --letter-spacing-body: 0;
+    --letter-spacing-heading: -0.02em;
+    --letter-spacing-subheading: 0;
+    --letter-spacing-navigation: 0;
+    --letter-spacing-mobile-navigation: 0;
+    --letter-spacing-secondary-mobile-navigation: 0;
+    --letter-spacing-product-listing-title: 0;
+    --letter-spacing-button: 0;
+
+    /* Line-height */
+    --line-height-body: 1.5;
+    --line-height-heading: 1.08;
+    --line-height-subheading: 1.3;
+    --line-height-button: 1;
+
+    /* Case: not everything in capitals. Buttons, badges and small labels keep theirs. */
+    --text-transform-heading: none;
+    --text-transform-subheading: none;
+    --text-transform-navigation: none;
+    --text-transform-mobile-navigation: none;
+    --text-transform-secondary-mobile-navigation: none;
+
+    /* Text sizes. The theme scales these by body size and by screen; here they are fixed and small. */
+    --font-size-body-20: 9px;
+    --font-size-body-25: 10px;
+    --font-size-body-50: 10px;
+    --font-size-body-60: 11px;
+    --font-size-body-75: 11px;
+    --font-size-body-100: 14px;
+    --font-size-body-150: 14px;
+    --font-size-body-200: 14px;
+    --font-size-body-250: 16px;
+    --font-size-body-300: 18px;
+    --font-size-body-350: 20px;
+    --font-size-body-400: 24px;
+
+    /* Navigation, drawer and buttons */
+    --font-size-navigation: 16px;
+    --font-size-mega-menu: 16px;
+    --font-size-mobile-navigation: 16px;
+    --font-size-secondary-mobile-navigation: 16px;
+    --font-size-button: 14px;
+    --font-size-button-small: 14px;
+    --font-size-button-x-small: 12px;
+    --font-size-product-listing-title: 12px;
+
+    /* Headings: one big size for hero titles, the rest follow the theme's own ratios */
+    --font-size-heading-1-base: clamp(28px, 2.5vw, 44px);
+    --font-size-heading-2-base: calc(var(--font-size-heading-1-base) * 0.875);
+    --font-size-heading-3-base: calc(var(--font-size-heading-1-base) * 0.75);
+    --font-size-heading-4-base: calc(var(--font-size-heading-1-base) * 0.583);
+    --font-size-heading-5-base: calc(var(--font-size-heading-1-base) * 0.5);
+    --font-size-heading-6-base: calc(var(--font-size-heading-1-base) * 0.416);
+    --font-size-heading-display-1: calc(var(--font-size-heading-1-base) * 1.15);
+    --font-size-heading-display-2: var(--font-size-heading-1-base);
+    --font-size-heading-display-3: calc(var(--font-size-heading-1-base) * 0.85);
+
+    /* Named sizes used by the rules in theme.css */
+    --type-hero-title: clamp(28px, 2.5vw, 44px);
+    --type-hero-subtitle: 14px;
+    --type-editorial: 18px;
+    --type-collection-title: 24px;
+    --type-product-title: 25px;
+    --type-card-name: 12px;
+  }
+
+  @media (max-width: 959px) {
+    html:root {
+      --font-size-heading-1-base: 26px;
+      --font-size-body-200: 13px;
+      --font-size-body-250: 15px;
+      --font-size-body-300: 16px;
+      --font-size-product-listing-title: 12px;
+      --letter-spacing-heading: -0.015em;
+      --line-height-heading: 1.08;
+
+      --type-hero-title: 26px;
+      --type-hero-subtitle: 13px;
+      --type-editorial: 16px;
+      --type-collection-title: 20px;
+      --type-product-title: 25px;
+      --type-card-name: 12px;
+    }
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  /* Override legacy fixed product sizes in theme.css. */
+  body .product .product__title { font-size: 25px !important; font-weight: 400; }
+  body .product[data-gallery-snap-mobile] .product__price, body .product__price, body .product__price span, body .product__label, body .info-links__link { font-size: 14px !important; }
+  body .product__price, body .product__price span, body .info-links__link { font-weight: 500 !important; }
+  body .product-form__cart-submit { font-size: 14px !important; font-weight: 600 !important; }
+  body .product-item__price { font-size: 12px !important; }
+  body .product-item .product-item__product-title, body .product-item .product-item__product-title a { font-size: 12px !important; }
+  body .drawer-menu__link, body .drawer-menu__link-title, body .drawer-menu__link-title span { font-size: 16px !important; }
+  body footer :is(h2,h3,h4,p,a,label,input,button) { font-size: 12px !important; }
+  body footer .footer__credits p { font-size: 9px !important; }
+</style>

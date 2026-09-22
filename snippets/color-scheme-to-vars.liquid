@@ -1,0 +1,168 @@
+{%- doc -%}
+  Renders CSS variables for each color setting in a color scheme.
+
+  @param {object} color_scheme - The color scheme to extract variables from.
+  @param {boolean} output_placeholder_colors - Whether to output placeholder colors.
+  @param {string} [css_vars] - A comma-separated list of color scheme CSS variables to output.
+
+  If a value is supplied, then only the listed variables are output. Variables shouldn't include the '--color-' prefix,
+  alpha-modified variables need to be explicitly listed, and there should be no spaces between variables. See the list
+  of variables below.
+
+  @param {string} [prefix] - A prefix to be applied before each variable name.
+
+  For example, if we have a variable of '--color-background' and a prefix of 'popup-modal', then the resulting variable
+  name would be '--color-popup-modal-background'.
+{%- enddoc -%}
+
+{%- liquid
+  comment
+    Color scheme variables (Liquid setting | CSS var):
+    - General
+      - background | --color-background
+        - Also has alpha variations in CSS (--color-text-alpha-XX):
+          - 00, 40, 60, 80, 90
+      - background_gradient | --color-background-gradient
+      - text | --color-text
+        - Also has alpha variations in CSS (--color-text-alpha-XX):
+          - 00, 05, 08, 10, 20, 30, 40, 50, 60, 70, 80, 90
+      - links | --color-links
+        - Also has alpha variations in CSS (--color-links-alpha-XX):
+          - 60, 70
+      - lines_and_borders | --color-lines-and-borders
+        - Also has alpha variations in CSS (--color-lines-and-borders-alpha-XX)
+          - 60
+    - Form inputs
+      - form_input_text | --color-form-input-text
+        - Also has alpha variations in CSS (--color-form-input-text-alpha-XX):
+          - 05, 10, 40, 50, 70
+      - form_input_background | --color-form-input-background
+    - Solid buttons
+      - solid_button_text | --color-solid-button-text
+      - solid_button_background | --color-solid-button-background
+      - solid_button_background_hover | --color-solid-button-background-hover
+    - Outline buttons
+      - outline_button_text | --color-outline-button-text
+        - Also has alpha variations in CSS (--color-outline-button-text-alpha-XX):
+          - 05
+      - outline_button_outline | --color-outline-button-outline
+        - Also has alpha variations in CSS (--color-outline-button-outline-alpha-XX):
+        - 05, 10, 60
+  endcomment
+
+  assign output_placeholder_colors = output_placeholder_colors | default: true, allow_false: true
+  assign output_all_variables = false
+
+  if css_vars != blank
+    # Convert handleized CSS vars to snake-case setting vars
+    assign setting_ids = css_vars | replace: '-', '_' | split: ','
+  else
+    assign setting_ids = color_scheme.settings
+    assign output_all_variables = true
+  endif
+
+  for setting_id in setting_ids
+    # CSS vars should be handleized, so we need to convert '_'s in the setting ID to '-'s
+    # We also need to strip whitespace and remove alpha suffixes in case a variable list has been passed
+    capture handleized_setting_id
+      echo setting_id | replace: '_', '-' | strip | split: '-alpha' | first
+    endcapture
+
+    capture variable_name
+      echo '--color-'
+
+      if prefix
+        echo prefix | append: '-'
+      endif
+
+      echo handleized_setting_id
+    endcapture
+
+    # If an alpha-modified variable has been passed, we need to access the unmodified
+    # setting value
+    if setting_id contains 'alpha'
+      capture root_setting_id
+        echo setting_id | split: '_alpha' | first | strip
+      endcapture
+
+      capture alpha_value
+        echo setting_id | split: 'alpha_' | last
+      endcapture
+
+      assign setting_value = color_scheme.settings[root_setting_id]
+    else
+      assign setting_value = color_scheme.settings[setting_id]
+
+      # Reset the alpha value so we don't re-use an old one
+      assign alpha_value = blank
+    endif
+
+    # Set blank background gradients to 'initial', which is the custom property version of being undefined.
+    # Set any other blank settings to be transparent so that there's not
+    #   just an empty value.
+    if setting_value == blank
+      if setting_id == 'background_gradient'
+        assign setting_value = 'initial'
+      else
+        assign setting_value = 'rgba(0, 0, 0, 0)'
+      endif
+    endif
+
+    # Unless this is specifically an alpha-modified variable that has been passed,
+    # output variable declaration
+    if output_all_variables or output_all_variables == false and alpha_value == blank
+      echo '[[vn]]: [[vv]];' | replace: '[[vn]]', variable_name | replace: '[[vv]]', setting_value
+    endif
+
+    # If all variables are being output, create alpha variations for certain settings
+    # Otherwise, if an alpha-modified value has been specified, create the dedicated alpha variation
+    if output_all_variables
+      case setting_id
+        when 'background'
+          render 'color-alpha-modified-vars', color_setting: setting_value, variable_name_base: variable_name, alpha_values: '00, 40, 60, 80, 90'
+        when 'text'
+          render 'color-alpha-modified-vars', color_setting: setting_value, variable_name_base: variable_name, alpha_values: '00, 05, 08, 10, 15, 20, 30, 40, 50, 60, 70, 80, 90'
+        when 'links'
+          render 'color-alpha-modified-vars', color_setting: setting_value, variable_name_base: variable_name, alpha_values: '60, 70'
+        when 'lines_and_borders'
+          render 'color-alpha-modified-vars', color_setting: setting_value, variable_name_base: variable_name, alpha_values: '60'
+        when 'form_input_text'
+          render 'color-alpha-modified-vars', color_setting: setting_value, variable_name_base: variable_name, alpha_values: '05, 10, 20, 40, 50, 60, 70'
+        when 'form_input_background'
+          render 'color-alpha-modified-vars', color_setting: setting_value, variable_name_base: variable_name, alpha_values: '20'
+        when 'outline_button_text'
+          render 'color-alpha-modified-vars', color_setting: setting_value, variable_name_base: variable_name, alpha_values: '05'
+        when 'outline_button_outline'
+          render 'color-alpha-modified-vars', color_setting: setting_value, variable_name_base: variable_name, alpha_values: '05, 10, 60'
+      endcase
+    elsif alpha_value != blank
+      render 'color-alpha-modified-vars', color_setting: setting_value, variable_name_base: variable_name, alpha_values: alpha_value
+    endif
+
+    unless forloop.last
+      echo ' '
+    endunless
+
+    # Reset for the next setting
+    assign alpha_value = blank
+  endfor
+
+  if output_placeholder_colors
+    capture placeholder_variable_name_start
+      echo '--color'
+
+      if prefix
+        echo prefix | prepend: '-'
+      endif
+    endcapture
+
+    capture placeholder_color_vars
+      echo '--color-placeholder-background: var([[value]]-background);'
+      echo '--color-placeholder-background-overlay: var([[value]]-text-alpha-10);'
+      echo '--color-placeholder-background-overlay-lighter: var([[value]]-text-alpha-08);'
+      echo '--color-placeholder-foreground: var([[value]]-text-alpha-40);'
+    endcapture
+
+    echo placeholder_color_vars | replace: '[[value]]', placeholder_variable_name_start
+  endif
+-%}

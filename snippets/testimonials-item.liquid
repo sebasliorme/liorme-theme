@@ -1,0 +1,128 @@
+{%- doc -%}
+  Renders a testimonial item.
+
+  @param {object} block - The block object.
+  @param {object} forloop - The block loop object.
+  @param {number} image_size - The image size (ie. 'small', 'medium', or 'large').
+  @param {string} quote_font - The font family class (ie. 'ff-heading', or 'ff-body').
+  @param {string} heading_font_class - The font class to apply for heading font.
+  @param {string} text_font_class - The font class to apply for text font.
+{%- enddoc -%}
+
+{%- liquid
+  if block.settings.image != blank
+    assign product_image = block.settings.image
+  else
+    assign product_image = block.settings.product.featured_media | default: block.settings.product.media[0].preview_image
+  endif
+
+  case image_size
+    when 'small'
+      assign image_sizes_fraction = 0.30
+    when 'medium'
+      assign image_sizes_fraction = 0.40
+    when 'large'
+      assign image_sizes_fraction = 0.50
+  endcase
+
+  capture image_sizes_attribute
+    echo '(min-width: 720px) calc((100vw - (2 * clamp(18px, 3.3vw, 3.3vw))) * [[isf]]), 83.3vw' | replace: '[[isf]]', image_sizes_fraction
+  endcapture
+-%}
+
+{%- capture product_image -%}
+  <figure class="testimonials__item-product">
+    {%- liquid
+      capture wrapper_tag
+        if block.settings.product != blank
+          echo 'a'
+        else
+          echo 'div'
+        endif
+      endcapture
+
+      capture wrapper_attributes
+        echo 'class="testimonials__item-product-image-wrapper"'
+
+        if block.settings.product != blank
+          echo 'href="[[pu]]"' | replace: '[[pu]]', block.settings.product.url
+          echo ' aria-label="[[pt]]"' | replace: '[[pt]]', block.settings.product.title
+        endif
+      endcapture
+    -%}
+
+    <{{ wrapper_tag }} {{ wrapper_attributes }}>
+      {%- render 'image',
+        image: product_image,
+        wrapper_class: 'testimonials__item-product-image',
+        aspect_ratio: block.settings.aspect_ratio,
+        focal_point: block.settings.focal_point,
+        include_placeholder: true,
+        sizes: image_sizes_attribute
+      -%}
+    </{{ wrapper_tag }}>
+
+    {%- if block.settings.product != blank -%}
+      <figcaption class="testimonials__item-product-title ff-product-listing-title">
+        {{- block.settings.product.title -}}
+      </figcaption>
+    {%- endif -%}
+  </figure>
+{% endcapture %}
+
+{%- capture quote -%}
+  <div class="testimonials__item-content">
+    {%- if block.settings.show_rating -%}
+      <div class="testimonials__item-stars">
+        {%- render 'star-rating', rating: block.settings.rating -%}
+      </div>
+    {%- endif -%}
+
+    {%- if block.settings.quote != blank -%}
+      <blockquote
+        class="
+          testimonials__item-quote
+          {{ quote_font }}
+          {% if quote_font == 'ff-heading' -%}
+            {{- heading_font_class -}}
+          {%- else -%}
+            {{- text_font_class -}}
+          {%- endif -%}
+        "
+      >
+        {{- block.settings.quote -}}
+      </blockquote>
+    {%- endif -%}
+
+    {%- if block.settings.author != blank -%}
+      <cite class="testimonials__item-author ff-body fs-body-100 t-opacity-60">
+        <span>{{ block.settings.author }}</span>
+      </cite>
+    {%- endif -%}
+  </div>
+{%- endcapture -%}
+
+<div
+  class="
+    testimonials__item
+    testimonials__item--image-{{ image_size }}
+    testimonials__item--image-placement-{{ block.settings.image_position }}
+    swiper-slide
+    animation--item
+  "
+  {% unless forloop.first -%}
+    inert
+  {%- endunless %}
+  data-index="{{ forloop.index0 }}"
+  {{ block.shopify_attributes }}
+>
+  {%- liquid
+    if block.settings.image_position == 'left'
+      echo product_image
+      echo quote
+    else
+      echo quote
+      echo product_image
+    endif
+  -%}
+</div>

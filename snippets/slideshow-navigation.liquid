@@ -1,0 +1,50 @@
+{%- doc -%}
+  Renders the slideshow navigation.
+
+  @param {boolean} enable_autoplay - Whether autoplay is enabled.
+  @param {number} duration_autoplay - The time (in seconds), between slide changes when auto-playing.
+  @param {string} navigation_alignment - The horizontal alignment of the navigation.
+  @param {string} navigation_color_foreground - The foreground color.
+  @param {string} navigation_color_background - The background color.
+  @param {string} navigation_background_opacity - The background opacity.
+{%- enddoc -%}
+
+{%- assign navigation_background_opacity = navigation_background_opacity | divided_by: 100.0 -%}
+
+<div
+  class="
+    slideshow-navigation
+    slideshow-navigation--align-{{ navigation_alignment }}
+    {% unless enable_autoplay -%}
+      slideshow-navigation--hide-autoplay
+    {%- endunless -%}
+  "
+  style="
+    --animation-timing: {{ duration_autoplay }};
+    --color-foreground: {{ navigation_color_foreground }};
+    {% if navigation_color_foreground != 'rgba(0,0,0,0)' -%}
+      --color-foreground-transparent: {{ navigation_color_foreground | color_modify: 'alpha', 0.1 }};
+    {%- endif %}
+    --color-background: {{ navigation_color_background | color_modify: 'alpha', navigation_background_opacity }};
+  "
+>
+  <div class="slideshow-navigation__inner">
+    <button
+      type="button"
+      class="slideshow-navigation__navigation-button slideshow-navigation__navigation-button--previous"
+      aria-label="{{ 'general.accessibility.carousel_previous' | t }}"
+    >
+      {%- render 'icon', icon: 'chevron-small' -%}
+    </button>
+
+    <div class="slideshow-navigation__dots"></div>
+
+    <button
+      type="button"
+      class="slideshow-navigation__navigation-button slideshow-navigation__navigation-button--next"
+      aria-label="{{ 'general.accessibility.carousel_next' | t }}"
+    >
+      {%- render 'icon', icon: 'chevron-small' -%}
+    </button>
+  </div>
+</div>

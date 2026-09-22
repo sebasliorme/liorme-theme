@@ -1,0 +1,69 @@
+{%- doc -%}
+  Renders the standard section header (introduction).
+
+  @param {object} local_settings - The settings to use for the header.
+  @param {string} [alignment_type] - The "type" of content being aligned.
+  @param {string} [alignment_override] - An alignment to use instead of the setting (ie. 'left', 'center', or 'right').
+  @param {string} [heading_id] - The heading setting ID (we use both 'heading' and 'title'). Defaults to 'heading'.
+  @param {string} custom_class_prefix - A class prefix used to apply a custom class to each header element.
+  @param {boolean} has_button - Whether the section header has a button.
+  @param {boolean} show_button_with_no_link - Whether to show the button if there's no link.
+  @param {string} [custom_button_link] - A custom link to use for the button if no link is set.
+{%- enddoc -%}
+
+{%- liquid
+  assign alignment_type = alignment_type | default: 'header'
+  assign alignment_setting_id = '[[at]]_alignment' | replace: '[[at]]', alignment_type
+  assign heading_id = heading_id | default: 'heading'
+  assign has_button = has_button | default: true, allow_false: true
+  assign show_button_with_no_link = show_button_with_no_link | default: true, allow_false: true
+  assign heading_custom_class = '[[ccp]]__heading' | replace: '[[ccp]]', custom_class_prefix
+  assign text_custom_class = '[[ccp]]__text' | replace: '[[ccp]]', custom_class_prefix
+  assign button_custom_class = '[[ccp]]__header-button section-introduction__button' | replace: '[[ccp]]', custom_class_prefix
+
+  if alignment_override != blank
+    assign alignment_value = alignment_override
+  else
+    assign alignment_value = local_settings[alignment_setting_id]
+  endif
+
+  if local_settings.link != blank
+    assign button_link = local_settings.link
+  elsif custom_button_link != blank
+    assign button_link = custom_button_link
+  endif
+-%}
+
+<div
+  class="
+    section-introduction
+    section-introduction--alignment-{{ alignment_value }}
+    animation--section-introduction
+  "
+>
+  {%- render 'section-block-heading',
+    heading_tag: local_settings.heading_tag,
+    heading: local_settings[heading_id],
+    heading_font_class: local_settings.heading_font_class,
+    is_section_introduction: true,
+    custom_class: heading_custom_class
+  -%}
+
+  {%- render 'section-block-text',
+    text: local_settings.text,
+    text_font_class: local_settings.text_font_class,
+    is_section_introduction: true,
+    custom_class: text_custom_class
+  -%}
+
+  {%- if has_button -%}
+    {%- if button_link != blank or show_button_with_no_link -%}
+      {%- render 'button-block',
+        link: button_link,
+        label: local_settings.link_text,
+        button_style: local_settings.button_style,
+        wrapper_class: button_custom_class
+      -%}
+    {%- endif -%}
+  {%- endif -%}
+</div>

@@ -1,0 +1,759 @@
+{%- liquid
+  capture image_max_width
+    case section.settings.image_width
+      when 'custom'
+        echo '[[ciw]]px' | replace: '[[ciw]]', section.settings.custom_image_width
+      when 'full'
+        echo '100%'
+    endcase
+  endcapture
+
+  # If there's a card/image radius, we want to ensure that the before/after labels get a radius as well
+  assign reduced_card_and_image_radius = settings.corner_radius_cards_and_images | divided_by: 2
+
+  if settings.corner_radius_type_badges == 'square'
+    assign badge_radius = 0
+  else
+    assign badge_radius = settings.corner_radius_badges
+  endif
+-%}
+
+<div
+  class="
+    section
+    section--divider-{{ section.settings.divider_style }}
+    section--divider-full-width-{{ section.settings.enable_full_width_divider }}
+    image-compare
+    image-compare--{{ section.settings.aspect_ratio }}
+    image-compare--{{ section.settings.reveal_direction }}
+    image-compare--image-{{ section.settings.image_position }}
+    image-compare--justify-{{ section.settings.content_alignment }}
+    {% if settings.enable_section_animations and section.settings.enable_animation -%}
+      animation
+      animation--image-compare
+    {%- endif -%}
+  "
+  style="
+    {%- render 'color-scheme-to-vars', color_scheme: section.settings.color_scheme -%}
+    {%- render 'section-padding-vars' -%}
+    --slider-color: {{ section.settings.slider_color }};
+    --slider-arrows-color: {{ section.settings.slider_arrows_color }};
+    --image-max-width: {{ image_max_width }};
+    {% if badge_radius < reduced_card_and_image_radius -%}
+      --corner-radius-badges: {{ reduced_card_and_image_radius }}px;
+    {%- endif -%}
+  "
+  data-section-id="{{ section.id }}"
+  data-section-type="image-compare"
+>
+  <div class="image-compare__inner section-inner section-inner--width-{{ section.settings.section_width }}">
+    <div class="image-compare__text-container">
+      <div class="image-compare__text-container-inner">
+        {%- render 'section-header',
+          local_settings: section.settings,
+          alignment_type: 'content',
+          custom_class_prefix: 'image-compare'
+        -%}
+      </div>
+    </div>
+
+    <div class="image-compare__image-container">
+      <div class="image-compare__image-container-inner">
+        {%- for block in section.blocks -%}
+          {%- liquid
+            assign text_position = block.settings.text_position | split: '_'
+            assign horizontal_position = text_position | first
+            assign vertical_position = text_position | last
+
+            case block.settings.filter_effect
+              when 'blur'
+                assign filter_amount = block.settings.filter_amount | divided_by: 25.0 | append: 'px'
+              when 'brightness', 'contrast', 'saturate'
+                assign filter_amount = block.settings.filter_amount | divided_by: 50.0
+              when 'grayscale', 'invert', 'sepia'
+                assign filter_amount = block.settings.filter_amount | divided_by: 100.0
+            endcase
+
+            if forloop.first
+              assign placeholder_name = 'collection-1'
+              assign class_modifier = 'before'
+            else
+              assign placeholder_name = 'collection-4'
+              assign class_modifier = 'after'
+            endif
+
+            assign image_sizes = '(min-width: 960px) calc(100vw - calc(2 * 3.3vw)), calc(100vw - calc(2 * clamp(18px, 3.3vw, 3.3vw)))'
+          -%}
+
+          <div
+            class="
+              image-compare__image-wrapper
+              {% if block.settings.filter_effect != 'none' -%}
+                image-compare__image--{{ block.settings.filter_effect }}
+              {%- endif -%}
+            "
+            style="
+              {%- render 'color-scheme-to-vars',
+                color_scheme: block.settings.overlay_color_scheme,
+                output_placeholder_colors: false,
+                css_vars: 'background,background-gradient'
+              -%}
+              --color-label-text: {{ block.settings.text_color }};
+              --color-label-background: {{ block.settings.text_container_color }};
+              --overlay-opacity: {{ block.settings.overlay_opacity | divided_by: 100.0 }};
+              --filter-amount: {{ filter_amount }};
+              --text-horizontal-position: {{ horizontal_position }};
+              --text-vertical-position: {{ vertical_position }};
+            "
+          >
+            <div class="image-compare__image-{{ class_modifier }}" {{ block.shopify_attributes }}>
+              {%- render 'image',
+                image: block.settings.image,
+                wrapper_class: 'image-compare__image',
+                aspect_ratio: section.settings.aspect_ratio,
+                focal_point: block.settings.focal_point,
+                placeholder_name: placeholder_name,
+                include_placeholder: true,
+                placeholder_natural_fallback_ratio: 'landscape',
+                sizes: image_sizes,
+                animate: true
+              -%}
+
+              <div class="image-compare__overlay"></div>
+
+              {%- if block.settings.show_label -%}
+                <div class="image-compare__label-container-wrapper animation--label">
+                  <div class="image-compare__label-container">
+                    <div class="image-compare__label-container-inner section-blocks animation--section-blocks">
+                      {%- unless block.settings.text == blank -%}
+                        <div
+                          class="
+                            image-compare__label-container-text
+                            ff-body
+                            fs-body-75
+                            fs-body-100-ns
+                            {{ block.settings.text_font_class }}
+                            section-blocks__text
+                          "
+                        >
+                          {{- block.settings.text -}}
+                        </div>
+                      {%- endunless -%}
+                    </div>
+                  </div>
+                </div>
+              {%- endif -%}
+            </div>
+          </div>
+        {%- endfor -%}
+      </div>
+
+      {%- if section.blocks.size > 0 -%}
+        <input
+          type="range"
+          class="image-compare__slider"
+          value="50"
+          step="any"
+          aria-label="Percentage of after photo shown"
+          orient="{{ section.settings.reveal_direction }}"
+          {%- # for Firefox -%}
+        >
+
+        <div class="image-compare__slider-line" aria-hidden="true"></div>
+
+        <div class="image-compare__slider-button" aria-hidden="true">
+          <div class="image-compare__slider-button-arrows">
+            <div class="image-compare__slider-button-arrow image-compare__slider-button-arrow-before">
+              {%- render 'icon', icon: 'chevron-small' -%}
+            </div>
+
+            <div class="image-compare__slider-button-arrow image-compare__slider-button-arrow-after">
+              {%- render 'icon', icon: 'chevron-small' -%}
+            </div>
+          </div>
+        </div>
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "t:sections.image_compare.name",
+  "tag": "section",
+  "disabled_on": {
+    "groups": [
+      "header",
+      "custom.overlay"
+    ]
+  },
+  "settings": [
+    {
+      "type": "select",
+      "id": "image_position",
+      "label": "t:sections.image_compare.settings.image_position.label",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.image_compare.settings.image_position.options.left"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.image_compare.settings.image_position.options.right"
+        },
+        {
+          "value": "below",
+          "label": "t:sections.image_compare.settings.image_position.options.below"
+        }
+      ],
+      "default": "below"
+    },
+    {
+      "type": "select",
+      "id": "aspect_ratio",
+      "label": "t:sections.image_compare.settings.aspect_ratio.label",
+      "options": [
+        {
+          "value": "square",
+          "label": "t:shared.options.aspect_ratio.square"
+        },
+        {
+          "value": "portrait",
+          "label": "t:shared.options.aspect_ratio.portrait"
+        },
+        {
+          "value": "landscape",
+          "label": "t:shared.options.aspect_ratio.landscape"
+        }
+      ],
+      "default": "landscape"
+    },
+    {
+      "type": "select",
+      "id": "reveal_direction",
+      "label": "t:sections.image_compare.settings.reveal_direction.label",
+      "options": [
+        {
+          "value": "horizontal",
+          "label": "t:sections.image_compare.settings.reveal_direction.options.horizontal"
+        },
+        {
+          "value": "vertical",
+          "label": "t:sections.image_compare.settings.reveal_direction.options.vertical"
+        }
+      ],
+      "default": "horizontal"
+    },
+    {
+      "type": "select",
+      "id": "image_width",
+      "label": "t:sections.image_compare.settings.image_width.label",
+      "options": [
+        {
+          "value": "full",
+          "label": "t:sections.image_compare.settings.image_width.options.full"
+        },
+        {
+          "value": "custom",
+          "label": "t:sections.image_compare.settings.image_width.options.custom"
+        }
+      ]
+    },
+    {
+      "type": "range",
+      "id": "custom_image_width",
+      "label": "t:sections.image_compare.settings.custom_image_width.label",
+      "min": 300,
+      "max": 1400,
+      "step": 100,
+      "unit": "px",
+      "default": 1400,
+      "info": "t:sections.image_compare.settings.custom_image_width.info",
+      "visible_if": "{{ section.settings.image_width == 'custom' }}"
+    },
+    {
+      "type": "color",
+      "id": "slider_color",
+      "label": "t:sections.image_compare.settings.slider_color.label",
+      "default": "#111111"
+    },
+    {
+      "type": "color",
+      "id": "slider_arrows_color",
+      "label": "t:sections.image_compare.settings.slider_arrows_color.label",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.image_compare.settings.content.header.content"
+    },
+    {
+      "type": "select",
+      "id": "content_alignment",
+      "label": "t:shared.settings.alignment_horizontal.content.label",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:shared.options.alignment.horizontal.left"
+        },
+        {
+          "value": "center",
+          "label": "t:shared.options.alignment.horizontal.center"
+        },
+        {
+          "value": "right",
+          "label": "t:shared.options.alignment.horizontal.right"
+        }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:sections.image_compare.settings.content.heading.label",
+      "default": "t:sections.image_compare.settings.content.heading.default"
+    },
+    {
+      "type": "select",
+      "id": "heading_font_class",
+      "label": "t:shared.settings.heading_font_class.label",
+      "options": [
+        {
+          "value": "fs-heading-6-base",
+          "label": "t:shared.settings.heading_font_class.options.xx_small"
+        },
+        {
+          "value": "fs-heading-5-base",
+          "label": "t:shared.settings.heading_font_class.options.x_small"
+        },
+        {
+          "value": "fs-heading-4-base",
+          "label": "t:shared.settings.heading_font_class.options.small"
+        },
+        {
+          "value": "fs-heading-3-base",
+          "label": "t:shared.settings.heading_font_class.options.medium"
+        },
+        {
+          "value": "fs-heading-2-base",
+          "label": "t:shared.settings.heading_font_class.options.large"
+        },
+        {
+          "value": "fs-heading-1-base",
+          "label": "t:shared.settings.heading_font_class.options.x_large"
+        },
+        {
+          "value": "fs-heading-display-3",
+          "label": "t:shared.settings.heading_font_class.options.display_regular"
+        },
+        {
+          "value": "fs-heading-display-2",
+          "label": "t:shared.settings.heading_font_class.options.display_large"
+        },
+        {
+          "value": "fs-heading-display-1",
+          "label": "t:shared.settings.heading_font_class.options.display_x_large"
+        }
+      ],
+      "default": "fs-heading-3-base"
+    },
+    {
+      "type": "select",
+      "id": "heading_tag",
+      "label": "t:shared.settings.heading_tag.heading.label",
+      "options": [
+        {
+          "value": "h2",
+          "label": "t:shared.settings.heading_tag.options.h2"
+        },
+        {
+          "value": "h3",
+          "label": "t:shared.settings.heading_tag.options.h3"
+        },
+        {
+          "value": "h4",
+          "label": "t:shared.settings.heading_tag.options.h4"
+        },
+        {
+          "value": "h5",
+          "label": "t:shared.settings.heading_tag.options.h5"
+        },
+        {
+          "value": "h6",
+          "label": "t:shared.settings.heading_tag.options.h6"
+        }
+      ],
+      "default": "h2"
+    },
+    {
+      "type": "paragraph",
+      "content": "t:shared.settings.heading_tag.heading.info"
+    },
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "t:sections.image_compare.settings.content.text.label"
+    },
+    {
+      "type": "select",
+      "id": "text_font_class",
+      "label": "t:shared.settings.text_font_class.label",
+      "options": [
+        {
+          "value": "fs-body-25",
+          "label": "t:shared.settings.text_font_class.options.xx_small"
+        },
+        {
+          "value": "fs-body-50",
+          "label": "t:shared.settings.text_font_class.options.x_small"
+        },
+        {
+          "value": "fs-body-75",
+          "label": "t:shared.settings.text_font_class.options.small"
+        },
+        {
+          "value": "fs-body-100",
+          "label": "t:shared.settings.text_font_class.options.regular"
+        },
+        {
+          "value": "fs-body-150",
+          "label": "t:shared.settings.text_font_class.options.large"
+        },
+        {
+          "value": "fs-body-200",
+          "label": "t:shared.settings.text_font_class.options.x_large"
+        },
+        {
+          "value": "fs-body-250",
+          "label": "t:shared.settings.text_font_class.options.2x_large"
+        },
+        {
+          "value": "fs-body-300",
+          "label": "t:shared.settings.text_font_class.options.3x_large"
+        },
+        {
+          "value": "fs-body-350",
+          "label": "t:shared.settings.text_font_class.options.4x_large"
+        },
+        {
+          "value": "fs-body-400",
+          "label": "t:shared.settings.text_font_class.options.5x_large"
+        }
+      ],
+      "default": "fs-body-100"
+    },
+    {
+      "type": "url",
+      "id": "link",
+      "label": "t:shared.settings.button_link.label"
+    },
+    {
+      "type": "text",
+      "id": "link_text",
+      "label": "t:shared.settings.button_link_text.label"
+    },
+    {
+      "type": "select",
+      "id": "button_style",
+      "label": "t:shared.settings.button_style.label",
+      "options": [
+        {
+          "value": "btn--primary",
+          "label": "t:shared.settings.button_style.options.solid"
+        },
+        {
+          "value": "btn--secondary",
+          "label": "t:shared.settings.button_style.options.outline"
+        },
+        {
+          "value": "btn--callout",
+          "label": "t:shared.settings.button_style.options.text"
+        }
+      ],
+      "default": "btn--secondary"
+    },
+    {
+      "type": "header",
+      "content": "t:shared.settings.section_style.header.content"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:shared.settings.color_scheme.label"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "t:shared.settings.section_style.section_width.label",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "t:shared.settings.section_style.section_width.options.page_width"
+        },
+        {
+          "value": "full-width-padded",
+          "label": "t:shared.settings.section_style.section_width.options.full_width"
+        }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "range",
+      "id": "section_padding_top",
+      "label": "t:shared.settings.section_style.section_padding.top.label",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "section_padding_bottom",
+      "label": "t:shared.settings.section_style.section_padding.bottom.label",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "select",
+      "id": "divider_style",
+      "label": "t:shared.settings.section_style.divider_style.label",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:shared.settings.section_style.divider_style.options.none"
+        },
+        {
+          "value": "solid",
+          "label": "t:shared.settings.section_style.divider_style.options.solid"
+        }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_full_width_divider",
+      "label": "t:shared.settings.section_style.enable_full_width_divider.label",
+      "visible_if": "{{ section.settings.divider_style == 'solid' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_animation",
+      "label": "t:shared.settings.section_style.enable_animation.label",
+      "default": true,
+      "info": "t:shared.settings.section_style.enable_animation.info"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "image",
+      "name": "t:sections.image_compare.blocks.image.name",
+      "limit": 2,
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:sections.image_compare.blocks.image.settings.image.label"
+        },
+        {
+          "type": "select",
+          "id": "focal_point",
+          "label": "t:shared.settings.focal_point.image.default.label",
+          "options": [
+            {
+              "value": "image_presentation",
+              "label": "t:shared.options.focal_point.image_presentation"
+            },
+            {
+              "value": "center",
+              "label": "t:shared.options.focal_point.center"
+            },
+            {
+              "value": "top",
+              "label": "t:shared.options.focal_point.top"
+            },
+            {
+              "value": "bottom",
+              "label": "t:shared.options.focal_point.bottom"
+            },
+            {
+              "value": "left",
+              "label": "t:shared.options.focal_point.left"
+            },
+            {
+              "value": "right",
+              "label": "t:shared.options.focal_point.right"
+            }
+          ],
+          "default": "image_presentation"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.image_compare.blocks.image.settings.graphics.header.content"
+        },
+        {
+          "type": "select",
+          "id": "filter_effect",
+          "label": "t:sections.image_compare.blocks.image.settings.graphics.filter_effect.label",
+          "options": [
+            {
+              "value": "none",
+              "label": "t:sections.image_compare.blocks.image.settings.graphics.filter_effect.options.none"
+            },
+            {
+              "value": "blur",
+              "label": "t:sections.image_compare.blocks.image.settings.graphics.filter_effect.options.blur"
+            },
+            {
+              "value": "brightness",
+              "label": "t:sections.image_compare.blocks.image.settings.graphics.filter_effect.options.brightness"
+            },
+            {
+              "value": "contrast",
+              "label": "t:sections.image_compare.blocks.image.settings.graphics.filter_effect.options.contrast"
+            },
+            {
+              "value": "grayscale",
+              "label": "t:sections.image_compare.blocks.image.settings.graphics.filter_effect.options.grayscale"
+            },
+            {
+              "value": "invert",
+              "label": "t:sections.image_compare.blocks.image.settings.graphics.filter_effect.options.invert"
+            },
+            {
+              "value": "saturate",
+              "label": "t:sections.image_compare.blocks.image.settings.graphics.filter_effect.options.saturate"
+            },
+            {
+              "value": "sepia",
+              "label": "t:sections.image_compare.blocks.image.settings.graphics.filter_effect.options.sepia"
+            }
+          ]
+        },
+        {
+          "type": "range",
+          "id": "filter_amount",
+          "label": "t:sections.image_compare.blocks.image.settings.graphics.filter_amount.label",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": "%",
+          "default": 100
+        },
+        {
+          "type": "header",
+          "content": "t:sections.image_compare.blocks.image.settings.image_overlay.header.content"
+        },
+        {
+          "type": "color_scheme",
+          "id": "overlay_color_scheme",
+          "label": "t:shared.settings.color_scheme.label",
+          "default": "scheme_4"
+        },
+        {
+          "type": "range",
+          "id": "overlay_opacity",
+          "label": "t:shared.settings.overlay.overlay_opacity.label",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": "%",
+          "default": 30,
+          "info": "t:shared.settings.overlay.overlay_opacity.info"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.image_compare.blocks.image.settings.label.header.content"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_label",
+          "label": "t:sections.image_compare.blocks.image.settings.label.show_label.label",
+          "default": true
+        },
+        {
+          "type": "text",
+          "id": "text",
+          "label": "t:sections.image_compare.blocks.image.settings.label.text.label"
+        },
+        {
+          "type": "select",
+          "id": "text_position",
+          "label": "t:sections.image_compare.blocks.image.settings.label.text_position.label",
+          "options": [
+            {
+              "value": "flex-start_flex-start",
+              "label": "t:shared.options.alignment.full.top_left"
+            },
+            {
+              "value": "center_flex-start",
+              "label": "t:shared.options.alignment.full.top_center"
+            },
+            {
+              "value": "flex-end_flex-start",
+              "label": "t:shared.options.alignment.full.top_right"
+            },
+            {
+              "value": "flex-start_center",
+              "label": "t:shared.options.alignment.full.middle_left"
+            },
+            {
+              "value": "flex-end_center",
+              "label": "t:shared.options.alignment.full.middle_right"
+            },
+            {
+              "value": "flex-start_flex-end",
+              "label": "t:shared.options.alignment.full.bottom_left"
+            },
+            {
+              "value": "center_flex-end",
+              "label": "t:shared.options.alignment.full.bottom_center"
+            },
+            {
+              "value": "flex-end_flex-end",
+              "label": "t:shared.options.alignment.full.bottom_right"
+            }
+          ],
+          "default": "flex-start_flex-start"
+        },
+        {
+          "type": "color",
+          "id": "text_color",
+          "label": "t:sections.image_compare.blocks.image.settings.label.text_color.label",
+          "default": "#111111"
+        },
+        {
+          "type": "color",
+          "id": "text_container_color",
+          "label": "t:sections.image_compare.blocks.image.settings.label.text_container_color.label",
+          "default": "#FFFFFF"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.image_compare.presets.name",
+      "blocks": [
+        {
+          "type": "image",
+          "settings": {
+            "text": "Before",
+            "text_position": "flex-start_flex-start"
+          }
+        },
+        {
+          "type": "image",
+          "settings": {
+            "text": "After",
+            "text_position": "flex-end_flex-end"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,177 @@
+{%- doc -%}
+  Renders the collection list grid or slider content.
+
+  @param {string} type - The collection list type (ie. 'grid', or 'slider').
+  @param {object} section - The section object.
+{%- enddoc -%}
+
+{%- liquid
+  capture section_class
+    echo 'section'
+    echo ' section--divider-[[ds]]' | replace: '[[ds]]', section.settings.divider_style
+    echo ' section--divider-full-width-[[efwd]]' | replace: '[[efwd]]', section.settings.enable_full_width_divider
+    echo ' collection-list-[[type]]' | replace: '[[type]]', type
+
+    if type == 'grid'
+      echo ' collection-list-grid--per-view-[[ssc]]' | replace: '[[ssc]]', section.settings.columns
+      echo ' collection-list-grid--mobile-per-view-[[ssmc]]' | replace: '[[ssmc]]', section.settings.mobile_columns
+    endif
+
+    if settings.enable_section_animations and section.settings.enable_animation
+      echo ' animation'
+
+      if type == 'grid'
+        echo ' animation--collection-list-grid'
+      else
+        echo ' animation--list-slider'
+      endif
+    endif
+  endcapture
+-%}
+
+<div
+  class="{{ section_class }}"
+  data-section-id="{{ section.id }}"
+  data-section-type="collection-list-{{ type }}"
+  data-products-per-view="{{ section.settings.columns }}"
+  data-mobile-products-per-view="{{ section.settings.mobile_columns }}"
+  style="
+    {%- render 'color-scheme-to-vars', color_scheme: section.settings.color_scheme -%}
+    {%- render 'section-padding-vars' -%}
+  "
+>
+  <div class="collection-list-{{ type }}__inner section-inner section-inner--width-{{ section.settings.section_width }}">
+    {%- liquid
+      assign intro_block_custom_class_prefix = 'collection-list-[[type]]' | replace: '[[type]]', type
+
+      capture section_header
+        render 'section-header', local_settings: section.settings, custom_class_prefix: intro_block_custom_class_prefix
+      endcapture
+    -%}
+
+    {%- if type == 'slider' and settings.slider_navigation_placement == 'header' -%}
+      <div
+        class="
+          collection-list-slider__meta
+          carousel__navigation-wrapper
+          carousel__navigation-wrapper--alignment-{{ section.settings.header_alignment }}
+        "
+      >
+        {%- liquid
+          case section.settings.header_alignment
+            when 'left'
+              echo section_header
+              render 'carousel-navigation', wrapper_class: 'animation--controls'
+            when 'center'
+              render 'carousel-navigation-button', type: 'previous'
+              echo section_header
+              render 'carousel-navigation-button', type: 'next'
+            when 'right'
+              render 'carousel-navigation', wrapper_class: 'animation--controls'
+              echo section_header
+          endcase
+        -%}
+      </div>
+    {%- else -%}
+      {{- section_header -}}
+    {%- endif -%}
+
+    {%- if type == 'slider' -%}
+      <div
+        class="
+          collection-list-slider__content
+          carousel
+          carousel--per-view-{{ section.settings.columns }}
+          carousel--mobile-per-view-{{ section.settings.mobile_columns }}
+          swiper
+        "
+      >
+    {%- endif -%}
+
+    {%- liquid
+      capture collections_class
+        echo 'collection-list-[[type]]__collections' | replace: '[[type]]', type
+
+        case type
+          when 'grid'
+            echo ' section-blocks__content'
+          when 'slider'
+            echo ' carousel__wrapper swiper-wrapper'
+        endcase
+      endcapture
+
+      capture image_sizes
+        echo '(min-width: 720px) calc(calc(100vw - calc(2 * clamp(18px, 3.3vw, 3.3vw))) / [[ssc]]),' | replace: '[[ssc]]', section.settings.columns
+        echo 'calc(calc(100vw - calc(2 * clamp(18px, 3.3vw, 3.3vw))) / [[ssmc]])' | replace: '[[ssmc]]', section.settings.mobile_columns
+      endcapture
+    -%}
+
+    <div class="{{ collections_class }}">
+      {%- liquid
+        capture collection_item_structure
+          if type == 'slider'
+            echo '<div class="collection-list-slider__collection carousel__slide swiper-slide">'
+          endif
+
+          echo '[[ci]]'
+
+          if type == 'slider'
+            echo '</div>'
+          endif
+        endcapture
+      -%}
+
+      {%- for collection in section.settings.collection_list -%}
+        {%- capture collection_item -%}
+          {%- render 'collection-item',
+            collection: collection,
+            aspect_ratio: section.settings.collection_listing_aspect_ratio,
+            label_font: section.settings.label_font,
+            label_size: section.settings.label_size,
+            label_style: section.settings.label_style,
+            overlay_title_background_style: section.settings.overlay_title_background_style,
+            overlay_color_scheme: section.settings.overlay_color_scheme,
+            image_sizes: image_sizes
+          -%}
+        {%- endcapture -%}
+
+        {{- collection_item_structure | replace: '[[ci]]', collection_item -}}
+      {%- else -%}
+        {%- liquid
+          if type == 'grid'
+            assign placeholder_count = section.settings.columns | times: 2
+          else
+            assign placeholder_count = 8
+          endif
+        -%}
+
+        {%- for i in (1..placeholder_count) -%}
+          {%- capture collection_item -%}
+            {%- render 'collection-item',
+              placeholder: true,
+              aspect_ratio: section.settings.collection_listing_aspect_ratio,
+              label_font: section.settings.label_font,
+              label_size: section.settings.label_size,
+              label_style: section.settings.label_style,
+              overlay_title_background_style: section.settings.overlay_title_background_style,
+              overlay_color_scheme: section.settings.overlay_color_scheme,
+              image_sizes: image_sizes
+            -%}
+          {%- endcapture -%}
+
+          {{- collection_item_structure | replace: '[[ci]]', collection_item -}}
+        {%- endfor -%}
+      {%- endfor -%}
+    </div>
+
+    {%- if type == 'slider' -%}
+      {%- liquid
+        if settings.slider_navigation_placement == 'slider'
+          render 'carousel-navigation', placement: 'slider'
+        endif
+      -%}
+
+      </div>
+    {%- endif -%}
+  </div>
+</div>

@@ -1,0 +1,34 @@
+{% doc %}
+  Renders the position setting values as custom properties to be used to horizontally and vertically position content within a flex-column parent.
+
+  @param {string} position - The 2D position setting value. Must be formatted as `flex-value_flex-value`.
+  @param {string} [position_mobile] - The 2D mobile position setting value. Must be formatted as `flex-value_flex-value`.
+  @param {string} [prefix] - A prefix to apply to the rendered property names.
+{% enddoc %}
+
+{% liquid
+  if prefix != blank
+    assign prefix = prefix | append: '-'
+  endif
+
+  assign position_array = position | split: '_'
+  assign horizontal_position = position_array | first
+  assign vertical_position = position_array | last
+
+  if position_mobile != blank
+    assign position_mobile_array = position_mobile | split: '_'
+    assign horizontal_position_mobile = position_mobile_array | first
+    assign vertical_position_mobile = position_mobile_array | last
+  endif
+
+  # horizontal should be applied via 'justify-content'
+  # vertical should be applied via 'align-items'
+
+  echo '--[[pre]]horizontal-position: [[hp]]; ' | replace: '[[pre]]', prefix | replace: '[[hp]]', horizontal_position
+  echo '--[[pre]]vertical-position: [[vp]]; ' | replace: '[[pre]]', prefix | replace: '[[vp]]', vertical_position
+
+  if position_mobile != blank
+    echo '--[[pre]]horizontal-position-mobile: [[hpm]]; ' | replace: '[[pre]]', prefix | replace: '[[hpm]]', horizontal_position_mobile
+    echo '--[[pre]]vertical-position-mobile: [[vpm]]; ' | replace: '[[pre]]', prefix | replace: '[[vpm]]', vertical_position_mobile
+  endif
+%}

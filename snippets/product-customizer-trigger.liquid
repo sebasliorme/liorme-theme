@@ -1,0 +1,20 @@
+{%- doc -%}
+  Customize button for the product studio. Uses the merchant's selected complements.
+{%- enddoc -%}
+{%- liquid
+ assign lc_thumb = prod.metafields.custom.customization_products.value.first.featured_image
+ assign lc_enabled = false
+ if prod.metafields.custom.customization_products.value.size > 0
+  assign lc_enabled = true
+ endif
+ if prod.handle == 'anillo-24'
+  assign lc_enabled = true
+  assign lc_thumb = all_products['aretes-12'].featured_image
+ endif
+-%}
+{% if lc_enabled %}
+<button type="button" class="product-form__customize-trigger btn btn--medium btn--secondary" data-customizer-trigger data-customizer-product="{{ prod.id }}" aria-haspopup="dialog">
+ {% if lc_thumb != blank %}<span class="product-form__customize-trigger-thumb"><span class="product-form__customize-trigger-track">{{ lc_thumb | image_url: width: 96 | image_tag: loading: 'lazy', width: 42, height: 42, alt: '' }}</span></span>{% endif %}
+ <span>Customize</span>
+</button>
+{% endif %}

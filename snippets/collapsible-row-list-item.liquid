@@ -1,0 +1,77 @@
+{%- doc -%}
+  Renders a collapsible row list item.
+
+  @param {object} block - The block object.
+  @param {string} item_heading_font - The font family class for item headings (ie. 'ff-heading', or 'ff-body').
+  @param {string} item_heading_size - The font size class for item headings.
+  @param {object} forloop - The forloop object from looping through the blocks.
+{%- enddoc -%}
+
+{%- liquid
+  assign heading = block.settings.title
+  assign text = block.settings.text
+
+  if block.settings.expand_by_default
+    assign item_heading_expanded = true
+    assign item_text_hidden = false
+  else
+    assign item_heading_expanded = false
+    assign item_text_hidden = true
+  endif
+-%}
+
+<div
+  class="collapsible-row-list-item"
+  data-index="{{ forloop.index0 }}"
+  {{ block.shopify_attributes }}
+>
+  {%- unless heading == blank -%}
+    <button
+      type="button"
+      class="
+        collapsible-row-list-item__trigger
+        {{ item_heading_font }}
+        {{ item_heading_size }}
+      "
+      aria-controls="content-{{ forloop.index }}"
+      aria-expanded="{{ item_heading_expanded }}"
+      {% if text == blank -%}
+        data-flash-trigger
+        data-flash-message="{{ 'general.flash_alert.no_text' | t }}"
+      {%- endif -%}
+    >
+      {%- if block.settings.custom_icon_image != blank -%}
+        {%- render 'image',
+          wrapper_class: 'collapsible-row-list-item__icon',
+          image: block.settings.custom_icon_image,
+          sizes: '25px'
+        -%}
+      {%- else -%}
+        {% if block.settings.icon != 'none' %}
+          {% render 'icon-editorial', class: 'collapsible-row-list-item__icon', icon: block.settings.icon %}
+        {% endif %}
+      {%- endif -%}
+
+      <span class="collapsible-row-list-item__heading">
+        {{- heading -}}
+      </span>
+
+      <div class="accordion__label-icons">
+        {%- render 'icon', icon: 'plus' -%}
+        {%- render 'icon', icon: 'minus' -%}
+      </div>
+    </button>
+  {%- endunless -%}
+
+  {%- unless text == blank -%}
+    <div
+      class="collapsible-row-list-item__text-container"
+      aria-hidden="{{ item_text_hidden }}"
+      id="content-{{ forloop.index }}"
+    >
+      <div class="collapsible-row-list-item__text fs-body-100 rte">
+        {{- text -}}
+      </div>
+    </div>
+  {%- endunless -%}
+</div>

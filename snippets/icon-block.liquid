@@ -1,0 +1,43 @@
+{%- doc -%}
+  Renders a preset or custom icon within a 'block' container.
+
+  @param {string} icon - The icon name (found in 'icon-editorial.liquid').
+  @param {object} custom_icon - The image to be rendered as a custom icon. Overrides the icon if present.
+  @param {string} width - The width of the icon. Can also be a number.
+  @param {string} mobile_width - The width of the icon on mobile. Can also be a number.
+  @param {boolean} enable_corner_rounding - Whether corner rounding should apply.
+  @param {string} shopify_attributes - Block attributes from 'block.shopify_attributes'.
+{%- enddoc -%}
+
+{%- liquid
+  if custom_icon == blank
+    assign enable_corner_rounding = false
+  endif
+-%}
+
+{%- unless icon == 'none' and custom_icon == blank -%}
+  <div
+    class="icon-block"
+    style="
+      --icon-width: {{ width }}px;
+      --icon-width-mobile: {{ mobile_width }}px;
+    "
+    data-enable-icon-corner-rounding="{{ enable_corner_rounding }}"
+    aria-label="{{ custom_icon.alt | default: icon }}"
+    role="img"
+    {{ shopify_attributes }}
+  >
+    {%- if icon != 'none' and custom_icon == blank -%}
+      {%- render 'icon-editorial', class: 'icon-block__icon', icon: icon -%}
+    {%- endif -%}
+
+    {%- if custom_icon != blank -%}
+      {%- render 'image',
+        wrapper_class: 'icon-block__icon',
+        image: custom_icon,
+        sizes_px: width,
+        aspect_ratio: 'natural'
+      -%}
+    {%- endif -%}
+  </div>
+{%- endunless -%}

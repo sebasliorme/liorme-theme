@@ -1,0 +1,109 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "type": "footer",
+  "name": "t:groups.footer_group.name",
+  "sections": {
+    "footer": {
+      "type": "footer",
+      "blocks": {
+        "footer-4": {
+          "type": "newsletter",
+          "settings": {
+            "desktop_width": 28,
+            "desktop_padding": 0,
+            "collapse_on_mobile": false,
+            "title": "",
+            "show_title_on_desktop": true,
+            "enable_collect_customer_name": false,
+            "text": "<h2>Suscríbete a nuestro boletín</h2>",
+            "text_font_choice": "ff-heading",
+            "text_font_class": "fs-body-50",
+            "show_social_icons": true,
+            "enable_follow_on_shop": false,
+            "consent_text": "<p>By clicking on \"Subscribe\", you confirm that you have read and understood our Privacy Statement and that you want to receive the newsletter and other marketing communication as set out therein.</p>"
+          }
+        },
+        "links_kEqf69": {
+          "type": "links",
+          "settings": {
+            "desktop_width": 13,
+            "desktop_padding": 0,
+            "collapse_on_mobile": true,
+            "title": "Contacto",
+            "show_title_on_desktop": true,
+            "link_list": "footer"
+          }
+        },
+        "footer-2": {
+          "type": "links",
+          "settings": {
+            "desktop_width": 13,
+            "desktop_padding": 0,
+            "collapse_on_mobile": true,
+            "title": "Ayuda",
+            "show_title_on_desktop": true,
+            "link_list": "footer"
+          }
+        },
+        "links_NF6VAq": {
+          "type": "links",
+          "settings": {
+            "desktop_width": 13,
+            "desktop_padding": 0,
+            "collapse_on_mobile": true,
+            "title": "Empresa",
+            "show_title_on_desktop": true,
+            "link_list": "footer"
+          }
+        },
+        "links_MmEeFU": {
+          "type": "links",
+          "settings": {
+            "desktop_width": 13,
+            "desktop_padding": 0,
+            "collapse_on_mobile": true,
+            "title": "Legal",
+            "show_title_on_desktop": true,
+            "link_list": "footer"
+          }
+        }
+      },
+      "block_order": [
+        "footer-4",
+        "links_kEqf69",
+        "footer-2",
+        "links_NF6VAq",
+        "links_MmEeFU"
+      ],
+      "settings": {
+        "enable_locale_selector": true,
+        "enable_country_selector": true,
+        "show_payment_icons": false,
+        "additional_copyright_text": "",
+        "footer_logo": "shopify://shop_images/logo.png",
+        "footer_logo_width": 2100,
+        "footer_logo_width_mobile": 220,
+        "legal_disclosure_text": "<p>California Consumer Privacy Act:<br><a href=\"/policies/privacy-policy\">Do not sell or share my personal information</a></p>",
+        "enable_transparent_header": true,
+        "dark_logo_on_transparent": true,
+        "color_scheme": "scheme_3",
+        "section_width": "full-width-padded",
+        "section_padding_top": 40,
+        "section_padding_bottom": 40,
+        "divider_style": "none",
+        "enable_full_width_divider": false
+      }
+    }
+  },
+  "order": [
+    "footer"
+  ]
+}

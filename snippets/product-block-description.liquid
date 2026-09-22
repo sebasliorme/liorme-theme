@@ -1,0 +1,32 @@
+{%- doc -%}
+  Renders the description product block.
+
+  @param {object} prod - The product object. We use 'prod' to avoid collision with the global 'product' object.
+  @param {object} block - The block object.
+{%- enddoc -%}
+
+{%- liquid
+  if prod != blank
+    assign description = prod.description
+  else
+    assign description = 'sections.featured_product.placeholder.description' | t
+  endif
+-%}
+
+{%- if block.settings.display_as_collapsible_row -%}
+  {%- render 'product-block-accordion',
+    block: block,
+    heading: block.settings.title,
+    label_font: block.settings.title_font_choice,
+    label_size: block.settings.title_font_class,
+    content: description
+  -%}
+{%- else -%}
+  {%- render 'product-block-text',
+    block: block,
+    heading: block.settings.title,
+    heading_font: block.settings.title_font_choice,
+    heading_size: block.settings.title_font_class,
+    content: description
+  -%}
+{%- endif -%}

@@ -1,0 +1,15 @@
+{%- doc -%}
+  Renders a quote item logo.
+
+  @param {object} logo - The logo.
+  @param {string} class - A class to apply to the logo.
+{%- enddoc -%}
+
+{%- liquid
+  unless logo == blank
+    assign image_height = 25
+    assign image_width = logo.width | divided_by: logo.height | times: image_height
+
+    render 'image', image: logo, wrapper_class: class, disable_style: true, sizes_px: image_width
+  endunless
+-%}

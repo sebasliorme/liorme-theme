@@ -1,0 +1,208 @@
+{%- doc -%}
+  Renders an A-Z letter picker overlaid on a product card, for products
+  tagged for letter personalization (see snippets/product-item.liquid).
+  Adds straight to cart with the chosen letter as a line item property,
+  bypassing the normal quick-add/quick-view flow.
+
+  This is a lightweight, card-scoped alternative to the product page's
+  `custom_data` personalization block (snippets/custom-data.liquid) — that
+  block is designed for a single instance per page (bare #add-set-to-cart id,
+  a non-namespaced global getValidVariantId() function) and would collide if
+  rendered once per card in a collection grid, so this snippet does not
+  reuse it. It intentionally only covers the letter, not birthstone/diamond/
+  charm/chain-length/engraving — those stay on the product page.
+
+  @param {object} prod - The product object.
+{%- enddoc -%}
+
+{%- liquid
+  assign letters = 'A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z' | split: ','
+  assign add_to_cart_label = 'products.product.add_to_cart' | t
+
+  # Tag `letra-negra` switches the letter grid to black text, for products
+  # whose card image is light enough that white letters lose contrast.
+  assign letter_color_dark = false
+  if prod.tags contains 'letra-negra'
+    assign letter_color_dark = true
+  endif
+-%}
+
+<div
+  class="product-item-letter-picker{% if letter_color_dark %} product-item-letter-picker--dark{% endif %}"
+  data-product-id="{{ prod.id }}"
+>
+  <div class="product-item-letter-picker__grid">
+    {%- for letter in letters -%}
+      <button type="button" class="product-item-letter-picker__letter" data-letter="{{ letter }}">
+        {{- letter -}}
+      </button>
+    {%- endfor -%}
+  </div>
+
+  <button
+    type="button"
+    class="product-item-letter-picker__submit"
+    data-letter-add-to-cart
+    data-variant-id="{{ prod.selected_or_first_available_variant.id }}"
+    data-label-add="{{ add_to_cart_label }}"
+    disabled
+  >
+    <span>{{ 'products.product.choose_options' | t }}</span>
+  </button>
+</div>
+
+<style>
+  .product-item-letter-picker {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 5;
+  }
+
+  @media (max-width: 719px) {
+    .product-item-letter-picker {
+      display: none;
+    }
+  }
+
+  @media (min-width: 720px) {
+    .product-item-letter-picker {
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease, visibility 0.2s ease;
+    }
+
+    .product-item__inner:hover .product-item-letter-picker,
+    .product-item__inner:focus-within .product-item-letter-picker {
+      opacity: 1;
+      visibility: visible;
+    }
+  }
+
+  .product-item-letter-picker__grid {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 4px 2px;
+    padding: 10px 8px 15px;
+  }
+
+  .product-item-letter-picker__letter {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    padding: 3px 0;
+    cursor: pointer;
+    text-underline-offset: 3px;
+  }
+
+  .product-item-letter-picker__letter:hover,
+  .product-item-letter-picker__letter.selected {
+    text-decoration: underline;
+  }
+
+  .product-item-letter-picker--dark .product-item-letter-picker__letter {
+    color: #111111;
+  }
+
+  .product-item-letter-picker__submit {
+    display: block;
+    width: 100%;
+    background: #111111;
+    color: #fff;
+    border: none;
+    padding: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .product-item-letter-picker__submit[disabled] {
+    cursor: not-allowed;
+  }
+</style>
+
+<script>
+  (function () {
+    if (window.__letterPickerBound) return;
+    window.__letterPickerBound = true;
+
+    document.addEventListener('click', function (e) {
+      var letterBtn = e.target.closest('.product-item-letter-picker__letter');
+      if (letterBtn) {
+        e.preventDefault();
+        var picker = letterBtn.closest('.product-item-letter-picker');
+        picker.querySelectorAll('.product-item-letter-picker__letter').forEach(function (btn) {
+          btn.classList.toggle('selected', btn === letterBtn);
+        });
+        picker.dataset.selectedLetter = letterBtn.dataset.letter;
+
+        var submitBtn = picker.querySelector('[data-letter-add-to-cart]');
+        var textEl = submitBtn.querySelector('span');
+        submitBtn.disabled = false;
+        if (textEl) textEl.textContent = submitBtn.dataset.labelAdd;
+        return;
+      }
+
+      var submitBtn = e.target.closest('[data-letter-add-to-cart]');
+      if (!submitBtn) return;
+
+      e.preventDefault();
+      var picker = submitBtn.closest('.product-item-letter-picker');
+      var letter = picker.dataset.selectedLetter;
+      var variantId = submitBtn.dataset.variantId;
+      if (!letter || !variantId) return;
+
+      var textEl = submitBtn.querySelector('span');
+      var originalText = textEl ? textEl.textContent : '';
+      submitBtn.disabled = true;
+      if (textEl) textEl.textContent = {{ 'products.product.adding_to_cart' | t | json }};
+
+      var formData = new FormData();
+      formData.append('id', variantId);
+      formData.append('quantity', '1');
+      formData.append('properties[{{ "products.product.personalization.slot_1" | t }}]', {{ 'products.product.personalization.letter_prefix' | t | json }} + ': ' + letter);
+
+      fetch('/cart/add.js', {
+        method: 'POST',
+        body: formData,
+        headers: { Accept: 'application/json' }
+      })
+        .then(function (response) {
+          if (!response.ok) return response.json().then(function (err) { throw err; });
+          return response.json();
+        })
+        .then(function (data) {
+          if (textEl) textEl.textContent = {{ 'products.product.added_to_cart' | t | json }};
+
+          document.dispatchEvent(new CustomEvent('cart:updated', { bubbles: true, detail: { data: data } }));
+          document.dispatchEvent(new CustomEvent('cart:refresh', { bubbles: true, detail: { data: data } }));
+          document.dispatchEvent(new CustomEvent('theme:cart:reload', { bubbles: true }));
+
+          var cartDrawer =
+            document.querySelector('cart-drawer') ||
+            document.querySelector('.cart-drawer') ||
+            document.querySelector('#CartDrawer');
+          if (cartDrawer) {
+            if (typeof cartDrawer.renderContents === 'function') cartDrawer.renderContents(data);
+            cartDrawer.classList.add('active', 'is-active');
+          }
+        })
+        .catch(function (error) {
+          console.error('Add to Cart Error:', error);
+          alert((error && (error.description || error.message)) || {{ 'products.product.add_to_cart_error' | t | json }});
+        })
+        .finally(function () {
+          setTimeout(function () {
+            submitBtn.disabled = !picker.dataset.selectedLetter;
+            if (textEl) textEl.textContent = originalText;
+          }, 1200);
+        });
+    });
+  })();
+</script>

@@ -1,0 +1,73 @@
+{%- doc -%}
+  Renders a countdown timer.
+
+  @param {string} [size] - The size of the timer (ie. 'default', or 'small').
+  @param {string} year - The year component of the date we're counting down to.
+  @param {string} month - The month component of the date we're counting down to.
+  @param {string} day - The day component of the date we're counting down to.
+  @param {string} hour - The minute component of the date we're counting down to.
+  @param {string} minute - The minute component of the date we're counting down to.
+  @param {string} time_zone_selection - The timezone 'source' to be used (ie. 'shop', or 'user').
+  @param {boolean} hide_timer_on_complete - Whether to hide the timer when it's complete.
+  @param {string} timer_complete_message - The message to show when the timer is complete.
+{%- enddoc -%}
+
+{%- liquid
+  assign size = size | default: 'default'
+-%}
+
+<div
+  class="
+    countdown-timer
+    countdown-timer--{{ size }}
+  "
+  data-countdown-timer
+>
+  <script type="application/json" data-timer-settings>
+    {
+      "year": {{ year | json }},
+      "month": {{ month | json }},
+      "day": {{ day | json }},
+      "hour": {{ hour | json }},
+      "minute": {{ minute | json }},
+      "shopTimezone": {{ 'now' | date: '%z' | json }},
+      "timeZoneSelection": {{ time_zone_selection | json }},
+      "hideTimerOnComplete": {{ hide_timer_on_complete | json }}
+    }
+  </script>
+
+  <div class="countdown-timer__inner">
+    <div class="countdown-timer__item">
+      <div class="countdown-timmer__amount ff-heading" data-days>0</div>
+      <div class="countdown-timer__type fs-accent">{{ 'sections.countdown_timer.days' | t }}</div>
+    </div>
+
+    <div class="countdown-timer__item">
+      <div class="countdown-timmer__amount ff-heading" data-hours>0</div>
+      <div class="countdown-timer__type fs-accent">{{ 'sections.countdown_timer.hours' | t }}</div>
+    </div>
+
+    <div class="countdown-timer__item">
+      <div class="countdown-timmer__amount ff-heading" data-minutes>0</div>
+      <div class="countdown-timer__type fs-accent">{{ 'sections.countdown_timer.minutes' | t }}</div>
+    </div>
+
+    <div class="countdown-timer__item">
+      <div class="countdown-timmer__amount ff-heading" data-seconds>0</div>
+      <div class="countdown-timer__type fs-accent">{{ 'sections.countdown_timer.seconds' | t }}</div>
+    </div>
+  </div>
+
+  {%- if timer_complete_message -%}
+    <div
+      class="
+        countdown-timer__message
+        section-blocks__text
+        rte
+        {% if size == 'small' -%}fs-body-75{%- endif %}
+      "
+    >
+      {{- timer_complete_message -}}
+    </div>
+  {%- endif -%}
+</div>

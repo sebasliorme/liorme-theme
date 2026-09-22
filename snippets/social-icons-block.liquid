@@ -1,0 +1,18 @@
+{%- doc -%}
+  Renders the social icons block.
+
+  @param {string} [position] - The horizontal position (ie. alignment) of the block.
+  @param {string} [classes] - Custom classes to apply the container.
+{%- enddoc -%}
+
+<div
+  class="
+    social-icons-block
+    section-blocks__social-icons
+    {% if classes != blank -%}
+      {{ classes }}
+    {%- endif -%}
+  "
+>
+  {%- render 'social-icons', position: position -%}
+</div>

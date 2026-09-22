@@ -1,0 +1,431 @@
+{%- capture prev_nav_button -%}
+  {%- if section.blocks.size > 1 -%}
+    <div class="testimonials__navigation-button-wrapper testimonials__navigation-button-wrapper--prev">
+      <button
+        type="button"
+        class="testimonials__navigation-button testimonials__navigation-button--prev"
+        aria-label="{{ 'general.accessibility.carousel_previous' | t }}"
+      >
+        {%- render 'icon', icon: 'chevron' -%}
+      </button>
+    </div>
+  {%- endif -%}
+{%- endcapture -%}
+
+{%- capture next_nav_button -%}
+  {%- if section.blocks.size > 1 -%}
+    <div class="testimonials__navigation-button-wrapper testimonials__navigation-button-wrapper--next">
+      <button
+        type="button"
+        class="testimonials__navigation-button testimonials__navigation-button--next"
+        aria-label="{{ 'general.accessibility.carousel_next' | t }}"
+      >
+        {%- render 'icon', icon: 'chevron' -%}
+      </button>
+    </div>
+  {%- endif -%}
+{%- endcapture -%}
+
+<div
+  class="
+    section
+    section--divider-{{ section.settings.divider_style }}
+    section--divider-full-width-{{ section.settings.enable_full_width_divider }}
+    testimonials
+    {% if settings.enable_section_animations and section.settings.enable_animation -%}
+      animation
+      animation--testimonials
+    {%- endif -%}
+  "
+  style="
+    {%- render 'color-scheme-to-vars', color_scheme: section.settings.color_scheme -%}
+    {%- render 'section-padding-vars' -%}
+    --nav-box-shadow-1: {{ section.settings.color_scheme.settings.solid_button_text | color_modify: 'alpha', 0.09 }};
+    --nav-box-shadow-2: {{ section.settings.color_scheme.settings.solid_button_text | color_modify: 'alpha', 0.14 }};
+  "
+  data-section-id="{{ section.id }}"
+  data-section-type="testimonials"
+  data-block-count="{{ section.blocks.size }}"
+>
+  <div class="testimonials__inner section-inner section-inner--width-{{ section.settings.section_width }}">
+    <div class="testimonails__carousel swiper">
+      {{- prev_nav_button -}}
+
+      <div class="testimonials__items-wrapper swiper-wrapper">
+        {%- for block in section.blocks -%}
+          {%- render 'testimonials-item',
+            block: block,
+            forloop: forloop,
+            image_size: section.settings.image_size,
+            quote_font: section.settings.quote_font,
+            heading_font_class: section.settings.heading_font_class,
+            text_font_class: section.settings.text_font_class
+          -%}
+        {%- endfor -%}
+      </div>
+
+      {{- next_nav_button -}}
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "t:sections.testimonials.name",
+  "tag": "section",
+  "disabled_on": {
+    "groups": [
+      "header",
+      "custom.overlay"
+    ],
+    "templates": [
+      "password"
+    ]
+  },
+  "settings": [
+    {
+      "type": "select",
+      "id": "image_size",
+      "label": "t:sections.testimonials.settings.image_size.label",
+      "options": [
+        {
+          "value": "small",
+          "label": "t:sections.testimonials.settings.image_size.options.small"
+        },
+        {
+          "value": "medium",
+          "label": "t:sections.testimonials.settings.image_size.options.medium"
+        },
+        {
+          "value": "large",
+          "label": "t:sections.testimonials.settings.image_size.options.large"
+        }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "quote_font",
+      "label": "t:sections.testimonials.settings.quote_font.label",
+      "options": [
+        {
+          "value": "ff-heading",
+          "label": "t:shared.settings.font_choice.options.heading"
+        },
+        {
+          "value": "ff-body",
+          "label": "t:shared.settings.font_choice.options.body"
+        }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "heading_font_class",
+      "label": "t:sections.testimonials.settings.quote_font_class.label",
+      "options": [
+        {
+          "value": "fs-heading-6-base",
+          "label": "t:shared.settings.heading_font_class.options.xx_small"
+        },
+        {
+          "value": "fs-heading-5-base",
+          "label": "t:shared.settings.heading_font_class.options.x_small"
+        },
+        {
+          "value": "fs-heading-4-base",
+          "label": "t:shared.settings.heading_font_class.options.small"
+        },
+        {
+          "value": "fs-heading-3-base",
+          "label": "t:shared.settings.heading_font_class.options.medium"
+        },
+        {
+          "value": "fs-heading-2-base",
+          "label": "t:shared.settings.heading_font_class.options.large"
+        },
+        {
+          "value": "fs-heading-1-base",
+          "label": "t:shared.settings.heading_font_class.options.x_large"
+        },
+        {
+          "value": "fs-heading-display-3",
+          "label": "t:shared.settings.heading_font_class.options.display_regular"
+        },
+        {
+          "value": "fs-heading-display-2",
+          "label": "t:shared.settings.heading_font_class.options.display_large"
+        },
+        {
+          "value": "fs-heading-display-1",
+          "label": "t:shared.settings.heading_font_class.options.display_x_large"
+        }
+      ],
+      "default": "fs-heading-3-base",
+      "visible_if": "{{ section.settings.quote_font == 'ff-heading' }}"
+    },
+    {
+      "type": "select",
+      "id": "text_font_class",
+      "label": "t:shared.settings.text_font_class.label",
+      "options": [
+        {
+          "value": "fs-body-25",
+          "label": "t:shared.settings.text_font_class.options.xx_small"
+        },
+        {
+          "value": "fs-body-50",
+          "label": "t:shared.settings.text_font_class.options.x_small"
+        },
+        {
+          "value": "fs-body-75",
+          "label": "t:shared.settings.text_font_class.options.small"
+        },
+        {
+          "value": "fs-body-100",
+          "label": "t:shared.settings.text_font_class.options.regular"
+        },
+        {
+          "value": "fs-body-150",
+          "label": "t:shared.settings.text_font_class.options.large"
+        },
+        {
+          "value": "fs-body-200",
+          "label": "t:shared.settings.text_font_class.options.x_large"
+        },
+        {
+          "value": "fs-body-250",
+          "label": "t:shared.settings.text_font_class.options.2x_large"
+        },
+        {
+          "value": "fs-body-300",
+          "label": "t:shared.settings.text_font_class.options.3x_large"
+        },
+        {
+          "value": "fs-body-350",
+          "label": "t:shared.settings.text_font_class.options.4x_large"
+        },
+        {
+          "value": "fs-body-400",
+          "label": "t:shared.settings.text_font_class.options.5x_large"
+        }
+      ],
+      "default": "fs-body-100",
+      "visible_if": "{{ section.settings.quote_font == 'ff-body' }}"
+    },
+    {
+      "type": "header",
+      "content": "t:shared.settings.section_style.header.content"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:shared.settings.color_scheme.label"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "t:shared.settings.section_style.section_width.label",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "t:shared.settings.section_style.section_width.options.page_width"
+        },
+        {
+          "value": "full-width-padded",
+          "label": "t:shared.settings.section_style.section_width.options.full_width"
+        }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "range",
+      "id": "section_padding_top",
+      "label": "t:shared.settings.section_style.section_padding.top.label",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "section_padding_bottom",
+      "label": "t:shared.settings.section_style.section_padding.bottom.label",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "select",
+      "id": "divider_style",
+      "label": "t:shared.settings.section_style.divider_style.label",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:shared.settings.section_style.divider_style.options.none"
+        },
+        {
+          "value": "solid",
+          "label": "t:shared.settings.section_style.divider_style.options.solid"
+        }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_full_width_divider",
+      "label": "t:shared.settings.section_style.enable_full_width_divider.label",
+      "visible_if": "{{ section.settings.divider_style == 'solid' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_animation",
+      "label": "t:shared.settings.section_style.enable_animation.label",
+      "default": true,
+      "info": "t:shared.settings.section_style.enable_animation.info"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "testimonial",
+      "name": "t:sections.testimonials.blocks.testimonial.name",
+      "settings": [
+        {
+          "type": "product",
+          "id": "product",
+          "label": "t:sections.testimonials.blocks.testimonial.settings.product.label"
+        },
+        {
+          "type": "select",
+          "id": "image_position",
+          "label": "t:sections.testimonials.blocks.testimonial.settings.image_position.label",
+          "options": [
+            {
+              "value": "left",
+              "label": "t:sections.testimonials.blocks.testimonial.settings.image_position.options.left"
+            },
+            {
+              "value": "right",
+              "label": "t:sections.testimonials.blocks.testimonial.settings.image_position.options.right"
+            }
+          ],
+          "default": "right"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:sections.testimonials.blocks.testimonial.settings.image.label"
+        },
+        {
+          "type": "select",
+          "id": "aspect_ratio",
+          "label": "t:sections.testimonials.blocks.testimonial.settings.aspect_ratio.label",
+          "options": [
+            {
+              "value": "natural",
+              "label": "t:shared.options.aspect_ratio.natural"
+            },
+            {
+              "value": "square",
+              "label": "t:shared.options.aspect_ratio.square"
+            },
+            {
+              "value": "portrait",
+              "label": "t:shared.options.aspect_ratio.portrait"
+            },
+            {
+              "value": "landscape",
+              "label": "t:shared.options.aspect_ratio.landscape"
+            }
+          ],
+          "default": "square"
+        },
+        {
+          "type": "select",
+          "id": "focal_point",
+          "label": "t:shared.settings.focal_point.image.default.label",
+          "options": [
+            {
+              "value": "image_presentation",
+              "label": "t:shared.options.focal_point.image_presentation"
+            },
+            {
+              "value": "center",
+              "label": "t:shared.options.focal_point.center"
+            },
+            {
+              "value": "top",
+              "label": "t:shared.options.focal_point.top"
+            },
+            {
+              "value": "bottom",
+              "label": "t:shared.options.focal_point.bottom"
+            },
+            {
+              "value": "left",
+              "label": "t:shared.options.focal_point.left"
+            },
+            {
+              "value": "right",
+              "label": "t:shared.options.focal_point.right"
+            }
+          ],
+          "default": "image_presentation"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.testimonials.blocks.testimonial.settings.product_rating.header.content"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_rating",
+          "label": "t:sections.testimonials.blocks.testimonial.settings.product_rating.show_rating.label",
+          "default": true
+        },
+        {
+          "type": "range",
+          "id": "rating",
+          "label": "t:sections.testimonials.blocks.testimonial.settings.product_rating.rating.label",
+          "min": 3,
+          "max": 5,
+          "step": 0.5,
+          "default": 5
+        },
+        {
+          "type": "header",
+          "content": "t:sections.testimonials.blocks.testimonial.settings.testimonial.header.content"
+        },
+        {
+          "type": "text",
+          "id": "quote",
+          "label": "t:sections.testimonials.blocks.testimonial.settings.testimonial.quote.label",
+          "default": "t:sections.testimonials.blocks.testimonial.settings.testimonial.quote.default"
+        },
+        {
+          "type": "text",
+          "id": "author",
+          "label": "t:sections.testimonials.blocks.testimonial.settings.testimonial.author.label",
+          "default": "t:sections.testimonials.blocks.testimonial.settings.testimonial.author.default"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.testimonials.presets.name",
+      "blocks": [
+        {
+          "type": "testimonial"
+        },
+        {
+          "type": "testimonial"
+        },
+        {
+          "type": "testimonial"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

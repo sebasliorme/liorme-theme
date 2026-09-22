@@ -1,0 +1,44 @@
+{% doc %}
+  Renders a promotion tile to be rendered as part of a grid.
+
+  @param {string} block_content - The content to render within the promotion tile.
+  @param {string} block_width_desktop - The block's grid-width on desktop.
+  @param {string} block_width_mobile - The block's grid-width on mobile.
+  @param {string} [class] - A custom class to apply to the tile.
+  @param {boolean} [has_mobile_tile] - Whether there's a mobile-specific tile.
+
+  When the product grid has 2 columns on mobile, we need to show the tile 1 spot after the selected index to prevent
+  blank spaces in the grid.
+{% enddoc %}
+
+{% liquid
+  unless block_width_desktop == 'full'
+    if section.settings.columns_desktop == '2'
+      assign block_width_desktop = block_width_desktop | at_most: 2
+    endif
+  endunless
+%}
+
+<promotion-tile
+  class="
+    promotion-tile
+    {% if has_mobile_tile -%}
+      promotion-tile--has-mobile-tile
+    {%- endif %}
+    {% if class != blank -%}
+      {{ class }}
+    {%- endif %}
+    animation
+    animation--item
+  "
+  data-width-desktop="{{ block_width_desktop }}"
+  data-width-mobile="{{ block_width_mobile }}"
+  data-has-mobile-tile="{{ has_mobile_tile }}"
+  js-promotion-tile
+  style="
+    --column-count-desktop: {{ section.settings.columns_desktop }};
+    --column-count-mobile: {{ section.settings.columns_mobile }};
+  "
+>
+  {{- block_content -}}
+</promotion-tile>

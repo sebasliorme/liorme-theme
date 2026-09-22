@@ -1,0 +1,74 @@
+<div
+  id="MainQuickSearch"
+  class="quick-search"
+  data-quick-search
+  aria-hidden="true"
+>
+  <div class="quick-search__overlay" data-overlay></div>
+
+  <div class="quick-search__container">
+    <form
+      action="{{ routes.search_url }}"
+      class="quick-search__form"
+      autocomplete="off"
+      data-quick-search-form
+      data-scroll-lock-ignore
+    >
+      <div class="quick-search__bar">
+        <div class="quick-search__bar-inner">
+          <label for="search" class="visually-hidden" aria-label="{{ 'search.placeholder' | t }}"></label>
+
+          <div class="quick-search__actions">
+            <button class="quick-search__submit" type="submit" aria-label="{{ 'search.search' | t }}">
+              {%- render 'icon', icon: 'search' -%}
+            </button>
+          </div>
+
+          <input
+            class="quick-search__input"
+            id="search"
+            type="text"
+            name="q"
+            placeholder="{{ 'search.placeholder' | t }}"
+            data-input
+          >
+
+          <input type="hidden" name="options[prefix]" value="last">
+
+          <div class="quick-search__actions">
+            <button class="quick-search__clear fs-body-50" type="button" data-clear>
+              {{- 'search.clear_search' | t -}}
+            </button>
+          </div>
+
+          <button type="button" class="quick-search__close fs-body-50" data-close-icon>
+            {{- 'general.accessibility.close_modal' | t -}}
+          </button>
+        </div>
+      </div>
+
+      <div class="quick-search__results-wrapper">
+        <div class="quick-search__results" data-results></div>
+      </div>
+
+      <div class="quick-search__suggested-wrapper">
+        <div class="quick-search__suggested">
+          {{ suggestions_html }}
+        </div>
+      </div>
+
+      <div
+        class="quick-search__footer"
+        data-has-background-gradient="
+          {%- if settings.drawer_color_scheme.settings.background_gradient != blank -%}
+            true
+          {%- else -%}
+            false
+          {%- endif -%}
+        "
+      >
+        <button type="submit" class="btn btn--primary btn--full">{{ 'search.view_all' | t }}</button>
+      </div>
+    </form>
+  </div>
+</div>

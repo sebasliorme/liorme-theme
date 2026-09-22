@@ -1,0 +1,85 @@
+{%- doc -%}
+  Renders the secure payment product block.
+
+  @param {object} block - The block object.
+{%- enddoc -%}
+
+{%- liquid
+  capture content_text_font_class
+    case block.settings.text_size
+      when 'small'
+        echo 'fs-body-50'
+      when 'large'
+        echo 'fs-body-100'
+      else
+        echo 'fs-body-75'
+    endcase
+  endcapture
+-%}
+
+{%- capture content_text -%}
+  <div class="product-block-secure-payment__text rte {{ content_text_font_class }}">{{ block.settings.optional_text }}</div>
+{%- endcapture -%}
+
+{%- capture content -%}
+  <div class="
+    product-block-secure-payment
+    product-block-secure-payment--{{ block.settings.text_alignment }}
+    {% if block.settings.add_box -%}product-block-secure-payment--boxed{%- endif -%}
+    "
+    {{ block.shopify_attributes }}
+  >
+    <div class="product__label-wrapper">
+      {%- if block.settings.heading_icon != 'none' -%}
+        {%- render 'icon-editorial', icon: block.settings.heading_icon -%}
+      {%- endif -%}
+
+      {%- if block.settings.heading_text -%}
+        <span class="product-block-secure-payment__label fs-body-150">{{ block.settings.heading_text }}</span>
+      {%- endif -%}
+    </div>
+
+    {%- liquid
+      if block.settings.optional_text and block.settings.text_position == 'above'
+        echo content_text
+      endif
+
+      if block.settings.show_payment_icons
+      render 'payment-icons'
+      endif
+
+      if block.settings.optional_text and block.settings.text_position == 'below'
+        echo content_text
+      endif
+    -%}
+
+    {%- if block.settings.trust_image != blank -%}
+      {%- render 'image-block',
+        image: block.settings.trust_image,
+        width: block.settings.trust_image_size,
+        mobile_width: block.settings.trust_image_size_mobile,
+        break_to_mobile_at: '720',
+        wrapper_class: 'product-block-secure-payment__trust-image section-blocks__image',
+        align: block.settings.text_alignment,
+        enable_corner_rounding: block.settings.enable_corner_rounding
+      -%}
+    {%- endif -%}
+  </div>
+{%- endcapture -%}
+
+{%- if block.settings.display_as_collapsible_row -%}
+  {%- render 'product-block-accordion',
+    block: block,
+    heading: block.settings.collapsible_row_title,
+    content: content,
+    label_font: block.settings.title_font_choice,
+    label_size: block.settings.title_font_class
+  -%}
+{%- else -%}
+  <div
+    class="product__block product__block--medium"
+    {{ block.shopify_attributes }}
+  >
+    {{- content -}}
+  </div>
+{%- endif -%}

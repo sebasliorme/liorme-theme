@@ -1,0 +1,78 @@
+{%- doc -%}
+  Renders standard scripts and structured data for a product.
+
+  @param {object} section - The section object.
+  @param {object} prod - The product object. We use 'prod' to avoid collision with the global 'product' object.
+  @param {object} current_variant - The currently selected variant of the product.
+{%- enddoc -%}
+
+{%- assign models = prod.media | where: 'media_type', 'model' | json -%}
+
+{%- if models != blank -%}
+  <script>
+    window.ShopifyXR=window.ShopifyXR||function(){(ShopifyXR.q=ShopifyXR.q||[]).push(arguments)}
+    ShopifyXR('addModels', {{ models }});
+  </script>
+{%- endif -%}
+
+{%- unless prod == empty -%}
+  <script type="application/json" id="ProductJson-{{ section.id }}">
+    {{- prod | json -}}
+  </script>
+
+  <script type="application/json" id="ModelJson-{{ section.id }}">
+    {{- prod.media | where: 'media_type', 'model' | json -}}
+  </script>
+{%- endunless -%}
+
+<script type="application/ld+json">
+  {%- liquid
+    assign ld_images = ''
+
+    for product_image in prod.images limit: 6
+      assign one_image = product_image | image_url: width: 1200 | remove: 'https:' | remove: 'http:' | prepend: 'https:' | json
+      if ld_images == ''
+        assign ld_images = one_image
+      else
+        assign ld_images = ld_images | append: ',' | append: one_image
+      endif
+    endfor
+
+    assign ld_description = prod.description | strip_html | strip_newlines | strip
+  -%}
+
+  {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": {{ prod.title | json }},
+    "url": {{ shop.url | append: prod.url | json }},
+    {% if ld_images != blank -%}
+      "image": [{{ ld_images }}],
+    {%- endif %}
+    {% if ld_description != blank -%}
+      "description": {{ ld_description | json }},
+    {%- endif %}
+    {% if current_variant.sku != blank -%}
+      "sku": {{ current_variant.sku | json }},
+    {%- endif %}
+    "brand": {
+      "@type": "Brand",
+      "name": {{ prod.vendor | json }}
+    },
+    "offers": [
+      {% for variant in prod.variants -%}
+        {
+          "@type" : "Offer",
+          {% if variant.sku != blank -%}
+            "sku": {{ variant.sku | json }},
+          {%- endif %}
+          "itemCondition": "https://schema.org/NewCondition",
+          "availability" : "https://schema.org/{% if variant.available %}InStock{% else %}OutOfStock{% endif %}",
+          "price" : {{ variant.price | divided_by: 100.00 | json }},
+          "priceCurrency" : {{ cart.currency.iso_code | json }},
+          "url" : {{ shop.url | append: variant.url | json }}
+        }{% unless forloop.last %},{% endunless %}
+      {%- endfor %}
+    ]
+  }
+</script>

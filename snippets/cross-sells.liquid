@@ -1,0 +1,201 @@
+{%- doc -%}
+  Renders cart cross-sell products.
+
+  @param {object} cart - The cart object.
+  @param {string} display - The display type of the cross-sells (ie. 'grid', or 'slider').
+  @param {string} [position] - The position of the cross-sells (ie. 'below-subtotal').
+  @param {boolean} show_product_currency - Whether to show the currency iso code with prices.
+  @param {boolean} [is_quick] - Whether the cross-sells are being rendered in the quick cart.
+{%- enddoc -%}
+
+{%- liquid
+  assign is_quick = is_quick | default: false, allow_false: true
+
+  assign product_limit = settings.cross_sells_max_products
+  assign product_count = 0
+  assign cart_item_ids = cart.items | map: 'product_id'
+
+  if settings.cross_sells_recommendations_type == 'collection'
+    assign product_pool = settings.collection.products
+  elsif settings.cross_sells_recommendations_type == 'product-list'
+    assign product_pool = settings.product_list
+  endif
+
+  assign product_will_show = false
+
+  for item in product_pool
+    if cart_item_ids contains item.id
+      continue
+    elsif item.available == false
+      continue
+    else
+      assign product_will_show = true
+      break
+    endif
+  endfor
+
+  if display == 'slider'
+    assign is_slider = true
+  else
+    assign is_slider = false
+  endif
+-%}
+
+{%- if product_will_show -%}
+  <div
+    class="cross-sells"
+    data-cross-sells
+    {% if position != blank -%}
+      data-position="{{ position }}"
+    {%- endif -%}
+  >
+    <div class="cross-sells__heading ff-heading fs-heading-6-base">{{ settings.cross_sells_heading }}</div>
+
+    <div class="cross-sells__items {%- if is_slider %} swiper{%- endif -%}" data-cross-sells-slider="{{ is_slider }}">
+      {%- if is_slider -%}
+        <div class="cross-sells__slider-inner swiper-wrapper">
+      {%- endif -%}
+
+      {%- for item in product_pool -%}
+        {%- liquid
+          if product_count >= product_limit
+            break
+          elsif cart_item_ids contains item.id or item.available == false
+            continue
+          endif
+
+          assign product_count = product_count | plus: 1
+        -%}
+
+        <div class="cross-sells__item {%- if is_slider %} swiper-slide{%- endif -%}">
+          {%- if settings.cross_sells_show_thumbnails -%}
+            <div class="cross-sells__item-image">
+              <a href="{{ item.url }}" class="cross-sells__item-link">
+                {%- render 'image',
+                  image: item.featured_media,
+                  sizes: '64px',
+                  prioritize_loading: true,
+                  focal_point: 'image_presentation',
+                  aspect_ratio: settings.cart_item_aspect_ratio,
+                  include_placeholder: true
+                -%}
+              </a>
+            </div>
+          {%- endif -%}
+
+          <div class="cross-sells__item-content">
+            <div class="cross-sells__item-details ff-body fs-body-75">
+              <h4 class="cross-sells__item-title fs-body-75">
+                <a href="{{ item.url }}">{{ item.title }}</a>
+              </h4>
+
+              <div class="cross-sells__item-price-wrapper">
+                {%- liquid
+                  capture price_display
+                    echo '[[price]]'
+
+                    if show_product_currency
+                      echo ' '
+                      echo cart.currency.iso_code
+                    endif
+                  endcapture
+                -%}
+
+                {%- if item.compare_at_price > item.price -%}
+                  <span class="visually-hidden">{{ 'products.product.regular_price' | t }}</span>
+
+                  <s class="t-subdued">
+                    {%- liquid
+                      assign price = item.compare_at_price | money
+                      echo price_display | replace: '[[price]]', price
+                    -%}
+                  </s>
+
+                  {%- if item.price_varies -%}
+                    <div class="sale">
+                      {%- liquid
+                        assign sale_price = item.price | money
+                        assign sale_price_display_string = 'products.product.on_sale_from_html' | t: price: sale_price
+
+                        echo price_display | replace: '[[price]]', sale_price_display_string
+                      -%}
+                    </div>
+                  {%- else -%}
+                    <div class="sale">
+                      {%- liquid
+                        assign price = item.price | money
+                        echo price_display | replace: '[[price]]', price
+                      -%}
+                    </div>
+                  {%- endif -%}
+                {%- else -%}
+                  {%- if item.price_varies -%}
+                    {%- liquid
+                      assign price = item.price | money
+                      assign price_display_string = 'products.product.from_lowest_price_html' | t: lowest_price: price
+
+                      echo price_display | replace: '[[price]]', price_display_string
+                    -%}
+                  {%- else -%}
+                    <span class="cross-sells__item-price">
+                      {%- liquid
+                        assign price = item.price | money
+                        echo price_display | replace: '[[price]]', price
+                      -%}
+                    </span>
+                  {%- endif -%}
+                {%- endif -%}
+              </div>
+            </div>
+
+            <div class="cross-sells__item-button">
+              <button
+                type="button"
+                class="cross-sells__item-add btn btn--tertiary btn--x-small"
+                data-product-url="{{ item.url }}"
+                {% if item.has_only_default_variant -%}
+                  data-add-item-id="{{ item.variants[0].id }}"
+                {%- else -%}
+                  data-quick-view-trigger
+                {%- endif %}
+                data-quantity-minimum="{{ item.variants[0].quantity_rule.min | default: 1 }}"
+              >
+                {%- unless is_quick -%}
+                  <span class="cross-sells__text-add-to-cart">{{ 'product.add_to_cart' | t }}</span>
+                {%- endunless -%}
+
+                <span class="cross-sells__text-add">{{ 'cart.general.add' | t }}</span>
+
+                <div class="btn__loading-wrap">
+                  <div class="btn__loading-bar"></div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      {%- endfor -%}
+
+      {% if is_slider %}
+        </div>
+
+        <button
+          type="button"
+          class="slider-nav-button slider-nav-button-prev"
+          title="{{ 'general.accessibility.previous' | t }}"
+          data-prev
+        >
+          {%- render 'icon', icon: 'chevron' -%}
+        </button>
+
+        <button
+          type="button"
+          class="slider-nav-button slider-nav-button-next"
+          title="{{ 'general.accessibility.next' | t }}"
+          data-next
+        >
+          {%- render 'icon', icon: 'chevron' -%}
+        </button>
+      {%- endif -%}
+    </div>
+  </div>
+{%- endif -%}

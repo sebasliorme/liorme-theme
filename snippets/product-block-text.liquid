@@ -1,0 +1,23 @@
+{%- doc -%}
+  Renders the text product block.
+
+  @param {object} block - The block object.
+  @param {string} [heading] - The heading.
+  @param {string} [heading_font] - The font family class for the heading.
+  @param {string} [heading_size] - The font size class for the heading.
+  @param {string} content - The content.
+{%- enddoc -%}
+
+<div class="product__description product__block product__block--medium" {{ block.shopify_attributes }}>
+  {%- if heading != blank -%}
+    <{{ block.settings.title_tag }} class="product__description-heading {{ heading_font }} {{ heading_size }}">
+      {{- heading -}}
+    </{{ block.settings.title_tag }}>
+  {%- endif -%}
+
+  {%- assign font_class = block.settings.text_font_class | default: 'fs-body-100' -%}
+
+  <div class="rte rte--product ff-body {{ font_class }}">
+    {{- content -}}
+  </div>
+</div>

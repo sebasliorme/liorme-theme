@@ -1,0 +1,29 @@
+{%- doc -%}
+  Renders a mobile drawer with the given content.
+
+  @param {string} content - The content to be rendered inside the drawer.
+  @param {string} class - A class to be applied to the drawer container.
+{%- enddoc -%}
+
+<dialog
+  class="
+    mobile-drawer
+    enters-upwards
+    {% if class != blank -%}
+      {{ class }}
+    {%- endif -%}
+  "
+  closedby="any"
+>
+  <div class="mobile-drawer__container" role="region" aria-live="polite">
+    {{- content -}}
+
+    <button
+      class="mobile-drawer__close"
+      data-close
+      aria-label="{{ 'general.accessibility.close_modal' | t }}"
+    >
+      {%- render 'icon-button', small: true, icon: 'close' -%}
+    </button>
+  </div>
+</dialog>

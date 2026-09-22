@@ -1,0 +1,132 @@
+{%- doc -%}
+  Renders the three underlined links under the buy button — "Find in store", "Product details" and
+  "Shipping & Returns" — each opening a side panel over the dimmed page (same panel and behaviour as the
+  "Find your size" block, see assets/find-your-size.js).
+
+  @param {object} prod - The product object. We use 'prod' to avoid collision with the global 'product' object.
+  @param {object} block - The block object.
+{%- enddoc -%}
+
+{%- liquid
+  assign store_label = block.settings.find_label | default: 'Find in store'
+  assign details_label = block.settings.details_label | default: 'Product details'
+  assign shipping_label = block.settings.shipping_label | default: 'Shipping & Returns'
+-%}
+
+<div class="product__block product__block--medium info-links" {{ block.shopify_attributes }}>
+  <ul class="info-links__list">
+    <li>
+      <button type="button" class="info-links__link" data-find-size-open aria-haspopup="dialog" aria-controls="info-drawer-store-{{ block.id }}">
+        {{- store_label | escape -}}
+      </button>
+    </li>
+    <li>
+      <button type="button" class="info-links__link" data-find-size-open aria-haspopup="dialog" aria-controls="info-drawer-details-{{ block.id }}">
+        {{- details_label | escape -}}
+      </button>
+    </li>
+    <li>
+      <button type="button" class="info-links__link" data-find-size-open aria-haspopup="dialog" aria-controls="info-drawer-shipping-{{ block.id }}">
+        {{- shipping_label | escape -}}
+      </button>
+    </li>
+  </ul>
+</div>
+
+{%- comment -%} Find in store {%- endcomment -%}
+<div
+  class="find-size-drawer info-drawer"
+  id="info-drawer-store-{{ block.id }}"
+  data-find-size-drawer="{{ block.id }}-store"
+  role="dialog"
+  aria-modal="true"
+  aria-label="{{ store_label | escape }}"
+  aria-hidden="true"
+  hidden
+>
+  <div class="find-size-drawer__overlay" data-find-size-close></div>
+  <div class="find-size-drawer__panel">
+    <button type="button" class="find-size-drawer__close" data-find-size-close aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="1.3"/></svg>
+    </button>
+    <div class="info-drawer__inner">
+      <h2 class="info-drawer__title">{{ store_label | escape }}</h2>
+      <div class="info-drawer__content rte">
+        {%- if block.settings.find_text != blank -%}
+          {{- block.settings.find_text -}}
+        {%- else -%}
+          <p>Contact us to check the availability of this piece in our store.</p>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</div>
+
+{%- comment -%} Product details {%- endcomment -%}
+<div
+  class="find-size-drawer info-drawer"
+  id="info-drawer-details-{{ block.id }}"
+  data-find-size-drawer="{{ block.id }}-details"
+  role="dialog"
+  aria-modal="true"
+  aria-label="{{ details_label | escape }}"
+  aria-hidden="true"
+  hidden
+>
+  <div class="find-size-drawer__overlay" data-find-size-close></div>
+  <div class="find-size-drawer__panel">
+    <button type="button" class="find-size-drawer__close" data-find-size-close aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="1.3"/></svg>
+    </button>
+    <div class="info-drawer__inner">
+      <h2 class="info-drawer__title">{{ details_label | escape }}</h2>
+      <div class="info-drawer__content rte">
+        {%- if prod.description != blank -%}
+          {{- prod.description -}}
+        {%- else -%}
+          <p>No details have been added for this product yet.</p>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</div>
+
+{%- comment -%} Shipping & Returns {%- endcomment -%}
+<div
+  class="find-size-drawer info-drawer"
+  id="info-drawer-shipping-{{ block.id }}"
+  data-find-size-drawer="{{ block.id }}-shipping"
+  role="dialog"
+  aria-modal="true"
+  aria-label="{{ shipping_label | escape }}"
+  aria-hidden="true"
+  hidden
+>
+  <div class="find-size-drawer__overlay" data-find-size-close></div>
+  <div class="find-size-drawer__panel">
+    <button type="button" class="find-size-drawer__close" data-find-size-close aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="1.3"/></svg>
+    </button>
+    <div class="info-drawer__inner">
+      <h2 class="info-drawer__title">{{ shipping_label | escape }}</h2>
+      <div class="info-drawer__content rte">
+        {%- if block.settings.shipping_text != blank -%}
+          {{- block.settings.shipping_text -}}
+        {%- elsif shop.shipping_policy.body != blank or shop.refund_policy.body != blank -%}
+          {%- if shop.shipping_policy.body != blank -%}
+            <h3>{{ shop.shipping_policy.title | escape }}</h3>
+            {{- shop.shipping_policy.body -}}
+          {%- endif -%}
+          {%- if shop.refund_policy.body != blank -%}
+            <h3>{{ shop.refund_policy.title | escape }}</h3>
+            {{- shop.refund_policy.body -}}
+          {%- endif -%}
+        {%- else -%}
+          <p>Shipping is calculated at checkout.</p>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{{ 'find-your-size.js' | asset_url }}" defer></script>

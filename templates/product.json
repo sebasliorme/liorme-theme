@@ -1,0 +1,150 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "main-product--default",
+      "blocks": {
+        "product_header": {
+          "type": "product_header",
+          "settings": {
+            "title_font_class": "fs-heading-display-3",
+            "show_divider": true,
+            "show_vendor": false,
+            "show_sku": false,
+            "price_font_class": "fs-body-150",
+            "show_discount": false,
+            "discount_format": "percent_off",
+            "show_product_rating": false,
+            "show_sale_badge": true,
+            "show_custom_badges": true
+          }
+        },
+        "d5361212-0991-4900-b29f-fe81fcaf8c86": {
+          "type": "text",
+          "disabled": true,
+          "settings": {
+            "text": "<p>Add some text to tell customers more about your product.</p>",
+            "text_font_class": "fs-body-100",
+            "column_placement": "right"
+          }
+        },
+        "variant_picker": {
+          "type": "variant_picker",
+          "settings": {
+            "variant_popup_option": "Size",
+            "variant_popup_icon": "measuring-tape",
+            "variant_popup_text": "Size guide",
+            "variant_popup_page": "size-guide",
+            "swatch_size": "medium",
+            "chip_layout": "natural"
+          }
+        },
+        "find_your_size": {
+          "type": "find_your_size",
+          "settings": {}
+        },
+        "buy_buttons": {
+          "type": "buy_buttons",
+          "settings": {
+            "add_to_cart_button_style": "btn--primary",
+            "show_dynamic_checkout": false
+          }
+        },
+        "info_links": {
+          "type": "info_links",
+          "settings": {}
+        },
+        "description": {
+          "type": "description",
+          "disabled": true,
+          "settings": {
+            "title": "Description",
+            "title_font_choice": "ff-heading",
+            "title_font_class": "fs-body-250",
+            "title_tag": "h3",
+            "text_font_class": "fs-body-100",
+            "column_placement": "left",
+            "display_as_collapsible_row": true,
+            "expand_by_default": true,
+            "icon": "none"
+          }
+        }
+      },
+      "block_order": [
+        "product_header",
+        "d5361212-0991-4900-b29f-fe81fcaf8c86",
+        "variant_picker",
+        "find_your_size",
+        "buy_buttons",
+        "info_links",
+        "description"
+      ],
+      "settings": {
+        "enable_sticky_product_details": true,
+        "show_breadcrumbs": false,
+        "show_navigation_buttons": false,
+        "auto_collapse_rows": false,
+        "show_featured_media_first": false,
+        "gallery_style": "list",
+        "gallery_width": "half",
+        "gallery_style_mobile": "carousel",
+        "gallery_width_mobile": "full-width",
+        "enable_mobile_carousel_looping": true,
+        "hide_mobile_carousel_dots": false,
+        "gallery_overflow": "2",
+        "enable_video_looping": true,
+        "enable_product_lightbox": true,
+        "full_height_photos": true,
+        "enable_gallery_snap": false,
+        "image_aspect_ratio": "portrait_alt",
+        "enable_multiple_variant_media": false,
+        "enable_gift_card_recipient": true,
+        "color_scheme": "scheme_3",
+        "section_width": "page-width",
+        "section_padding_top": 40,
+        "section_padding_bottom": 40,
+        "divider_style": "none",
+        "enable_full_width_divider": false,
+        "enable_animation": true
+      }
+    },
+    "recommendations": {
+      "type": "recommended-products",
+      "settings": {
+        "header_alignment": "center",
+        "title": "Recommended",
+        "heading_font_class": "fs-heading-3-base",
+        "heading_tag": "h2",
+        "text": "",
+        "text_font_class": "fs-body-100",
+        "maximum_products": 8,
+        "columns": "4",
+        "mobile_columns": "2",
+        "color_scheme": "",
+        "section_width": "page-width",
+        "section_padding_top": 40,
+        "section_padding_bottom": 40,
+        "divider_style": "none",
+        "enable_full_width_divider": false,
+        "enable_animation": true
+      }
+    },
+    "product_breadcrumbs": {
+      "type": "product-breadcrumbs",
+      "settings": {}
+    }
+  },
+  "order": [
+    "main",
+    "recommendations",
+    "product_breadcrumbs"
+  ]
+}

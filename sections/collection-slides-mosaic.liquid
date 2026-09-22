@@ -1,0 +1,672 @@
+{%- comment -%}
+  Mosaico de slides — Miu Miu's collection page mosaic (miumiu.com/us/en/collections/fw26-collection/c/11085US):
+  a grid of SLIDES (photos, colour panels with text, tags such as "From the runway", titles and "Shop" links) of
+  free sizes: each slide spans 1-6 columns and 1-4 rows of a grid whose cells have a fixed ratio (2:3 by default).
+  Independent of the products: it is its own section, placed above or below the product grid of the template
+  (drag it in the editor). Slides come from the section's blocks, in order; `grid-auto-flow: dense` fills the holes.
+  A colour panel next to a photo (two slides of 2 columns) gives the "Eyewear" split banner of the reference.
+  WHERE THE SLIDES COME FROM: (a) the section's blocks (default), or (b) with "Usar los slides de cada colección"
+  on, the entries of each collection's metafield `custom.editorial_slides` (the list edited on the collection's own
+  page, the same one that feeds the product grid's editorial slides): the entries are the CONTENT (photo, link,
+  and title/text/button when their text is enabled) and the blocks only give the LAYOUT of each slot, in order
+  (size, text position, colours), like the grid does. Then a collection without entries shows no mosaic.
+
+  ORDER AND POSITION: slides are laid out in list order, left to right and top to bottom, each in the first free
+  hole (a big slide added before smaller ones, or after them, leaves different holes). A slide can be FIXED with
+  "Columna donde empieza" + "Fila donde empieza" (desktop only): fixed slides are placed first and the others
+  flow around them in list order, so adding slides anywhere in the list never moves them. Phones always go by list order,
+  except a slide with "Orden en móvil" = Primero / Último, which goes before / after all the others on phones.
+
+  WHERE IT SHOWS: on every collection that uses the template, unless "Colecciones donde se muestra" lists some;
+  then only on those. For different content per collection there are two ways: one "Mosaico de slides" per
+  collection (each with its own collections), or ONE mosaic whose slides each list the collections they are for
+  ("Colecciones donde se muestra este slide"; empty = every collection the mosaic shows on). A slide that is not for
+  the collection being shown is not drawn (the dense grid closes the hole); with the collection's own slides (entries),
+  the entries take their layout from the slides that ARE for that collection, in order. In the theme editor a mosaic
+  (or all its slides) that belongs to another collection than the one being previewed is replaced by a short note
+  (visitors never see it), so previewing Aretes shows only what is for Aretes.
+{%- endcomment -%}
+
+{%- liquid
+  # Which collections this mosaic is for (empty list = all of them)
+  assign shown_handles = ''
+  assign shown_names = ''
+
+  for shown_collection in section.settings.show_in_collections
+    assign shown_handles = shown_handles | append: '|' | append: shown_collection.handle | append: '|'
+
+    unless forloop.first
+      assign shown_names = shown_names | append: ', '
+    endunless
+
+    assign shown_names = shown_names | append: shown_collection.title
+  endfor
+
+  assign show_here = true
+
+  if section.settings.show_in_collections.size > 0
+    assign show_here = false
+
+    if collection != blank
+      assign current_handle_key = '|' | append: collection.handle | append: '|'
+
+      if shown_handles contains current_handle_key
+        assign show_here = true
+      endif
+    endif
+  endif
+
+  assign cols = section.settings.columns_desktop | plus: 0
+  assign cols_m = section.settings.columns_mobile | plus: 0
+  assign ratio = section.settings.tile_ratio | plus: 0.0
+  assign gap = section.settings.gap | plus: 0
+
+  # How many slides of this mosaic are for the collection being shown (a slide can list its collections)
+  assign slides_here = 0
+
+  for slide_block in section.blocks
+    capture slide_block_here
+      render 'liorme-block-for-collection', block: slide_block
+    endcapture
+
+    if slide_block_here == 'true'
+      assign slides_here = slides_here | plus: 1
+    endif
+  endfor
+-%}
+
+{%- liquid
+  # Content source: the collection's metafield entries (when asked for) or the section's own blocks
+  assign use_collection_slides = section.settings.use_collection_slides
+  assign entries = nil
+  assign use_entries = false
+
+  if use_collection_slides and collection != blank
+    assign entries = collection.metafields.custom.editorial_slides.value
+
+    if entries.size > 0
+      assign use_entries = true
+    endif
+  endif
+
+  assign has_content = false
+
+  if use_entries
+    assign has_content = true
+  elsif use_collection_slides != true and slides_here > 0
+    assign has_content = true
+  endif
+-%}
+
+{%- if show_here and use_collection_slides and use_entries == false and request.design_mode -%}
+  <div style="margin: 12px; padding: 14px 16px; border: 1px dashed #9a9a9a; background: #f6f6f4; color: #444444; font-size: 12px; line-height: 1.5;">
+    <strong>Mosaico de slides</strong> — «Usar los slides de cada colección» está activado y esta colección no tiene entradas en el metacampo «Editorial slides», así que no se muestra nada. Añade entradas en la ficha de la colección. Los visitantes no ven este aviso.
+  </div>
+{%- endif -%}
+
+{%- if show_here and use_collection_slides != true and section.blocks.size > 0 and slides_here == 0 and request.design_mode -%}
+  <div style="margin: 12px; padding: 14px 16px; border: 1px dashed #9a9a9a; background: #f6f6f4; color: #444444; font-size: 12px; line-height: 1.5;">
+    <strong>Mosaico de slides</strong> — ningún slide de este mosaico es para esta colección (cada slide indica en «Colecciones donde se muestra este slide» dónde sale). Cambia la colección de la vista previa para ver y editar los slides de otra. Los visitantes no ven este aviso.
+  </div>
+{%- endif -%}
+
+{%- if show_here == false and request.design_mode -%}
+  <div style="margin: 12px; padding: 14px 16px; border: 1px dashed #9a9a9a; background: #f6f6f4; color: #444444; font-size: 12px; line-height: 1.5;">
+    <strong>Mosaico de slides</strong> — solo se muestra en: {{ shown_names | escape }}. Estás viendo otra colección en la vista previa; cámbiala a una de esas para ver y editar este mosaico. Los visitantes no ven este aviso.
+  </div>
+{%- endif -%}
+
+{%- if show_here and has_content -%}
+  <style>
+    #shopify-section-{{ section.id }} .collection-mosaic {
+      container-type: inline-size;
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+      background: #ffffff;
+    }
+
+    /* Rows are exactly one cell tall (cell width x ratio), so a slide of 2 rows is 2 cells + 1 gap: no row can
+       collapse and the slides line up whatever they hold. cqw = the width of .collection-mosaic. */
+    #shopify-section-{{ section.id }} .collection-mosaic__grid {
+      --mosaic-cols: {{ cols }};
+      display: grid;
+      grid-template-columns: repeat(var(--mosaic-cols), minmax(0, 1fr));
+      grid-auto-flow: row dense;
+      grid-auto-rows: calc((100cqw - (var(--mosaic-cols) - 1) * {{ gap }}px) / var(--mosaic-cols) * {{ ratio }});
+      gap: {{ gap }}px;
+    }
+
+    #shopify-section-{{ section.id }} .collection-mosaic__tile {
+      grid-column: span var(--span-c, 1);
+      grid-row: span var(--span-r, 1);
+    }
+
+    /* the look of a slide (photo, tag, title, text, link) is shared with the product grid's "Slide de mosaico" */
+    {%- liquid
+      assign tile_scope = '#shopify-section-' | append: section.id
+    -%}
+    {%- render 'collection-mosaic-tile-css', scope: tile_scope %}
+
+    @media (max-width: 719px) {
+      #shopify-section-{{ section.id }} .collection-mosaic__grid {
+        --mosaic-cols: {{ cols_m }};
+      }
+
+      #shopify-section-{{ section.id }} .collection-mosaic__tile {
+        grid-column: span var(--span-c-m, 1);
+        order: var(--order-m, 0);
+      }
+    }
+
+    @media (min-width: 720px) {
+      #shopify-section-{{ section.id }} .collection-mosaic__tile {
+        grid-column: var(--col-start, auto) / span var(--span-c, 1);
+        grid-row: var(--row-start, auto) / span var(--span-r, 1);
+      }
+    }
+  </style>
+
+  <div class="collection-mosaic" data-section-id="{{ section.id }}">
+    <div class="collection-mosaic__grid">
+      {%- if use_entries -%}
+        {%- comment -%}
+          Entries of the collection's metafield = the content; the slide (block) in the same position, counting only
+          the slides that are for this collection, gives the layout (size, text position and colours) and any value
+          the entry does not have. More entries than slides: the extra ones are 1 x 1 slides.
+        {%- endcomment -%}
+        {%- for entry in entries -%}
+          {%- liquid
+            assign entry_index = forloop.index0
+            assign entry_number = forloop.index
+
+            assign slot = nil
+            assign slot_count = 0
+
+            for candidate in section.blocks
+              capture candidate_here
+                render 'liorme-block-for-collection', block: candidate
+              endcapture
+
+              if candidate_here == 'true'
+                if slot_count == entry_index
+                  assign slot = candidate
+                  break
+                endif
+
+                assign slot_count = slot_count | plus: 1
+              endif
+            endfor
+
+            assign show_entry_text = section.settings.show_collection_slide_text
+
+            if show_entry_text
+              assign entry_heading = entry.heading.value | default: slot.settings.heading
+              assign entry_text = entry.text.value | default: slot.settings.text
+              assign entry_button = entry.button_label.value | default: slot.settings.button_label
+            else
+              assign entry_heading = slot.settings.heading
+              assign entry_text = slot.settings.text
+              assign entry_button = slot.settings.button_label
+            endif
+
+            assign eager = false
+            if entry_number <= 3
+              assign eager = true
+            endif
+
+            assign v_column_span = entry.column_span.value | default: slot.settings.column_span
+            assign v_row_span = entry.row_span.value | default: slot.settings.row_span
+            assign v_image = entry.image.value | default: slot.settings.image
+            assign v_image_mobile = entry.image_mobile.value | default: slot.settings.image_mobile
+            assign v_focal_point = entry.image_position.value | default: slot.settings.focal_point
+            assign v_background_color = entry.background_color.value | default: slot.settings.background_color
+            assign v_label = entry.label.value | default: slot.settings.label
+            assign v_label_color = entry.label_color.value | default: slot.settings.label_color
+            assign v_link = entry.link.value | default: slot.settings.link
+            assign v_text_position = entry.text_position.value | default: slot.settings.text_position
+            assign v_text_color = entry.text_color.value | default: slot.settings.text_color
+          -%}
+
+          {%- render 'collection-mosaic-slide',
+            column_span: v_column_span,
+            row_span: v_row_span,
+            image: v_image,
+            image_mobile: v_image_mobile,
+            mobile_order: slot.settings.mobile_order,
+            column_start: slot.settings.column_start,
+            row_start: slot.settings.row_start,
+            focal_point: v_focal_point,
+            focal_x: slot.settings.focal_x,
+            focal_y: slot.settings.focal_y,
+            mobile_focal_point: slot.settings.mobile_focal_point,
+            mobile_focal_x: slot.settings.mobile_focal_x,
+            mobile_focal_y: slot.settings.mobile_focal_y,
+            background_color: v_background_color,
+            label: v_label,
+            label_color: v_label_color,
+            heading: entry_heading,
+            text: entry_text,
+            button_label: entry_button,
+            link: v_link,
+            text_position: v_text_position,
+            text_color: v_text_color,
+            cols: cols,
+            cols_m: cols_m,
+            ratio: ratio,
+            eager: eager,
+            attributes: slot.shopify_attributes
+          -%}
+        {%- endfor -%}
+      {%- else -%}
+        {%- assign shown_count = 0 -%}
+        {%- for block in section.blocks -%}
+          {%- liquid
+            capture block_here
+              render 'liorme-block-for-collection', block: block
+            endcapture
+          -%}
+
+          {%- if block_here == 'true' -%}
+            {%- liquid
+              assign shown_count = shown_count | plus: 1
+              assign eager = false
+              if shown_count <= 3
+                assign eager = true
+              endif
+            -%}
+
+            {%- render 'collection-mosaic-slide',
+              column_span: block.settings.column_span,
+              row_span: block.settings.row_span,
+              image: block.settings.image,
+              image_mobile: block.settings.image_mobile,
+              mobile_order: block.settings.mobile_order,
+              column_start: block.settings.column_start,
+              row_start: block.settings.row_start,
+              focal_point: block.settings.focal_point,
+              focal_x: block.settings.focal_x,
+              focal_y: block.settings.focal_y,
+              mobile_focal_point: block.settings.mobile_focal_point,
+              mobile_focal_x: block.settings.mobile_focal_x,
+              mobile_focal_y: block.settings.mobile_focal_y,
+              background_color: block.settings.background_color,
+              label: block.settings.label,
+              label_color: block.settings.label_color,
+              heading: block.settings.heading,
+              text: block.settings.text,
+              button_label: block.settings.button_label,
+              link: block.settings.link,
+              text_position: block.settings.text_position,
+              text_color: block.settings.text_color,
+              cols: cols,
+              cols_m: cols_m,
+              ratio: ratio,
+              eager: eager,
+              attributes: block.shopify_attributes
+            -%}
+          {%- endif -%}
+        {%- endfor -%}
+      {%- endif -%}
+    </div>
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Mosaico de slides",
+  "max_blocks": 24,
+  "settings": [
+    {
+      "type": "header",
+      "content": "De dónde salen los slides"
+    },
+    {
+      "type": "checkbox",
+      "id": "use_collection_slides",
+      "label": "Usar los slides de cada colección",
+      "default": false,
+      "info": "Apagado: los slides son los bloques de abajo. Encendido: el contenido (fotos y enlaces) sale del metacampo «Editorial slides» de cada colección, el que editas en la ficha de la colección, y los bloques de abajo solo dan la distribución (tamaño de cada slide, en orden). Una colección sin entradas no muestra el mosaico. Las mismas entradas ya se usan en la cuadrícula de productos: desactiva allí «Use collection slides» si no quieres que salgan dos veces."
+    },
+    {
+      "type": "checkbox",
+      "id": "show_collection_slide_text",
+      "label": "Mostrar título, texto y botón de esas entradas",
+      "default": false,
+      "info": "Apagado: de las entradas solo se usa la imagen y el enlace (el texto sale de los bloques). Enciéndelo cuando hayas revisado los textos de las entradas."
+    },
+    {
+      "type": "header",
+      "content": "Cuadrícula"
+    },
+    {
+      "type": "range",
+      "id": "columns_desktop",
+      "label": "Columnas en escritorio",
+      "min": 2,
+      "max": 6,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "type": "select",
+      "id": "columns_mobile",
+      "label": "Columnas en móvil",
+      "options": [
+        { "value": "1", "label": "1 columna" },
+        { "value": "2", "label": "2 columnas" }
+      ],
+      "default": "2"
+    },
+    {
+      "type": "select",
+      "id": "tile_ratio",
+      "label": "Forma de cada celda",
+      "info": "Un slide de 1 columna × 1 fila tiene esta forma; los más grandes son varias celdas juntas.",
+      "options": [
+        { "value": "1.5", "label": "Vertical 2:3 (como Miu Miu)" },
+        { "value": "1.25", "label": "Vertical 4:5" },
+        { "value": "1", "label": "Cuadrada 1:1" },
+        { "value": "0.6667", "label": "Horizontal 3:2" }
+      ],
+      "default": "1.5"
+    },
+    {
+      "type": "select",
+      "id": "gap",
+      "label": "Separación entre slides",
+      "options": [
+        { "value": "0", "label": "Ninguna" },
+        { "value": "1", "label": "1 px" },
+        { "value": "2", "label": "2 px" }
+      ],
+      "default": "1"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Espacio arriba",
+      "min": 0,
+      "max": 80,
+      "step": 4,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Espacio abajo",
+      "min": 0,
+      "max": 80,
+      "step": 4,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "Dónde se muestra"
+    },
+    {
+      "type": "collection_list",
+      "id": "show_in_collections",
+      "label": "Colecciones donde se muestra",
+      "info": "Elige una o varias. Vacío = sale en todas las colecciones que usan esta plantilla. Para tener contenido distinto en cada colección, añade otro «Mosaico de slides» y elige en él otras colecciones. En el editor solo verás el de la colección que estés previsualizando.",
+      "limit": 12
+    }
+  ],
+  "blocks": [
+    {
+      "type": "slide",
+      "name": "Slide",
+      "settings": [
+        {
+          "type": "header",
+          "content": "Dónde se muestra"
+        },
+        {
+          "type": "collection_list",
+          "id": "show_in_collections",
+          "label": "Colecciones donde se muestra este slide",
+          "info": "Elige una o varias. Vacío = sale en todas las colecciones donde se muestra el mosaico. Así un solo mosaico puede tener slides distintos por colección. Con «Usar los slides de cada colección» encendido, los slides de esta colección dan el tamaño de sus entradas, en orden.",
+          "limit": 12
+        },
+        {
+          "type": "header",
+          "content": "Tamaño en el mosaico"
+        },
+        {
+          "type": "range",
+          "id": "column_span",
+          "label": "Columnas que ocupa",
+          "min": 1,
+          "max": 6,
+          "step": 1,
+          "default": 1
+        },
+        {
+          "type": "range",
+          "id": "row_span",
+          "label": "Filas que ocupa",
+          "min": 1,
+          "max": 4,
+          "step": 1,
+          "default": 1
+        },
+        {
+          "type": "header",
+          "content": "Posición (opcional)"
+        },
+        {
+          "type": "range",
+          "id": "column_start",
+          "label": "Columna donde empieza",
+          "info": "0 = automática: el slide va en el primer hueco libre, según el orden de la lista. Con columna y fila, el slide queda fijo aunque añadas slides antes o después. Ejemplo: columna 3 y fila 1 para un slide grande arriba a la derecha. Solo en escritorio; en móvil siempre va por orden.",
+          "min": 0,
+          "max": 6,
+          "step": 1,
+          "default": 0
+        },
+        {
+          "type": "range",
+          "id": "row_start",
+          "label": "Fila donde empieza",
+          "info": "0 = automática. 1 = la primera fila de arriba. Pon columna y fila juntas, y no dejes dos slides en la misma posición.",
+          "min": 0,
+          "max": 12,
+          "step": 1,
+          "default": 0
+        },
+        {
+          "type": "select",
+          "id": "mobile_order",
+          "label": "Orden en móvil",
+          "info": "En móvil la posición fija no cuenta: los slides van en el orden de la lista. Elige «Primero» para que este salga arriba del todo en el móvil, o «Último» para que salga al final.",
+          "options": [
+            { "value": "auto", "label": "Según la lista" },
+            { "value": "first", "label": "Primero" },
+            { "value": "last", "label": "Último" }
+          ],
+          "default": "auto"
+        },
+        {
+          "type": "header",
+          "content": "Imagen"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Imagen"
+        },
+        {
+          "type": "image_picker",
+          "id": "image_mobile",
+          "label": "Imagen en móvil (opcional)"
+        },
+        {
+          "type": "select",
+          "id": "focal_point",
+          "label": "t:shared.settings.focal_point.image.default.label",
+          "info": "Qué parte de la foto se queda a la vista cuando el slide la recorta. «De la imagen» usa el punto focal guardado en la propia imagen (centro si no tiene).",
+          "options": [
+            { "value": "image_presentation", "label": "t:shared.options.focal_point.image_presentation" },
+            { "value": "center", "label": "t:shared.options.focal_point.center" },
+            { "value": "top", "label": "t:shared.options.focal_point.top" },
+            { "value": "bottom", "label": "t:shared.options.focal_point.bottom" },
+            { "value": "left", "label": "t:shared.options.focal_point.left" },
+            { "value": "right", "label": "t:shared.options.focal_point.right" },
+            { "value": "custom", "label": "Personalizado (usa los deslizadores)" }
+          ],
+          "default": "image_presentation"
+        },
+        {
+          "type": "range",
+          "id": "focal_x",
+          "label": "Punto focal: posición horizontal",
+          "info": "Solo con «Personalizado». 0 % es el borde izquierdo de la foto y 100 % el derecho.",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": "%",
+          "default": 50
+        },
+        {
+          "type": "range",
+          "id": "focal_y",
+          "label": "Punto focal: posición vertical",
+          "info": "Solo con «Personalizado». 0 % es el borde superior de la foto y 100 % el inferior.",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": "%",
+          "default": 50
+        },
+        {
+          "type": "select",
+          "id": "mobile_focal_point",
+          "label": "t:shared.settings.focal_point.image.mobile.label",
+          "info": "Qué parte de la foto se queda a la vista cuando el slide la recorta. «De la imagen» usa el punto focal guardado en la propia imagen (centro si no tiene).",
+          "options": [
+            { "value": "image_presentation", "label": "t:shared.options.focal_point.image_presentation" },
+            { "value": "center", "label": "t:shared.options.focal_point.center" },
+            { "value": "top", "label": "t:shared.options.focal_point.top" },
+            { "value": "bottom", "label": "t:shared.options.focal_point.bottom" },
+            { "value": "left", "label": "t:shared.options.focal_point.left" },
+            { "value": "right", "label": "t:shared.options.focal_point.right" },
+            { "value": "custom", "label": "Personalizado (usa los deslizadores)" }
+          ],
+          "default": "image_presentation"
+        },
+        {
+          "type": "range",
+          "id": "mobile_focal_x",
+          "label": "Punto focal móvil: posición horizontal",
+          "info": "Solo con «Personalizado». 0 % es el borde izquierdo de la foto y 100 % el derecho.",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": "%",
+          "default": 50
+        },
+        {
+          "type": "range",
+          "id": "mobile_focal_y",
+          "label": "Punto focal móvil: posición vertical",
+          "info": "Solo con «Personalizado». 0 % es el borde superior de la foto y 100 % el inferior.",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": "%",
+          "default": 50
+        },
+        {
+          "type": "header",
+          "content": "Color"
+        },
+        {
+          "type": "color",
+          "id": "background_color",
+          "label": "Color de fondo",
+          "info": "Sin imagen, el slide es un panel de este color (como el de «Eyewear»)."
+        },
+        {
+          "type": "header",
+          "content": "Etiqueta"
+        },
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Etiqueta",
+          "info": "Texto pequeño arriba a la izquierda, por ejemplo «From the runway»."
+        },
+        {
+          "type": "select",
+          "id": "label_color",
+          "label": "Color de la etiqueta",
+          "options": [
+            { "value": "dark", "label": "Oscuro" },
+            { "value": "light", "label": "Claro" }
+          ],
+          "default": "dark"
+        },
+        {
+          "type": "header",
+          "content": "Texto"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Título"
+        },
+        {
+          "type": "textarea",
+          "id": "text",
+          "label": "Texto"
+        },
+        {
+          "type": "text",
+          "id": "button_label",
+          "label": "Texto del enlace",
+          "info": "Por ejemplo «Shop». Se muestra subrayado y solo si el slide tiene enlace."
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Enlace",
+          "info": "Todo el slide es un enlace a esta dirección."
+        },
+        {
+          "type": "select",
+          "id": "text_position",
+          "label": "Dónde va el texto",
+          "options": [
+            { "value": "top_left", "label": "Arriba a la izquierda" },
+            { "value": "center_left", "label": "Centro, a la izquierda" },
+            { "value": "bottom_left", "label": "Abajo a la izquierda" },
+            { "value": "center", "label": "Centrado" }
+          ],
+          "default": "top_left"
+        },
+        {
+          "type": "select",
+          "id": "text_color",
+          "label": "Color del texto",
+          "options": [
+            { "value": "white", "label": "Blanco" },
+            { "value": "black", "label": "Negro" }
+          ],
+          "default": "white"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Mosaico de slides",
+      "blocks": [
+        { "type": "slide", "settings": { "column_span": 1, "row_span": 1, "label": "New in" } },
+        { "type": "slide", "settings": { "column_span": 1, "row_span": 1 } },
+        { "type": "slide", "settings": { "column_span": 2, "row_span": 2, "label": "From the runway" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

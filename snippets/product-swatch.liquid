@@ -1,0 +1,103 @@
+{%- doc -%}
+  Renders a swatch.
+
+  @param {string} context - Where the swatch is being rendered (ie. 'product-page', or 'product-item'). The markup varies based on the context.
+  @param {object} prod - The product that the swatch is associated with.
+  @param {object} forloop_index - The current index of the sibling product loop.
+  @param {string} option_name - The option name whose values should display as swatches. Is downcased and has newlines stripped.
+  @param {number} option_index - The index of the option (1-based) in the list of product options. Used to find the associated variant image if variant image swatches are enabled.
+  @param {string} option_value - The current option value being rendered as a swatch.
+  @param {number} [swatch_size] - The width of the swatch.
+  @param {number} [swatch_image_width] - The width of the swatch image source.
+  @param {boolean} [selected_value] - Whether the current swatch is selected. Only applies to the 'product-page' context for variant selectors.
+  @param {string} custom_color_key_map - A list of custom color names for swatches.
+  @param {string} custom_color_value_map - A list of custom color values for swatches.
+{%- enddoc -%}
+
+{% liquid
+  assign file_extension = '.png'
+  assign option_index0 = option_index | minus: 1
+
+  capture swatch_html
+    assign option = option_value | downcase | strip
+
+    assign swatch_img = ''
+
+    if settings.use_variant_image_swatches
+      assign variant_swatch_image = blank
+
+      for variant in prod.variants
+        if variant.options[option_index0] == option_value and variant.image
+          assign variant_swatch_image = variant.image
+          break
+        endif
+      endfor
+    endif
+
+    if variant_swatch_image != blank
+      assign swatch_img = variant_swatch_image
+    elsif option_value.swatch and option_value.swatch.image
+      assign swatch_img = option_value.swatch.image
+    else
+      assign custom_swatch_image = option_value | handle | append: file_extension
+      if images[custom_swatch_image] != blank
+        assign swatch_img = images[custom_swatch_image]
+      endif
+    endif
+
+    if swatch_img != blank
+      echo swatch_img | image_url: width: swatch_image_width | image_tag: alt: option_value, loading: 'lazy', role: 'presentation'
+    endif
+
+    # Color
+    if option_value.swatch and option_value.swatch.color
+      assign background_color_value = option_value.swatch.color
+    elsif custom_color_key_map contains option
+      for color_name in custom_color_key_map
+        if color_name == option
+          assign background_color_value = custom_color_value_map[forloop.index0]
+          break
+        endif
+      endfor
+    else
+      assign background_color_value = option_value | downcase | replace: ' ', ''
+    endif
+
+    assign swatch_background_style = 'background-color: [[bcv]];' | replace: '[[bcv]]', background_color_value
+  endcapture
+%}
+
+{%- case context -%}
+  {%- when 'product-item' -%}
+    <li
+      class="product-swatches-options__item product-swatches-options__item--swatch"
+      data-swatch-shape="{{ settings.swatch_shape }}"
+      style="{{ swatch_background_style }}"
+      aria-label="{{ option_name }} {{ option_value }}"
+    >
+      {{- swatch_html -}}
+    </li>
+  {%- else -%}
+    <button
+      type="button"
+      data-button
+      data-label="{{ option_value | url_encode }}"
+      aria-label="{{ option_value | replace: '"', "'" }}"
+      data-option-value="{{ option_value | escape }}"
+      data-option-handle="{{ option_value | handleize }}--{{ forloop_index }}"
+      data-shape="{{ settings.swatch_shape }}"
+      data-size="{{ swatch_size }}"
+      class="
+        product__color-swatch
+        {% if selected_value == option_value -%}
+          selected
+        {%- endif %}
+        {% if settings.enable_dynamic_product_options -%}
+          dynamic-variant-button
+        {%- endif -%}
+      "
+      style="{{ swatch_background_style }}"
+    >
+      {{- swatch_html -}}
+    </button>
+{%- endcase -%}

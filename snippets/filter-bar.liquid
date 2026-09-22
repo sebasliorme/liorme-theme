@@ -1,0 +1,294 @@
+{%- doc -%}
+  Renders the filter bar for collection/search.
+
+  @param {object} resource - The collection or search object.
+  @param {boolean} show_item_count - Whether to show the item count.
+  @param {boolean} show_sort - Whether to show the sort selector.
+  @param {boolean} show_filters - Whether to show filters.
+  @param {boolean} enable_sticky_filter_bar - Whether the filter bar should be sticky.
+  @param {boolean} collapse_filter_bar - Whether the filter bar should be collapsed by default.
+  @param {string} filter_location - Where the filters should display (ie. "Top bar", or "Sidebar").
+  @param {number} active_filter_count - The number of active filters.
+  @param {boolean} show_swatch_filters - Whether to show matching filters as swatches.
+  @param {string} swatch_options - The product options that should be used for swatches.
+  @param {string} custom_color_key_map - A list of custom color names for swatches.
+  @param {string} custom_color_value_map - A list of custom color values for swatches.
+  @param {boolean} show_chip_filters - Whether to show matching filters as chips.
+  @param {string} chip_options - The product options that should be used for chips.
+  @param {string} chip_layout - How chip filters should be laid out (ie. "Grid 3 columns", "Grid 2 columns", or "Natural").
+{%- enddoc -%}
+
+{%- liquid
+  # Filters valid
+  if resource.filters != empty and show_filters
+    assign filters_valid = true
+  else
+    assign filters_valid = false
+  endif
+
+  # Result count
+  if resource.products_count != blank
+    assign results_count = resource.products_count
+  elsif resource.results_count != blank
+    assign results_count = resource.results_count
+  else
+    assign results_count = 0
+  endif
+
+  # Filter bar enabled
+  if show_item_count or filters_valid or show_sort
+    assign filter_bar_enabled = true
+  else
+    assign filter_bar_enabled = false
+  endif
+
+  # Filter bar class
+  capture filter_bar_class
+    echo 'filter-bar'
+
+    unless filter_bar_enabled
+      echo ' filter-bar--disabled'
+    endunless
+
+    if enable_sticky_filter_bar
+      echo ' filter-bar--sticky'
+    endif
+
+    if active_filter_count > 0
+      echo ' filters-active'
+    endif
+
+    echo ' animation--filter-bar'
+  endcapture
+-%}
+
+<style>
+  /* Global CSS: Filter Bar padding adjustment.
+     theme.css's base .filter-bar also full-bleeds past its container with a
+     negative margin + oversized width (margin: -3.3vw, width: 100% + 6.6vw) —
+     neutralize those too, or .filter-bar__inner's padding below ends up
+     measured from that shifted edge instead of lining up with the header. */
+  .filter-bar.animation--filter-bar {
+    padding: 0px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+  }
+
+  /* This bar now only renders as the desktop "FILTROS | ORDENAR POR" row
+     (collection-editorial-grid.liquid hides it below 750px and shows its
+     own .custom-subnav-bar__filter button there instead) — see that
+     section's embedded <style> for the responsive show/hide rules. */
+  .filter-bar__inner {
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    /* No horizontal padding here — the outer .filter-bar already gets 27px
+       left/right from collection-editorial-grid.liquid's section_padding_left/
+       right setting (which now matches the header's 27px). Adding it again
+       here would double it up to 54px. */
+    padding: 10px 0 !important;
+    border-bottom: none !important;
+  }
+
+  /* Hide default collapsible filters dropdown — filtering itself still
+     happens through the custom #FilterDrawer accordion (opened by this
+     bar's native .filter-bar__button--filters click, intercepted in
+     collection-editorial-grid.liquid's own script), not this panel. */
+  #filter-bar-filters,
+  .filter-bar__filters,
+  .filter-bar__inner-filters,
+  .filter-bar__collapse {
+    display: none !important;
+  }
+</style>
+
+<form
+  class="{{ filter_bar_class }}"
+  data-filter-form
+  data-filter-bar
+>
+  {%- # Keep search term within form -%}
+  {%- if resource.terms -%}
+    <input type="hidden" name="q" value="{{ resource.terms | escape }}">
+    <input name="options[prefix]" type="hidden" value="last">
+  {%- endif -%}
+
+  {%- # Keep product type within form -%}
+  {%- if resource.current_type -%}
+    <input type="hidden" name="q" value="{{ resource.current_type | escape }}">
+  {%- endif -%}
+
+  {%- # Keep product vendor within form -%}
+  {%- if resource.current_vendor -%}
+    <input type="hidden" name="q" value="{{ resource.current_vendor | escape }}">
+  {%- endif -%}
+
+  {%- if filter_bar_enabled -%}
+    <div class="filter-bar__inner">
+      {%- if filters_valid -%}
+        <button
+          type="button"
+          class="filter-bar__button filter-bar__button--filters"
+          data-dropdown-toggle="filter-bar-filters"
+          data-filter-location="{{ filter_location }}"
+          {% if filter_location == 'sidebar' -%}
+            aria-expanded="{{ collapse_filter_bar }}"
+            aria-controls="filter-sidebar"
+            data-collapsed-title="{{ 'filters.title' | t | escape }}"
+            data-expanded-title="{{ 'filters.hide_title' | t | escape }}"
+          {%- else -%}
+            aria-expanded="{% if collapse_filter_bar == false or active_filter_count > 0 %}true{% else %}false{% endif %}"
+            aria-controls="filter-bar-filters"
+          {%- endif %}
+        >
+          {%- render 'icon', icon: 'filter' -%}
+          <span class="filter-bar__button-text">
+            {%- liquid
+              if collapse_filter_bar
+                echo 'filters.title' | t
+              else
+                echo 'filters.hide_title' | t
+              endif
+            -%}
+          </span>
+          {%- if active_filter_count > 0 -%}
+            <span class="filter-bar__button-count" data-active-filter-count>{{ active_filter_count }}</span>
+          {%- endif -%}
+          {%- liquid
+            unless filter_location == 'sidebar'
+              render 'icon', icon: 'chevron-small'
+            endunless
+          -%}
+        </button>
+
+        {%- if filter_location == 'sidebar' -%}
+          <button
+            type="button"
+            class="filter-bar__button filter-bar__button--filters"
+            data-filter-drawer-target="__tags"
+            aria-expanded="{% if collapse_filter_bar == false or active_filter_count > 0 %}true{% else %}false{% endif %}"
+            aria-controls="filter-bar-filters"
+          >
+            {%- render 'icon', icon: 'filter' -%}
+            {{- 'filters.title' | t -}}
+            {%- if active_filter_count > 0 -%}
+              <span class="filter-bar__button-count" data-active-filter-count>{{ active_filter_count }}</span>
+            {%- endif -%}
+          </button>
+        {%- endif -%}
+      {%- endif -%}
+
+      {%- if show_item_count -%}
+        <p class="filter-bar__results-count fs-body-75" data-results-count>
+          {%- render 'results-count', results_count: results_count -%}
+        </p>
+      {%- endif -%}
+
+      {%- if show_sort -%}
+        <div class="filter-bar__sort-group" data-filter-group>
+          {%- liquid
+            assign sort_by = resource.sort_by | default: resource.default_sort_by
+
+            for option in resource.sort_options
+              if option.value == sort_by
+                assign sort_by = option.name
+              endif
+            endfor
+          -%}
+
+          <button
+            type="button"
+            class="filter-bar__button filter-bar__button--sort"
+            data-filter-group-label
+            data-sort-toggle
+            data-dropdown-toggle="filter-bar-sort"
+            aria-expanded="false"
+            aria-controls="filter-bar-sort"
+          >
+            <span data-sort-label>{{ 'filters.sort_title' | t }}</span>
+            {%- render 'icon', icon: 'chevron-small' -%}
+          </button>
+
+          <div
+            id="filter-bar-sort"
+            class="filter-group__values filter-group__values--right"
+            data-dropdown="filter-bar-sort"
+            data-sort-values
+            aria-hidden="true"
+          >
+            <ul class="filter-group__list filter-group__list--sort">
+              {%- for option in resource.sort_options -%}
+                {%- liquid
+                  assign is_active = false
+
+                  if resource.sort_by != blank
+                    if option.value == resource.sort_by
+                      assign is_active = true
+                    endif
+                  elsif option.value == collection.default_sort_by
+                    assign is_active = true
+                  endif
+                -%}
+
+                <li class="filter-item">
+                  <label data-sort for="filter-{{ option.name | handleize }}" class="filter-item__content">
+                    <input
+                      id="filter-{{ option.name | escape | handleize }}"
+                      class="filter-item__radio visually-hidden"
+                      type="radio"
+                      name="sort_by"
+                      value="{{ option.value }}"
+                      data-sort-item-input
+                      data-value-escaped="{{ option.value | url_escape }}"
+                      {% if is_active -%}
+                        checked
+                      {%- endif -%}
+                    >
+
+                    <div class="filter-item__content-inner">
+                      <div class="filter-input__input">
+                        <div class="indicator"></div>
+                      </div>
+
+                      <span class="filter-item__label">{{ option.name }}</span>
+                    </div>
+                  </label>
+                </li>
+              {%- endfor -%}
+            </ul>
+          </div>
+        </div>
+      {%- endif -%}
+
+    </div>
+
+    {%- if filters_valid -%}
+      {%- render 'filter-bar-filters',
+        resource: resource,
+        collapse_filter_bar: collapse_filter_bar,
+        filter_location: filter_location,
+        active_filter_count: active_filter_count,
+        show_swatch_filters: show_swatch_filters,
+        swatch_options: swatch_options,
+        custom_color_key_map: custom_color_key_map,
+        custom_color_value_map: custom_color_value_map,
+        show_chip_filters: show_chip_filters,
+        chip_options: chip_options,
+        chip_layout: chip_layout
+      -%}
+    {%- endif -%}
+
+    <div class="filter-bar__active-filters">
+      {%- render 'active-filters',
+        resource: resource,
+        show_swatch_filters: show_swatch_filters,
+        swatch_options: swatch_options,
+        custom_color_key_map: custom_color_key_map,
+        custom_color_value_map: custom_color_value_map
+      -%}
+    </div>
+  {%- endif -%}
+</form>
+
+<div class="filter-bar__wash"></div>

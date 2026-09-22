@@ -1,0 +1,230 @@
+{%- doc -%}
+  Renders the product header block.
+
+  @param {object} prod - The product object. We use 'prod' to avoid collision with the global 'product' object.
+  @param {object} [block] - The block object. Sometimes we render this content without a dedicated block.
+  @param {object} local_settings - The settings to be used. Can either come from a block or a section.
+  @param {object} current_variant - The currently selected variant of the product.
+  @param {boolean} is_quick - Whether the blocks are being rendered for a quick product display.
+  @param {boolean} is_featured - Whether the blocks are being rendered for a "Featured product" section.
+  @param {object} featured_media - The product's featured media.
+  @param {boolean} [enable_product_lightbox] - Whether the lightbox is enabled.
+  @param {boolean} [enable_video_looping] - Whether videos should loop.
+  @param {string} [aspect_ratio] - The aspect ratio of the media.
+  @param {string} [title_font_class] - The title's font class. Used by the quick view because this setting lives at the section level, so is passed directly.
+  @param {string} price_content_type - The type of price content (ie. 'price', 'custom', or 'hide') based on the $0 and sold out pricing settings.
+  @param {string} custom_price_content - Content to show if 'price_content_type' is 'custom'.
+{%- enddoc -%}
+
+<div
+  class="
+    product__block
+    product__block--product-header
+    {% if local_settings.show_divider -%}
+      product__block--with-divider
+    {%- endif %}
+  "
+  {% if block -%}
+    {{- block.shopify_attributes -}}
+  {%- endif %}
+>
+  {%- if is_quick -%}
+    <div class="product__block--product-header-image-wrap">
+      <div class="product__media-container">
+        <div class="product__media">
+          {%- for media in prod.media -%}
+            <div
+              class="product__media-item {% unless media.id == featured_media.id %} hidden{% endunless %}"
+              data-media-item-id="{{ media.id }}"
+              data-product-media-wrapper
+            >
+              {%- render 'media',
+                media: media,
+                enable_product_lightbox: enable_product_lightbox,
+                loop_video: enable_video_looping,
+                aspect_ratio: aspect_ratio,
+                sizes: '122px',
+                fallback_alt: prod.title,
+                within_carousel: false
+              -%}
+            </div>
+          {%- else -%}
+            <div class="product__media-item placeholder-image">
+              {{- 'image' | placeholder_svg_tag: 'placeholder-svg' -}}
+            </div>
+          {%- endfor -%}
+        </div>
+      </div>
+    </div>
+  {%- endif -%}
+
+  <div class="product__block--product-header-inner">
+    {%- liquid
+      capture product_title_tag_type
+        if is_quick or is_featured
+          echo 'h2'
+        else
+          echo 'h1'
+        endif
+      endcapture
+
+      if block != blank
+        assign product_title_font_class = block.settings.title_font_class
+      else
+        assign product_title_font_class = title_font_class
+      endif
+    -%}
+
+    {%- if prod != blank -%}
+      {%- if local_settings.show_sale_badge or local_settings.show_custom_badges -%}
+        {%- render 'product-badges',
+          prod: prod,
+          show_sale_badge: local_settings.show_sale_badge,
+          show_custom_badges: local_settings.show_custom_badges,
+          show_sold_out_badge: false
+        -%}
+      {%- endif -%}
+
+      <{{ product_title_tag_type }} class="product__title ff-heading {{ product_title_font_class }}">
+        {{- prod.title -}}
+      </{{ product_title_tag_type }}>
+
+      {%- unless is_quick or is_featured -%}
+        <button
+          type="button"
+          class="product__wishlist"
+          data-product-wishlist
+          data-handle="{{ prod.handle }}"
+          data-label-add="Add to wishlist"
+          data-label-remove="Remove from wishlist"
+          aria-label="Add to wishlist"
+          aria-pressed="false"
+        >
+          {%- comment -%}
+            Same heart as the header (the 'header-wishlist' glyph from snippets/icon.liquid). The glyph is only a thin
+            outline, so an extra path with the inside of that outline is added under it: it is what turns solid when
+            the product is in the wishlist.
+          {%- endcomment -%}
+          {%- capture wishlist_icon -%}
+            {%- render 'icon', icon: 'header-wishlist' -%}
+          {%- endcapture -%}
+          {{- wishlist_icon | replace: '<g transform="translate(0 1024) scale(1 -1)">', '<g transform="translate(0 1024) scale(1 -1)"><path class="product__wishlist-fill" d="M629 688Q670 720 706.0 723.5Q742 727 770 713Q799 698 819.5 665.5Q840 633 846 588Q851 544 837 491Q824 437 785.5 382.0Q747 327 680 273Q613 219 510 173Q395 224 325 286Q255 347 219.5 408.5Q184 470 179 527Q174 585 188 628Q204 672 234.5 697.5Q265 723 303 725Q340 726 387.0 697.5Q434 669 480 596Z" fill="currentColor" stroke="none"/>' -}}
+        </button>
+        <script src="{{ 'product-wishlist.js' | asset_url }}" defer></script>
+      {%- endunless -%}
+
+      {%- if local_settings.show_vendor or local_settings.show_sku -%}
+        <div
+          class="product__vendor_and_sku"
+          data-showing-sku="{% if local_settings.show_sku and current_variant.sku != blank %}true{% else %}false{% endif %}"
+          data-showing-vendor="{% if local_settings.show_vendor and prod.vendor != blank %}true{% else %}false{% endif %}"
+        >
+          {%- if local_settings.show_vendor -%}
+            <div class="product__vendor fs-body-100 t-opacity-60">{{ prod.vendor | link_to_vendor }}</div>
+          {%- endif -%}
+
+          {%- if local_settings.show_sku -%}
+            <div class="product__sku fs-body-25 t-opacity-60" data-product-sku>
+              {%- if current_variant.sku != blank -%}
+                {{- 'products.product.sku_with_value' | t: value: current_variant.sku -}}
+              {%- endif -%}
+            </div>
+          {%- endif -%}
+        </div>
+      {%- endif -%}
+    {%- else -%}
+      <{{ block.settings.title_tag }} class="product__title ff-heading {{ product_title_font_class }}">
+        {{- 'sections.featured_product.placeholder.title' | t -}}
+      </{{ block.settings.title_tag }}>
+
+      {%- if local_settings.show_vendor -%}
+        <div
+          class="product__vendor_and_sku"
+          data-showing-vendor="true"
+        >
+          <div class="product__vendor fs-body-100 t-opacity-70">
+            {{- 'sections.featured_product.placeholder.vendor' | t -}}
+          </div>
+        </div>
+      {%- endif -%}
+    {%- endif -%}
+
+    <div
+      class="product__price-and-ratings"
+      data-show-product-rating="{{ local_settings.show_product_rating }}"
+    >
+      <div class="product__price {{ local_settings.price_font_class }}">
+        {%- if prod != blank -%}
+          <span class="visually-hidden" data-compare-text>{{ 'products.product.regular_price' | t }}</span>
+
+          <s data-compare-price>
+            {%- if price_content_type == 'price' and current_variant.compare_at_price > current_variant.price -%}
+              {{- current_variant.compare_at_price | money_without_trailing_zeros | replace: '.00', '' -}}
+            {%- endif -%}
+          </s>
+
+          <span data-price>
+            {%- liquid
+              if price_content_type == 'price'
+                echo current_variant.price | money_without_trailing_zeros | replace: '.00', ''
+              elsif price_content_type == 'custom'
+                echo custom_price_content
+              endif
+            -%}
+          </span>
+
+          {%- if local_settings.show_discount -%}
+            {%- liquid
+              assign price_size_level = local_settings.price_font_class | split: '-' | last | plus: 0
+              assign discount_size_level = price_size_level | divided_by: 2 | at_least: 50
+
+              # There are some cases where half the size doesn't have an associated size, so we need to adjust
+              case discount_size_level
+                when 125
+                  assign discount_size_level = 100
+                when 175
+                  assign discount_size_level = 150
+              endcase
+
+              capture discount_font_class
+                echo 'fs-body-[[dsl]]' | replace: '[[dsl]]', discount_size_level
+              endcapture
+            -%}
+
+            <span data-discount-display class="product__price-displayed-discount {{ discount_font_class }}">
+              {%- render 'get-display-discount',
+                prod: prod,
+                variant: current_variant,
+                format: local_settings.discount_format
+              -%}
+            </span>
+          {%- endif -%}
+
+          {% render 'unit-price', item: current_variant %}
+        {%- else -%}
+          <span>{{ 9999 | money_without_trailing_zeros | replace: '.00', '' }}</span>
+        {%- endif -%}
+      </div>
+
+      {%- if local_settings.show_product_rating and prod != blank -%}
+        {% render 'product-rating', prod: prod %}
+      {%- endif -%}
+    </div>
+
+    {%- if local_settings.show_discount and prod != blank -%}
+      {%- comment -%}weird hack but we need to be able to access these dynamically {%- endcomment -%}
+      {%- for variant in prod.variants -%}
+        <div hidden class="visually-hidden" variant-discount-display variant-id="{{ variant.id }}">
+          {%- render 'get-display-discount', prod: prod, variant: variant, format: local_settings.discount_format -%}
+        </div>
+      {%- endfor -%}
+    {%- endif -%}
+
+    {%- if is_quick -%}
+      <a class="quick-view-view-product-details-link btn btn--text-link" href="{{ prod.url | within: collection }}">
+        {{- 'products.product.quick_view_product_link' | t -}}
+        {%- render 'icon', icon: 'arrow-long-small' -%}
+      </a>
+    {%- endif -%}
+  </div>
+</div>

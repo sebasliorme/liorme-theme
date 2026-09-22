@@ -1,0 +1,124 @@
+{%- doc -%}
+  Renders discount text.
+
+  @param {object} prod - The product we're getting discounts for. We use 'prod' to avoid collision with the global 'product' object.
+  @param {object} [variant] - The variant we're getting a discount for. If a variant is supplied, that overrides the product and changes the output.
+  @param {string} format - The discount format. Format types are listed below.
+{%- enddoc -%}
+
+{%- liquid
+  comment
+    Discount format types:
+    - "sale_text"
+    - "percent_off"
+    - "minus_percent"
+    - "save_percent"
+    - "amount_off"
+    - "minus_amount"
+    - "save_amount"
+  endcomment
+
+  assign price_varies = false
+
+  if format contains 'percent'
+    assign is_percent_format = true
+  else
+    assign is_percent_format = false
+  endif
+
+  if variant
+    assign prod = variant
+  else
+    if prod.compare_at_price_varies or prod.price_varies
+      assign price_varies = true
+      assign discount_varies = true
+
+      # The price may vary, but the amount off may be the same for each variant, so
+      # we have to check.
+      assign smallest_discount = 0
+      assign largest_discount = 0
+
+      for variant in prod.variants
+        if variant.compare_at_price > variant.price
+          if is_percent_format
+            assign variant_discount = variant.compare_at_price | minus: variant.price | times: 100.00 | divided_by: variant.compare_at_price | round
+          else
+            assign variant_discount = variant.compare_at_price | minus: variant.price
+          endif
+
+          if smallest_discount == 0 or variant_discount < smallest_discount
+            assign smallest_discount = variant_discount
+          endif
+
+          if variant_discount > largest_discount
+            assign largest_discount = variant_discount
+          endif
+        endif
+      endfor
+
+      # If the smallest discount is equal to the largest discount, then the discount doesn't vary
+      if smallest_discount == largest_discount
+        assign discount_varies = false
+      endif
+    endif
+  endif
+
+  if format == 'sale_text'
+    if prod.compare_at_price > prod.price
+      echo 'products.product.on_sale' | t
+    endif
+  else
+    capture displayed_discount
+      # If the price varies, we've already calculated the largest discount
+      if price_varies
+        echo largest_discount
+      else
+        if is_percent_format
+          render 'get-percent-discount', prod: prod
+        else
+          render 'get-amount-discount', prod: prod
+        endif
+      endif
+    endcapture
+
+    # Because we possibly get this value from a snippet, we have to convert to a number
+    assign displayed_discount = displayed_discount | plus: 0
+
+    unless is_percent_format
+      assign formatted_currency_discount = displayed_discount | money
+    endunless
+
+    if displayed_discount > 0
+      case format
+        when 'percent_off', 'minus_percent', 'amount_off', 'minus_amount'
+          if discount_varies
+            echo 'products.product.on_sale_varied_prefix' | t
+            echo ' '
+          endif
+
+          assign translation_string = 'products.product.on_sale_format_[[format]]' | replace: '[[format]]', format
+
+          if format contains 'amount'
+            echo translation_string | t: value: formatted_currency_discount
+          else
+            echo translation_string | t: value: displayed_discount
+          endif
+
+        when 'save_percent', 'save_amount'
+          capture translation_string
+            if discount_varies
+              echo 'products.product.on_sale_format_[[format]]_varied' | replace: '[[format]]', format
+            else
+              echo 'products.product.on_sale_format_[[format]]' | replace: '[[format]]', format
+            endif
+          endcapture
+
+          if format contains 'amount'
+            echo translation_string | t: value: formatted_currency_discount
+          else
+            echo translation_string | t: value: displayed_discount
+          endif
+      endcase
+    endif
+  endif
+-%}

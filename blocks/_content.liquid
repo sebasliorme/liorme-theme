@@ -1,0 +1,180 @@
+{% # whitespace: normal %}
+{% capture position_variables %}
+  {% render 'position-values-to-vars',
+    position: block.settings.text_position,
+    position_mobile: block.settings.text_position_mobile
+  %}
+{% endcapture %}
+
+<div
+  class="
+    content-blocks
+    section-blocks
+  "
+  data-alignment-desktop="{{ block.settings.alignment_desktop }}"
+  data-alignment-mobile="{{ block.settings.alignment_mobile }}"
+  style="{{ position_variables | strip }}"
+  {{ block.shopify_attributes }}
+>
+  <div class="content-blocks__inner animation--section-blocks">
+    {% content_for 'blocks' %}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "t:blocks._content.name",
+  "tag": null,
+  "settings": [
+    {
+      "type": "select",
+      "id": "text_position",
+      "label": "t:blocks._content.settings.position.label",
+      "options": [
+        {
+          "value": "flex-start_flex-start",
+          "label": "t:shared.options.alignment.full.top_left"
+        },
+        {
+          "value": "center_flex-start",
+          "label": "t:shared.options.alignment.full.top_center"
+        },
+        {
+          "value": "flex-end_flex-start",
+          "label": "t:shared.options.alignment.full.top_right"
+        },
+        {
+          "value": "flex-start_center",
+          "label": "t:shared.options.alignment.full.middle_left"
+        },
+        {
+          "value": "center_center",
+          "label": "t:shared.options.alignment.full.middle_center"
+        },
+        {
+          "value": "flex-end_center",
+          "label": "t:shared.options.alignment.full.middle_right"
+        },
+        {
+          "value": "flex-start_flex-end",
+          "label": "t:shared.options.alignment.full.bottom_left"
+        },
+        {
+          "value": "center_flex-end",
+          "label": "t:shared.options.alignment.full.bottom_center"
+        },
+        {
+          "value": "flex-end_flex-end",
+          "label": "t:shared.options.alignment.full.bottom_right"
+        }
+      ],
+      "default": "flex-start_flex-start"
+    },
+    {
+      "type": "select",
+      "id": "text_position_mobile",
+      "label": "t:blocks._content.settings.mobile_position.label",
+      "options": [
+        {
+          "value": "flex-start_flex-start",
+          "label": "t:shared.options.alignment.full.top_left"
+        },
+        {
+          "value": "center_flex-start",
+          "label": "t:shared.options.alignment.full.top_center"
+        },
+        {
+          "value": "flex-end_flex-start",
+          "label": "t:shared.options.alignment.full.top_right"
+        },
+        {
+          "value": "flex-start_center",
+          "label": "t:shared.options.alignment.full.middle_left"
+        },
+        {
+          "value": "center_center",
+          "label": "t:shared.options.alignment.full.middle_center"
+        },
+        {
+          "value": "flex-end_center",
+          "label": "t:shared.options.alignment.full.middle_right"
+        },
+        {
+          "value": "flex-start_flex-end",
+          "label": "t:shared.options.alignment.full.bottom_left"
+        },
+        {
+          "value": "center_flex-end",
+          "label": "t:shared.options.alignment.full.bottom_center"
+        },
+        {
+          "value": "flex-end_flex-end",
+          "label": "t:shared.options.alignment.full.bottom_right"
+        }
+      ],
+      "default": "flex-start_flex-start"
+    },
+    {
+      "type": "text_alignment",
+      "id": "alignment_desktop",
+      "label": "t:blocks._content.settings.alignment.label"
+    },
+    {
+      "type": "text_alignment",
+      "id": "alignment_mobile",
+      "label": "t:blocks._content.settings.mobile_alignment.label"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "@app"
+    },
+    {
+      "type": "_content-accent"
+    },
+    {
+      "type": "_content-heading"
+    },
+    {
+      "type": "_content-subheading"
+    },
+    {
+      "type": "_content-text"
+    },
+    {
+      "type": "_content-video-player"
+    },
+    {
+      "type": "_content-image"
+    },
+    {
+      "type": "_content-inline-buttons"
+    },
+    {
+      "type": "_content-button"
+    },
+    {
+      "type": "_content-border"
+    },
+    {
+      "type": "_content-spacer"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:blocks._content.presets.name",
+      "blocks": [
+        {
+          "type": "_content-heading"
+        },
+        {
+          "type": "_content-text"
+        },
+        {
+          "type": "_content-button"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

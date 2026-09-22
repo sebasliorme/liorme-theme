@@ -1,0 +1,26 @@
+{%- doc -%}
+  Renders the mini callouts product block (ie. "Product labels").
+
+  @param {object} block - The block object.
+{%- enddoc -%}
+
+<div
+  class="product__block product__block-callouts-mini product__callouts-mini product__block--medium"
+  {{ block.shopify_attributes }}
+>
+  <div
+    class="product__callouts-mini-items"
+    data-with-box="{{ block.settings.add_box }}"
+    data-with-dividers="{{ block.settings.add_dividers }}"
+  >
+    {%- liquid
+      for i in (1..6)
+        assign text_setting_id = 'text_[[i]]' | replace: '[[i]]', i
+        assign icon_setting_id = 'icon_[[i]]' | replace: '[[i]]', i
+        assign custom_icon_setting_id = 'custom_icon_image_[[i]]' | replace: '[[i]]', i
+
+        render 'product-block-callouts-mini-item', text: block.settings[text_setting_id], icon: block.settings[icon_setting_id], custom_icon_image: block.settings[custom_icon_setting_id]
+      endfor
+    -%}
+  </div>
+</div>

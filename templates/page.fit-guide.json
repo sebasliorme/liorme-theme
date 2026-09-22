@@ -1,0 +1,370 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "main-page",
+      "disabled": true,
+      "settings": {
+        "header_alignment": "center",
+        "heading_font_class": "fs-heading-2-base",
+        "content_width": "custom",
+        "custom_content_width": 700,
+        "enable_corner_rounding": true,
+        "section_width": "page-width",
+        "section_padding_top": 40,
+        "section_padding_bottom": 40,
+        "divider_style": "none",
+        "enable_full_width_divider": false,
+        "enable_animation": true
+      }
+    },
+    "image-with-text-1": {
+      "type": "image-with-text",
+      "blocks": {
+        "block-0": {
+          "type": "heading",
+          "settings": {
+            "title": "How to Measure",
+            "heading_font_class": "fs-heading-display-3",
+            "heading_tag": "h2"
+          }
+        },
+        "block-1": {
+          "type": "text",
+          "settings": {
+            "text": "<h6><strong><br/></strong>Bust</h6><p>Measure around the fullest part, close up under the arms.</p><h6>Waist</h6><p>Measure around the narrowest part of your body.<br/></p><h6>Hip</h6><p>Measure 20cm down from your waist</p>",
+            "text_font_class": "fs-body-100"
+          }
+        }
+      },
+      "block_order": [
+        "block-0",
+        "block-1"
+      ],
+      "settings": {
+        "image_position": "right",
+        "aspect_ratio": "square",
+        "focal_point": "image_presentation",
+        "image_caption": "",
+        "text_alignment": "left",
+        "mobile_text_alignment": "center",
+        "show_small_image": false,
+        "image_small_aspect": "square",
+        "image_small_focal_point": "center",
+        "color_scheme": "scheme_3",
+        "section_width": "page-width",
+        "section_padding_top": 40,
+        "section_padding_bottom": 40,
+        "divider_style": "none",
+        "enable_full_width_divider": false,
+        "enable_animation": true
+      }
+    },
+    "multi-column": {
+      "type": "multi-column",
+      "blocks": {
+        "block-0": {
+          "type": "image_column",
+          "settings": {
+            "image_width": 100,
+            "aspect_ratio": "portrait",
+            "enable_corner_rounding": true,
+            "enable_image_crop_circle": false,
+            "focal_point": "image_presentation",
+            "image_position": "above_text",
+            "image_link": "",
+            "small_caption": "",
+            "accent": "",
+            "heading": "Straight Pant",
+            "heading_font_class": "fs-heading-4-base",
+            "heading_tag": "h3",
+            "text": "<p>Classic and endlessly versatile, our straight cut fits neatly through the legs for slight definition and room to move.</p><ul><li>Boskemper signature style</li><li>Designed for everyday wear</li><li>Slimmer through the thighs, loosens at the ankles</li></ul>",
+            "text_font_class": "fs-body-100",
+            "text_max_width": 100,
+            "link": "",
+            "link_text": "",
+            "button_style": "btn--secondary"
+          }
+        },
+        "block-1": {
+          "type": "image_column",
+          "settings": {
+            "image_width": 100,
+            "aspect_ratio": "portrait",
+            "enable_corner_rounding": true,
+            "enable_image_crop_circle": false,
+            "focal_point": "image_presentation",
+            "image_position": "above_text",
+            "image_link": "",
+            "small_caption": "",
+            "accent": "",
+            "heading": "Wide Pant",
+            "heading_font_class": "fs-heading-4-base",
+            "heading_tag": "h3",
+            "text": "<p>Available in both high and low rise, our wide-leg jeans fall loosely over the body, elongating the form.</p><ul><li>The roomiest style in our collection</li><li>Lengthening silhouette</li><li>Loose-fitting legs</li></ul>",
+            "text_font_class": "fs-body-100",
+            "text_max_width": 100,
+            "link": "",
+            "link_text": "",
+            "button_style": "btn--secondary"
+          }
+        },
+        "block-2": {
+          "type": "image_column",
+          "settings": {
+            "image_width": 100,
+            "aspect_ratio": "portrait",
+            "enable_corner_rounding": true,
+            "enable_image_crop_circle": false,
+            "focal_point": "image_presentation",
+            "image_position": "above_text",
+            "image_link": "",
+            "small_caption": "",
+            "accent": "",
+            "heading": "Tapered Pant",
+            "heading_font_class": "fs-heading-4-base",
+            "heading_tag": "h3",
+            "text": "<p>Loose fitting and ankle grazing, our tapered shape is designed for an easy-going silhouette. Cut for a relaxed fit over the hips and legs.</p><ul><li>Designed for everyday comfort</li><li>Extra room at the thighs</li><li>Slightly curved legs</li></ul>",
+            "text_font_class": "fs-body-100",
+            "text_max_width": 100,
+            "link": "",
+            "link_text": "",
+            "button_style": "btn--secondary"
+          }
+        }
+      },
+      "block_order": [
+        "block-0",
+        "block-1",
+        "block-2"
+      ],
+      "settings": {
+        "header_alignment": "left",
+        "title": "The Pant Fits",
+        "heading_font_class": "fs-heading-1-base",
+        "heading_tag": "h2",
+        "text": "",
+        "text_font_class": "fs-body-100",
+        "item_color_scheme": "",
+        "content_vertical_alignment": "top",
+        "content_background_padding": "medium",
+        "columns": "3",
+        "column_spacing": 28,
+        "row_spacing": 48,
+        "column_alignment": "left",
+        "enable_slider_mobile": false,
+        "columns_mobile": "2",
+        "column_spacing_mobile": 16,
+        "row_spacing_mobile": 48,
+        "column_alignment_mobile": "left",
+        "section_width": "page-width",
+        "section_padding_top": 40,
+        "section_padding_bottom": 40,
+        "divider_style": "none",
+        "enable_full_width_divider": false,
+        "enable_animation": true
+      }
+    },
+    "quote_87Bd4z": {
+      "type": "quote",
+      "blocks": {
+        "quote_hUY84d": {
+          "type": "quote",
+          "settings": {
+            "quote": "<p>Check out individual size guides on each product page for more information. </p>",
+            "quote_font": "ff-heading",
+            "heading_quote_font_class": "fs-heading-5-base",
+            "text_quote_font_class": "fs-body-250",
+            "quote_tag": "h4",
+            "title": ""
+          }
+        }
+      },
+      "block_order": [
+        "quote_hUY84d"
+      ],
+      "settings": {
+        "content_width": "custom",
+        "custom_content_width": 1150,
+        "autoplay_enabled": true,
+        "autoplay_delay": 7,
+        "pagination_style": "dots",
+        "section_width": "page-width",
+        "section_padding_top": 40,
+        "section_padding_bottom": 40,
+        "divider_style": "none",
+        "enable_full_width_divider": false,
+        "enable_animation": true
+      }
+    },
+    "image-with-text-2": {
+      "type": "image-with-text",
+      "blocks": {
+        "1661612015fe8eae74-0": {
+          "type": "heading",
+          "settings": {
+            "title": "Made by Women For Women",
+            "heading_font_class": "fs-heading-1-base",
+            "heading_tag": "h2"
+          }
+        },
+        "6a4f5d32-f759-4a1c-942b-4c3e1f87ecc9": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Discover the process and meet our designer and founder. </p>",
+            "text_font_class": "fs-body-100"
+          }
+        },
+        "button_U3EbQ6": {
+          "type": "button",
+          "settings": {
+            "link_text": "Read more",
+            "button_style": "btn--primary"
+          }
+        }
+      },
+      "block_order": [
+        "1661612015fe8eae74-0",
+        "6a4f5d32-f759-4a1c-942b-4c3e1f87ecc9",
+        "button_U3EbQ6"
+      ],
+      "settings": {
+        "image_position": "left",
+        "aspect_ratio": "portrait",
+        "focal_point": "image_presentation",
+        "image_caption": "",
+        "text_alignment": "left",
+        "mobile_text_alignment": "center",
+        "show_small_image": false,
+        "image_small_aspect": "square",
+        "image_small_focal_point": "center",
+        "section_width": "page-width",
+        "section_padding_top": 40,
+        "section_padding_bottom": 40,
+        "divider_style": "none",
+        "enable_full_width_divider": false,
+        "enable_animation": true
+      }
+    },
+    "image-with-text-3": {
+      "type": "image-with-text",
+      "blocks": {
+        "block-0": {
+          "type": "heading",
+          "settings": {
+            "title": "Try them on",
+            "heading_font_class": "fs-heading-1-base",
+            "heading_tag": "h2"
+          }
+        },
+        "block-1": {
+          "type": "border",
+          "settings": {}
+        },
+        "block-2": {
+          "type": "spacer",
+          "settings": {
+            "space": 12
+          }
+        },
+        "block-3": {
+          "type": "subheading",
+          "settings": {
+            "subheading": "Toronto",
+            "subheading_font_class": "fs-heading-4-base",
+            "subheading_tag": "h3"
+          }
+        },
+        "block-4": {
+          "type": "text",
+          "settings": {
+            "text": "<p>123 Queen Street<br/>Tuesday to Sunday: 9 - 5<br/>+1 (416) 555-5555</p>",
+            "text_font_class": "fs-body-100"
+          }
+        },
+        "block-5": {
+          "type": "button",
+          "settings": {
+            "link": "",
+            "link_text": "Get Directions",
+            "button_style": "btn--callout"
+          }
+        },
+        "block-6": {
+          "type": "spacer",
+          "settings": {
+            "space": 20
+          }
+        },
+        "block-7": {
+          "type": "subheading",
+          "settings": {
+            "subheading": "Vancouver",
+            "subheading_font_class": "fs-heading-4-base",
+            "subheading_tag": "h3"
+          }
+        },
+        "block-8": {
+          "type": "text",
+          "settings": {
+            "text": "<p>789 Main Street<br/>Tuesday to Sunday: 9 - 5<br/>+1 (604) 555-5555</p>",
+            "text_font_class": "fs-body-100"
+          }
+        },
+        "block-9": {
+          "type": "button",
+          "settings": {
+            "link": "",
+            "link_text": "Get directions",
+            "button_style": "btn--callout"
+          }
+        }
+      },
+      "block_order": [
+        "block-0",
+        "block-1",
+        "block-2",
+        "block-3",
+        "block-4",
+        "block-5",
+        "block-6",
+        "block-7",
+        "block-8",
+        "block-9"
+      ],
+      "settings": {
+        "image_position": "right",
+        "aspect_ratio": "portrait",
+        "focal_point": "image_presentation",
+        "image_caption": "",
+        "text_alignment": "left",
+        "mobile_text_alignment": "center",
+        "show_small_image": false,
+        "image_small_aspect": "square",
+        "image_small_focal_point": "center",
+        "section_width": "page-width",
+        "section_padding_top": 40,
+        "section_padding_bottom": 40,
+        "divider_style": "none",
+        "enable_full_width_divider": false,
+        "enable_animation": true
+      }
+    }
+  },
+  "order": [
+    "main",
+    "image-with-text-1",
+    "multi-column",
+    "quote_87Bd4z",
+    "image-with-text-2",
+    "image-with-text-3"
+  ]
+}

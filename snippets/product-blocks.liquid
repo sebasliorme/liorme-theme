@@ -1,0 +1,239 @@
+{%- doc -%}
+  Renders the provided product blocks.
+
+  @param {object} prod - The product object. We use 'prod' to avoid collision with the global 'product' object.
+  @param {object} blocks - The blocks to be rendered.
+  @param {boolean} [is_quick] - Whether the blocks are being rendered for a quick product display.
+  @param {boolean} [is_featured] - Whether the blocks are being rendered for a "Featured product" section.
+  @param {string} [column] - Which product column the blocks are being rendered for (ie. 'left', or 'right').
+  @param {object} [current_variant] - The currently selected variant of the product.
+  @param {object} featured_media - The product's featured media.
+  @param {string} [aspect_ratio] - The aspect ratio of the media.
+  @param {string} price_content_type - The type of price content (ie. 'price', 'custom', or 'hide') based on the $0 and sold out pricing settings.
+  @param {string} custom_price_content - Content to show if 'price_content_type' is 'custom'.
+  @param {string} custom_color_key_map - A list of custom color names for swatches.
+  @param {string} custom_color_value_map - A list of custom color values for swatches.
+  @param {boolean} [enable_gift_card_recipient] - Whether the gift card recipient form is enabled.
+  @param {boolean} [auto_collapse_rows] - Whether accordions within the same group should auto-close as others open.
+{%- enddoc -%}
+
+{%- liquid
+  assign is_quick = is_quick | default: false, allow_false: true
+  assign is_featured = is_featured | default: false, allow_false: true
+  assign auto_collapse_rows = auto_collapse_rows | default: false, allow_false: true
+  assign enable_gift_card_recipient = enable_gift_card_recipient | default: false, allow_false: true
+
+  capture product_url
+    echo shop.url | append: prod.url
+  endcapture
+
+  assign in_accordion_group = false
+-%}
+
+{%- for block in blocks -%}
+  {% liquid
+    if column == block.settings.column_placement or column == 'right' and block.settings.column_placement == blank
+      assign render_block = true
+    else
+      assign render_block = false
+    endif
+
+    if block.type == 'accordion' or block.settings.display_as_collapsible_row
+      assign is_collapsible_row = true
+    else
+      assign is_collapsible_row = false
+    endif
+  %}
+
+  {%- if render_block -%}
+    {%- liquid
+      if is_collapsible_row and in_accordion_group == false
+        echo '<div class="product-accordion-group" data-auto-collapse="[[acr]]">' | replace: '[[acr]]', auto_collapse_rows
+        assign in_accordion_group = true
+      elsif in_accordion_group and is_collapsible_row == false
+        echo '</div>'
+        assign in_accordion_group = false
+      endif
+    -%}
+
+    {%- case block.type -%}
+      {%- when '@app' -%}
+        {%- render block -%}
+
+      {%- when 'product_header' -%}
+        {%- if is_quick -%}<div class="quick-product--header-block-wrap">{%- endif -%}
+
+        {%- render 'product-block-header',
+          prod: prod,
+          block: block,
+          local_settings: block.settings,
+          current_variant: current_variant,
+          is_quick: is_quick,
+          is_featured: is_featured,
+          featured_media: featured_media,
+          price_content_type: price_content_type,
+          custom_price_content: custom_price_content
+        -%}
+
+        {%- if is_quick -%}</div>{%- endif -%}
+      {%- when 'spacer' -%}
+        <div
+          class="product-block-spacer product__block product__block--medium"
+          style="height: {{ block.settings.space }}px"
+          {{ block.shopify_attributes }}
+        ></div>
+
+      {%- when 'variant_picker' -%}
+        {%- if prod != blank -%}
+          {%- render 'product-block-variant-picker',
+            prod: prod,
+            block: block,
+            current_variant: current_variant,
+            show_siblings: settings.enable_product_sibling_swatches,
+            custom_color_key_map: custom_color_key_map,
+            custom_color_value_map: custom_color_value_map
+          -%}
+        {%- endif -%}
+
+      {%- when 'quantity_selector' -%}
+        {%- if prod != blank -%}
+          {%- render 'product-block-quantity-selector', prod: prod, block: block -%}
+        {%- endif -%}
+
+      {%- when 'info_links' -%}
+        {%- if prod != blank -%}
+          {%- render 'product-block-info-links', prod: prod, block: block -%}
+        {%- endif -%}
+
+      {%- when 'find_your_size' -%}
+        {%- if prod != blank -%}
+          {%- render 'product-block-find-size', prod: prod, block: block -%}
+        {%- endif -%}
+
+      {%- when 'custom_option' -%}
+        {%- render 'product-block-custom-option', block: block, field_type: block.settings.field_type -%}
+
+      {%- when 'buy_buttons' -%}
+        {%- if prod != blank -%}
+          {%- render 'product-block-buy-buttons',
+            prod: prod,
+            block: block,
+            blocks: blocks,
+            current_variant: current_variant,
+            featured_media: featured_media,
+            aspect_ratio: aspect_ratio,
+            price_content_type: price_content_type,
+            custom_price_content: custom_price_content,
+            enable_gift_card_recipient: enable_gift_card_recipient
+          -%}
+        {%- else -%}
+          <div class="product-form">
+            <div class="product-form__controls-group product-form__controls-group--submit">
+              <button
+                type="button"
+                aria-disabled="true"
+                disabled
+                class="product-form__cart-submit btn btn--medium btn--full"
+              >
+                <span>
+                  {{- 'products.product.add_to_cart' | t -}}
+                </span>
+              </button>
+            </div>
+          </div>
+        {%- endif -%}
+
+      {%- when 'description' -%}
+        {%- render 'product-block-description', prod: prod, block: block -%}
+
+      {%- when 'product_callouts' -%}
+        {%- render 'product-block-callouts', block: block -%}
+
+      {%- when 'product_callouts_mini' -%}
+        {%- render 'product-block-callouts-mini', block: block -%}
+
+      {%- when 'text' -%}
+        {% render 'product-block-text', block: block, content: block.settings.text -%}
+
+      {%- when 'share' -%}
+        {%- if prod != blank -%}
+          {%- liquid
+            if is_quick or is_featured
+              assign share_alignment = 'left-above'
+            else
+              assign share_alignment = 'left-below'
+            endif
+          -%}
+
+          <div class="product-block-social-share product__block product__block--medium" {{ block.shopify_attributes }}>
+            {%- render 'social-share',
+              url: product_url,
+              title: product.title,
+              image: product.featured_image,
+              alignment: share_alignment
+            -%}
+          </div>
+        {%- endif -%}
+
+      {%- when 'inventory-counter' -%}
+        {%- if prod != blank -%}
+          {%- render 'inventory-counter',
+            prod: prod,
+            block: block,
+            block_settings: block.settings,
+            current_variant: current_variant
+          -%}
+        {%- endif -%}
+
+      {%- when 'accordion' -%}
+        {%- render 'product-block-accordion',
+          block: block,
+          heading: block.settings.heading,
+          content: block.settings.content,
+          label_font: block.settings.heading_font_choice,
+          label_size: block.settings.heading_font_class
+        -%}
+
+      {%- when 'custom_liquid' -%}
+        {%- unless block.settings.custom_liquid == blank -%}
+          <div class="product-block-custom-liquid product__block product__block--medium" {{ block.shopify_attributes }}>
+            {{- block.settings.custom_liquid -}}
+          </div>
+        {%- endunless -%}
+
+      {%- when 'information_popup' -%}
+        {%- if block.settings.popup_text != blank and block.settings.popup_page.content != blank -%}
+          {% render 'product-block-information-popup',
+            block: block,
+            popup_page: block.settings.popup_page,
+            icon: block.settings.popup_icon,
+            custom_icon_image: block.settings.custom_icon_image,
+            text: block.settings.popup_text
+          %}
+        {%- endif -%}
+      {%- when 'featured_products' -%}
+        {%- render 'product-block-featured-products', prod: prod, block: block -%}
+
+      {%- when 'image' -%}
+        <div class="product-block-image product__block product__block--medium">
+          {%- render 'image-block',
+            image: block.settings.image,
+            width: block.settings.image_size,
+            mobile_width: block.settings.image_size_mobile,
+            break_to_mobile_at: '720',
+            wrapper_class: 'product-block-image__text-container-image section-blocks__image',
+            align: block.settings.alignment,
+            enable_corner_rounding: block.settings.enable_corner_rounding,
+            shopify_attributes: block.shopify_attributes
+          -%}
+        </div>
+
+      {%- when 'secure_payment' -%}
+        {%- render 'product-block-secure-payment', block: block -%}
+    {%- endcase -%}
+  {% endif %}
+{%- endfor -%}
+
+{%- if in_accordion_group -%}
+  </div>
+{%- endif -%}

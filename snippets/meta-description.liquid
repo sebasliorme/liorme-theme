@@ -1,0 +1,57 @@
+{% comment %}
+  - outputs the <meta> tag with the description of the current page or collection
+  Params:
+    - content (string, optional): The content for the <meta> tag. If present, overrides the description for the current page or collection.
+
+  When the page has no description of its own (nothing in the admin's SEO field or in the body), collections and
+  products get a short sentence built from their title instead of the bare shop name.
+{% endcomment %}
+
+{%- liquid
+  assign meta_description_content = content | default: page_description
+
+  assign collection_title_lower = collection.title | downcase
+  assign shop_name_lower = shop.name | downcase
+  assign collection_is_brand = false
+  if collection_title_lower == shop_name_lower
+    assign collection_is_brand = true
+  endif
+
+  if meta_description_content == blank
+    if request.locale.iso_code == 'es'
+      if request.page_type == 'collection'
+        capture meta_description_content
+          if collection_is_brand
+            echo 'Descubre toda la colección de ' | append: shop.name | append: ', joyería peruana.'
+          else
+            echo 'Descubre ' | append: collection.title | append: ' de ' | append: shop.name | append: ', joyería peruana.'
+          endif
+        endcapture
+      elsif request.page_type == 'product'
+        capture meta_description_content
+          echo product.title | append: ' – joyería peruana de ' | append: shop.name | append: '.'
+        endcapture
+      endif
+    else
+      if request.page_type == 'collection'
+        capture meta_description_content
+          if collection_is_brand
+            echo 'Discover the full ' | append: shop.name | append: ' collection, Peruvian jewelry.'
+          else
+            echo 'Discover ' | append: collection.title | append: ' by ' | append: shop.name | append: ', Peruvian jewelry.'
+          endif
+        endcapture
+      elsif request.page_type == 'product'
+        capture meta_description_content
+          echo product.title | append: ' – Peruvian jewelry by ' | append: shop.name | append: '.'
+        endcapture
+      endif
+    endif
+  endif
+
+  assign meta_description_content = meta_description_content | default: shop.name
+-%}
+
+{% if meta_description_content != blank %}
+  <meta name="description" content="{{ meta_description_content | strip_html | strip | escape_once }}">
+{% endif %}

@@ -1,0 +1,48 @@
+{%- doc -%}
+  Renders the callouts product block (ie. "Text list with icons").
+
+  @param {object} block - The block object.
+{%- enddoc -%}
+
+{%- capture content -%}
+  <div
+    class="product__callouts-items"
+    data-with-box="{{ block.settings.add_box }}"
+    data-with-dividers="{{ block.settings.add_dividers }}"
+  >
+    {%- liquid
+      for i in (1..6)
+        assign text_setting_id = 'text_[[i]]' | replace: '[[i]]', i
+        assign icon_setting_id = 'icon_[[i]]' | replace: '[[i]]', i
+        assign custom_icon_setting_id = 'custom_icon_image_[[i]]' | replace: '[[i]]', i
+
+        render 'product-block-callouts-item', text: block.settings[text_setting_id], icon: block.settings[icon_setting_id], custom_icon_image: block.settings[custom_icon_setting_id]
+      endfor
+    -%}
+  </div>
+{%- endcapture -%}
+
+{%- if block.settings.display_as_collapsible_row -%}
+  {%- assign heading = block.settings.title | default: block.settings.collapsible_row_title -%}
+
+  {%- render 'product-block-accordion',
+    block: block,
+    heading: heading,
+    content: content,
+    label_font: block.settings.title_font_choice,
+    label_size: block.settings.title_font_class
+  -%}
+{%- else -%}
+  <div
+    class="product__block product__block-callouts product__callouts product__block--medium"
+    {{ block.shopify_attributes }}
+  >
+    {%- if block.settings.title != blank -%}
+      <{{ block.settings.title_tag }} class="product__callouts-heading {{ block.settings.title_font_choice }} {{ block.settings.title_font_class }}">
+        {{- block.settings.title -}}
+      </{{ block.settings.title_tag }}>
+    {%- endif -%}
+
+    {{- content -}}
+  </div>
+{%- endif -%}

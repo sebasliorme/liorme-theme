@@ -1,0 +1,50 @@
+{%- doc -%}
+  Renders the swiper content for the shoppable sections.
+
+  @param {object} blocks - The blocks to render.
+  @param {number} image_size - The width of the shoppable image (percentage).
+{%- enddoc -%}
+
+{%- liquid
+  assign non_image_half = 100 | minus: image_size | divided_by: 100.00
+  assign image_sizes_fraction = non_image_half | times: 0.55
+
+  capture image_sizes
+    echo '(min-width: 960px) calc(((100vw - (2 * clamp(18px, 3.3vw, 3.3vw))) * [[isf]]) - 34px), 160px' | replace: '[[isf]]', image_sizes_fraction
+  endcapture
+-%}
+
+<div class="shoppable-feature__carousel-outer" role="region" aria-live="polite">
+  <div class="shoppable-feature__carousel swiper">
+    <div class="shoppable-feature__carousel-inner swiper-wrapper">
+      {%- for block in blocks -%}
+        <div
+          class="swiper-slide"
+          {% unless forloop.first -%}
+            inert
+          {%- endunless -%}
+        >
+          {%- render 'product-card-mini',
+            prod: block.settings.product_item,
+            image_sizes: image_sizes,
+            shopify_attributes: block.shopify_attributes
+          -%}
+        </div>
+      {%- else -%}
+        <div class="swiper-slide">
+          {%- render 'product-card-mini', placeholder: true, image_sizes: image_sizes -%}
+        </div>
+      {%- endfor -%}
+    </div>
+  </div>
+
+  <button class="slider-nav-button slider-nav-button-prev" title="{{ 'general.accessibility.previous' | t }}">
+    {%- render 'icon', icon: 'chevron' -%}
+  </button>
+
+  <button class="slider-nav-button slider-nav-button-next" title="{{ 'general.accessibility.next' | t }}">
+    {%- render 'icon', icon: 'chevron' -%}
+  </button>
+
+  <div class="swiper-pagination fs-body-50"></div>
+</div>

@@ -1,0 +1,234 @@
+{%- doc -%}
+  Renders a real-size picker overlaid on a product card, for products
+  manually tagged with "talla-en-card". Uses the product's actual size
+  variant option (whatever option isn't in the Material swatch/chip list —
+  same detection the main variant picker uses), not hardcoded values.
+  Adding to cart bypasses the normal quick-add/quick-view flow.
+
+  @param {object} prod - The product object.
+{%- enddoc -%}
+
+{%- liquid
+  assign swatch_option_names = settings.swatch_options | downcase | split: ', '
+  assign size_option = null
+
+  for option in prod.options_with_values
+    assign option_name_downcase = option.name | downcase | strip
+    assign is_swatch_option = false
+    for swatch_name in swatch_option_names
+      if option_name_downcase == swatch_name
+        assign is_swatch_option = true
+      endif
+    endfor
+    unless is_swatch_option
+      assign size_option = option
+      break
+    endunless
+  endfor
+-%}
+
+{%- if size_option != null -%}
+  {%- assign size_option_index = size_option.position | minus: 1 -%}
+  <div class="product-item-size-picker" data-product-id="{{ prod.id }}">
+    <div class="product-item-size-picker__values">
+      {%- for value in size_option.values -%}
+        {%- liquid
+          assign matched_variant = null
+          for variant in prod.variants
+            if variant.options[size_option_index] == value and variant.available
+              assign matched_variant = variant
+              break
+            endif
+          endfor
+
+          unless matched_variant
+            for variant in prod.variants
+              if variant.options[size_option_index] == value
+                assign matched_variant = variant
+                break
+              endif
+            endfor
+          endunless
+        -%}
+        <button
+          type="button"
+          class="product-item-size-picker__value"
+          data-value="{{ value | escape }}"
+          data-variant-id="{{ matched_variant.id }}"
+          {% unless matched_variant.available %}disabled{% endunless %}
+        >
+          {{- value -}}
+        </button>
+      {%- endfor -%}
+    </div>
+
+    <button
+      type="button"
+      class="product-item-size-picker__submit"
+      data-size-add-to-cart
+      data-label-select="{{ 'products.product.choose_options' | t }}"
+      data-label-add="{{ 'products.product.add_to_cart' | t }}"
+      disabled
+    >
+      <span>{{ 'products.product.choose_options' | t }}</span>
+    </button>
+  </div>
+
+  <style>
+    .product-item-size-picker {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 5;
+    }
+
+    @media (max-width: 719px) {
+      .product-item-size-picker {
+        display: none;
+      }
+    }
+
+    @media (min-width: 720px) {
+      .product-item-size-picker {
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+      }
+
+      .product-item__inner:hover .product-item-size-picker,
+      .product-item__inner:focus-within .product-item-size-picker {
+        opacity: 1;
+        visibility: visible;
+      }
+    }
+
+    .product-item-size-picker__values {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 4px 24px;
+      padding: 10px 8px 15px;
+    }
+
+    .product-item-size-picker__value {
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      padding: 3px 0;
+      cursor: pointer;
+      text-underline-offset: 3px;
+    }
+
+    .product-item-size-picker__value:hover,
+    .product-item-size-picker__value.selected {
+      text-decoration: underline;
+    }
+
+    .product-item-size-picker__value[disabled] {
+      opacity: 0.4;
+      cursor: not-allowed;
+      text-decoration: line-through;
+    }
+
+    .product-item-size-picker__submit {
+      display: block;
+      width: 100%;
+      background: #111111;
+      color: #fff;
+      border: none;
+      padding: 12px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .product-item-size-picker__submit[disabled] {
+      cursor: not-allowed;
+    }
+  </style>
+
+  <script>
+    (function () {
+      if (window.__sizePickerBound) return;
+      window.__sizePickerBound = true;
+
+      document.addEventListener('click', function (e) {
+        var valueBtn = e.target.closest('.product-item-size-picker__value');
+        if (valueBtn) {
+          if (valueBtn.disabled) return;
+          e.preventDefault();
+          var picker = valueBtn.closest('.product-item-size-picker');
+          picker.querySelectorAll('.product-item-size-picker__value').forEach(function (btn) {
+            btn.classList.toggle('selected', btn === valueBtn);
+          });
+          picker.dataset.selectedVariantId = valueBtn.dataset.variantId;
+
+          var submitBtn = picker.querySelector('[data-size-add-to-cart]');
+          var textEl = submitBtn.querySelector('span');
+          submitBtn.disabled = false;
+          if (textEl) textEl.textContent = submitBtn.dataset.labelAdd;
+          return;
+        }
+
+        var submitBtn = e.target.closest('[data-size-add-to-cart]');
+        if (!submitBtn) return;
+
+        e.preventDefault();
+        var picker = submitBtn.closest('.product-item-size-picker');
+        var variantId = picker.dataset.selectedVariantId;
+        if (!variantId) return;
+
+        var textEl = submitBtn.querySelector('span');
+        var originalText = textEl ? textEl.textContent : '';
+        submitBtn.disabled = true;
+        if (textEl) textEl.textContent = {{ 'products.product.adding_to_cart' | t | json }};
+
+        var formData = new FormData();
+        formData.append('id', variantId);
+        formData.append('quantity', '1');
+
+        fetch('/cart/add.js', {
+          method: 'POST',
+          body: formData,
+          headers: { Accept: 'application/json' }
+        })
+          .then(function (response) {
+            if (!response.ok) return response.json().then(function (err) { throw err; });
+            return response.json();
+          })
+          .then(function (data) {
+            if (textEl) textEl.textContent = {{ 'products.product.added_to_cart' | t | json }};
+
+            document.dispatchEvent(new CustomEvent('cart:updated', { bubbles: true, detail: { data: data } }));
+            document.dispatchEvent(new CustomEvent('cart:refresh', { bubbles: true, detail: { data: data } }));
+            document.dispatchEvent(new CustomEvent('theme:cart:reload', { bubbles: true }));
+
+            var cartDrawer =
+              document.querySelector('cart-drawer') ||
+              document.querySelector('.cart-drawer') ||
+              document.querySelector('#CartDrawer');
+            if (cartDrawer) {
+              if (typeof cartDrawer.renderContents === 'function') cartDrawer.renderContents(data);
+              cartDrawer.classList.add('active', 'is-active');
+            }
+          })
+          .catch(function (error) {
+            console.error('Add to Cart Error:', error);
+            alert((error && (error.description || error.message)) || {{ 'products.product.add_to_cart_error' | t | json }});
+          })
+          .finally(function () {
+            setTimeout(function () {
+              submitBtn.disabled = !picker.dataset.selectedVariantId;
+              if (textEl) textEl.textContent = originalText;
+            }, 1200);
+          });
+      });
+    })();
+  </script>
+{%- endif -%}

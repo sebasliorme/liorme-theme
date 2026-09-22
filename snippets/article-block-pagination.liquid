@@ -1,0 +1,37 @@
+{%- doc -%}
+  Renders the 'Pagination' block for the article page.
+
+  @param {object} block - The block object.
+  @param {object} blog - The blog object.
+{%- enddoc -%}
+
+{%- if blog.previous_article or blog.next_article -%}
+  {%- capture pagination_item_structure -%}
+    <div class="article__pagination-item article__pagination-item--[[type]]">
+      <a href="[[link]]" class="article__pagination-[[type]] btn btn--callout">
+        <span>[[text]]</span>
+      </a>
+    </div>
+  {%- endcapture -%}
+
+  <div
+    class="article__block article__pagination"
+    {{ block.shopify_attributes }}
+  >
+    <div class="article__block-inner">
+      {%- liquid
+        if blog.previous_article
+          assign text = 'blogs.article.pagination.previous' | t
+
+          echo pagination_item_structure | replace: '[[link]]', blog.previous_article | replace: '[[type]]', 'prev' | replace: '[[text]]', text
+        endif
+
+        if blog.next_article
+          assign text = 'blogs.article.pagination.next' | t
+
+          echo pagination_item_structure | replace: '[[link]]', blog.next_article | replace: '[[type]]', 'next' | replace: '[[text]]', text
+        endif
+      -%}
+    </div>
+  </div>
+{%- endif -%}

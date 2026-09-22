@@ -1,0 +1,34 @@
+{%- doc -%}
+  Renders the necessary CSS vars to apply section padding.
+
+  @param {number} [padding_top] - The amount of top padding (in pixels).
+  @param {number} [padding_bottom] - The amount of bottom padding (in pixels).
+{%- enddoc -%}
+
+{%- liquid
+  assign padding_top = padding_top | default: section.settings.section_padding_top
+  assign padding_bottom = padding_bottom | default: section.settings.section_padding_bottom
+
+  assign top_padding_spacing_number = padding_top | divided_by: 4 | round
+  assign bottom_padding_spacing_number = padding_bottom | divided_by: 4 | round
+
+  if padding_top >= 60
+    assign padding_top_below_desktop = padding_top | times: 0.75 | at_least: 60
+  else
+    assign padding_top_below_desktop = padding_top
+  endif
+
+  if padding_bottom >= 60
+    assign padding_bottom_below_desktop = padding_bottom | times: 0.75 | at_least: 60
+  else
+    assign padding_bottom_below_desktop = padding_bottom
+  endif
+
+  assign top_padding_spacing_number_below_desktop = padding_top_below_desktop | divided_by: 4 | round
+  assign bottom_padding_spacing_number_below_desktop = padding_bottom_below_desktop | divided_by: 4 | round
+
+  echo '--section-padding-top: var(--spacing-[[tpsn]]);' | replace: '[[tpsn]]', top_padding_spacing_number
+  echo '--section-padding-bottom: var(--spacing-[[bpsn]]);' | replace: '[[bpsn]]', bottom_padding_spacing_number
+  echo '--section-padding-top-below-desktop: var(--spacing-[[tpsnbd]]);' | replace: '[[tpsnbd]]', top_padding_spacing_number_below_desktop
+  echo '--section-padding-bottom-below-desktop: var(--spacing-[[bpsnbd]]);' | replace: '[[bpsnbd]]', bottom_padding_spacing_number_below_desktop
+-%}

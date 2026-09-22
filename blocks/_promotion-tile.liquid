@@ -1,0 +1,618 @@
+{%- liquid
+  if block.settings.width_desktop == 'one-column'
+    assign use_small_button_above_960 = true
+  else
+    assign use_small_button_above_960 = false
+  endif
+
+  assign media_background_color = 'rgba(0,0,0,0)'
+
+  if block.settings.media_type == 'color'
+    assign color_scheme = block.settings.media_color_scheme
+    assign needs_overlay = false
+  else
+    assign color_scheme = block.settings.overlay_color_scheme
+    assign needs_overlay = true
+
+    if block.settings.media_fit == 'contain'
+      assign media_background_color = block.settings.color_media_background
+    endif
+  endif
+
+  case block.settings.width_desktop
+    when 'one-column'
+      assign width_desktop = 1
+    when 'two-column'
+      assign width_desktop = 2
+    when 'three-column'
+      assign width_desktop = 3
+    else
+      assign width_desktop = 'full'
+  endcase
+-%}
+
+<div
+  class="promotion-tile-content promotion-tile-content--standard"
+  data-block-id="{{ block.id }}"
+  data-position="{{ block.settings.position }}"
+  data-width-desktop="{{ width_desktop }}"
+  data-width-mobile="{{ block.settings.width_mobile }}"
+  data-media-fit="{{ block.settings.media_fit }}"
+  style="
+    {%- render 'color-scheme-to-vars', color_scheme: color_scheme, output_placeholder_colors: false -%}
+    --color-media-background: {{ media_background_color }};
+    --media-fit: {{ block.settings.media_fit }};
+    --overlay-opacity: {{ block.settings.overlay_opacity }}%;
+    --min-height-desktop: {{ block.settings.min_height_desktop }}px;
+    --min-height-mobile: {{ block.settings.min_height_mobile | default: block.settings.min_height_desktop }}px;
+  "
+  {{ block.shopify_attributes }}
+>
+  <div
+    class="promotion-tile-content__inner"
+  >
+    {%- if block.settings.tile_link != blank -%}
+      <a
+        class="promotion-tile-content__link-overlay"
+        href="{{ block.settings.tile_link }}"
+        aria-label="{{ "general.accessibility.visit_link" | t: link: block.settings.tile_link }}"
+      ></a>
+    {%- endif -%}
+
+    {%- case block.settings.media_type -%}
+      {%- when 'image' -%}
+        {%- liquid
+          assign full_width_padding_desktop = '(2 * 3.3vw)'
+          assign full_width_padding_mobile = '(2 * clamp(18px, 3.3vw, 3.3vw))'
+          assign page_width_max = settings.max_page_width | append: 'px'
+
+          capture desktop_image_sizes
+            case width_desktop
+              when '1'
+                case section.settings.section_width
+                  when 'page-width'
+                    case section.settings.columns_desktop
+                      when '5'
+                        echo '(min-width: [[pwm]]) calc(([[pwm]] - (25px * 4)) / 5), (min-width: 720px) calc((100vw - [[fwpd]] - (13px * 4)) / 5)'
+                      when '4'
+                        echo '(min-width: [[pwm]]) calc(([[pwm]] - (25px * 3)) / 4), (min-width: 720px) calc((100vw - [[fwpd]] - (13px * 3)) / 4)'
+                      when '3'
+                        echo '(min-width: [[pwm]]) calc(([[pwm]] - (25px * 2)) / 3), (min-width: 720px) calc((100vw - [[fwpd]] - (13px * 2)) / 3)'
+                      when '2'
+                        echo '(min-width: [[pwm]]) calc(([[pwm]] - (25px * 1)) / 2), (min-width: 720px) calc((100vw - [[fwpd]] - (13px * 1)) / 2)'
+                    endcase
+
+                  when 'full-width-padded'
+                    case section.settings.columns_desktop
+                      when '5'
+                        echo '(min-width: 1200px) calc((100vw - [[fwpd]] - (25px * 4)) / 5), (min-width: 720px) calc((100vw - [[fwpd]] - (13px * 4)) / 5)'
+                      when '4'
+                        echo '(min-width: 1200px) calc((100vw - [[fwpd]] - (25px * 3)) / 4), (min-width: 720px) calc((100vw - [[fwpd]] - (13px * 3)) / 4)'
+                      when '3'
+                        echo '(min-width: 1200px) calc((100vw - [[fwpd]] - (25px * 2)) / 3), (min-width: 720px) calc((100vw - [[fwpd]] - (13px * 2)) / 3)'
+                      when '2'
+                        echo '(min-width: 1200px) calc((100vw - [[fwpd]] - (25px * 1)) / 2), (min-width: 720px) calc((100vw - [[fwpd]] - (13px * 1)) / 2)'
+                    endcase
+                endcase
+
+              when '2'
+                case section.settings.section_width
+                  when 'page-width'
+                    case section.settings.columns_desktop
+                      when '5'
+                        echo '(min-width: [[pwm]]) calc((([[pwm]] - (25px * 4)) / 5 * 2) + 25px), (min-width: 720px) calc(((100vw - [[fwpd]] - (13px * 4)) / 5 * 2) + 13px)'
+                      when '4'
+                        echo '(min-width: [[pwm]]) calc((([[pwm]] - (25px * 3)) / 4 * 2) + 25px), (min-width: 720px) calc(((100vw - [[fwpd]] - (13px * 3)) / 4 * 2) + 13px)'
+                      when '3'
+                        echo '(min-width: [[pwm]]) calc((([[pwm]] - (25px * 2)) / 3 * 2) + 25px), (min-width: 720px) calc(((100vw - [[fwpd]] - (13px * 2)) / 3 * 2) + 13px)'
+                      when '2'
+                        echo '(min-width: [[pwm]]) calc((([[pwm]] - (25px * 1)) / 2 * 2) + 25px), (min-width: 720px) calc(((100vw - [[fwpd]] - (13px * 1)) / 2 * 2) + 13px)'
+                    endcase
+
+                  when 'full-width-padded'
+                    case section.settings.columns_desktop
+                      when '5'
+                        echo '(min-width: 1200px) calc(((100vw - [[fwpd]] - (25px * 4)) / 5 * 2) + 25px), (min-width: 720px) calc(((100vw - [[fwpd]] - (13px * 4)) / 5 * 2) + 13px)'
+                      when '4'
+                        echo '(min-width: 1200px) calc(((100vw - [[fwpd]] - (25px * 3)) / 4 * 2) + 25px), (min-width: 720px) calc(((100vw - [[fwpd]] - (13px * 3)) / 4 * 2) + 13px)'
+                      when '3'
+                        echo '(min-width: 1200px) calc(((100vw - [[fwpd]] - (25px * 2)) / 3 * 2) + 25px), (min-width: 720px) calc(((100vw - [[fwpd]] - (13px * 2)) / 3 * 2) + 13px)'
+                      when '2'
+                        echo '(min-width: 1200px) calc(((100vw - [[fwpd]] - (25px * 1)) / 2 * 2) + 25px), (min-width: 720px) calc(((100vw - [[fwpd]] - (13px * 1)) / 2 * 2) + 13px)'
+                    endcase
+                endcase
+
+              when '3'
+                case section.settings.section_width
+                  when 'page-width'
+                    case section.settings.columns_desktop
+                      when '5'
+                        echo '(min-width: [[pwm]]) calc((([[pwm]] - (25px * 4)) / 5 * 3) + (25px * 2)), (min-width: 720px) calc(((100vw - [[fwpd]] - (13px * 4)) / 5 * 3) + (13px * 2))'
+                      when '4'
+                        echo '(min-width: [[pwm]]) calc((([[pwm]] - (25px * 3)) / 4 * 3) + (25px * 2)), (min-width: 720px) calc(((100vw - [[fwpd]] - (13px * 3)) / 4 * 3) + (13px * 2))'
+                      when '3'
+                        echo '(min-width: [[pwm]]) calc((([[pwm]] - (25px * 2)) / 3 * 3) + (25px * 2)), (min-width: 720px) calc(((100vw - [[fwpd]] - (13px * 2)) / 3 * 3) + (13px * 2))'
+                      when '2'
+                        echo '(min-width: [[pwm]]) calc((([[pwm]] - (25px * 1)) / 2 * 3) + (25px * 2)), (min-width: 720px) calc(((100vw - [[fwpd]] - (13px * 1)) / 2 * 3) + (13px * 2))'
+                    endcase
+
+                  when 'full-width-padded'
+                    case section.settings.columns_desktop
+                      when '5'
+                        echo '(min-width: 1200px) calc(((100vw - [[fwpd]] - (25px * 4)) / 5 * 3) + (25px * 2)), (min-width: 720px) calc(((100vw - [[fwpd]] - (13px * 4)) / 5 * 3) + (13px * 2))'
+                      when '4'
+                        echo '(min-width: 1200px) calc(((100vw - [[fwpd]] - (25px * 3)) / 4 * 3) + (25px * 2)), (min-width: 720px) calc(((100vw - [[fwpd]] - (13px * 3)) / 4 * 3) + (13px * 2))'
+                      when '3'
+                        echo '(min-width: 1200px) calc(((100vw - [[fwpd]] - (25px * 2)) / 3 * 3) + (25px * 2)), (min-width: 720px) calc(((100vw - [[fwpd]] - (13px * 2)) / 3 * 3) + (13px * 2))'
+                      when '2'
+                        echo '(min-width: 1200px) calc(((100vw - [[fwpd]] - (25px * 1)) / 2 * 3) + (25px * 2)), (min-width: 720px) calc(((100vw - [[fwpd]] - (13px * 1)) / 2 * 3) + (13px * 2))'
+                    endcase
+                endcase
+
+              when 'full'
+                case section.settings.section_width
+                  when 'page-width'
+                    echo '(min-width: [[pwm]]) [[pwm]], (min-width: 720px) calc(100vw - [[fwpd]])'
+                  when 'full-width-padded'
+                    echo '(min-width: 720px) calc(100vw - [[fwpd]])'
+                endcase
+            endcase
+          endcapture
+
+          capture mobile_image_sizes
+            case block.settings.width_mobile
+              when 'one-column'
+                case section.settings.columns_mobile
+                  when '2'
+                    echo 'calc((100vw - [[fwpm]] - 13px) / 2)'
+                  when '1'
+                    echo 'calc(100vw - [[fwpm]])'
+                endcase
+
+              when 'full'
+                echo 'calc(100vw - [[fwpm]])'
+            endcase
+          endcapture
+
+          assign image_sizes_responsive = 'auto, [[dis]], [[mis]], 100vw' | replace: '[[dis]]', desktop_image_sizes | replace: '[[mis]]', mobile_image_sizes | replace: '[[fwpd]]', full_width_padding_desktop | replace: '[[fwpm]]', full_width_padding_mobile | replace: '[[pwm]]', page_width_max
+        -%}
+
+        {%- if block.settings.mobile_image != blank -%}
+          {%- render 'image',
+            wrapper_class: 'promotion-tile-content__image promotion-tile-content__image--mobile',
+            focal_point: block.settings.mobile_focal_point,
+            image: block.settings.mobile_image,
+            sizes: image_sizes_responsive,
+            animate: true
+          -%}
+        {% endif %}
+
+        {%- render 'image',
+          wrapper_class: 'promotion-tile-content__image promotion-tile-content__image--desktop',
+          focal_point: block.settings.focal_point,
+          image: block.settings.image,
+          sizes: image_sizes_responsive,
+          animate: true,
+          include_placeholder: true,
+          placeholder_name: 'lifestyle-1',
+          placeholder_natural_fallback_ratio: 'natural'
+        -%}
+
+      {%- when 'video' -%}
+        {%- render 'background-video',
+          video: block.settings.background_video,
+          enable_mobile_video: true,
+          mobile_video: block.settings.mobile_background_video,
+          focal_point: block.settings.video_focal_point,
+          focal_point_mobile: block.settings.mobile_video_focal_point,
+          class: 'promotion-tile-content__video',
+          placeholder_name: 'image'
+        -%}
+    {%- endcase -%}
+
+    <div class="promotion-tile-content__overlay" data-use-opacity="{{ needs_overlay }}"></div>
+
+    <div class="promotion-tile-content__text-container-wrapper">
+      <div
+        class="
+          promotion-tile-content__text-container
+          promotion-tile__content-blocks
+          content-blocks
+          section-blocks
+        "
+        data-alignment-desktop="{{ block.settings.alignment }}"
+        data-alignment-mobile="{{ block.settings.alignment }}"
+        style="--horizontal-position: center; --horizontal-position-mobile: center;"
+      >
+        <div class="promotion-tile-content__text-container-inner content-blocks__inner animation--section-blocks">
+          {% content_for 'blocks' %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% # '<br>' as a block list delimiter %}
+<br>
+
+{% schema %}
+{
+  "name": "t:blocks._promotion_tile.name",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "t:blocks._promotion_tile.settings.layout.header.content"
+    },
+    {
+      "type": "range",
+      "id": "position",
+      "label": "t:blocks._promotion_tile.settings.layout.position.label",
+      "min": 1,
+      "max": 50,
+      "step": 1,
+      "default": 1,
+      "info": "t:blocks._promotion_tile.settings.layout.position.info"
+    },
+    {
+      "type": "select",
+      "id": "width_desktop",
+      "label": "t:blocks._promotion_tile.settings.layout.width.label",
+      "options": [
+        {
+          "value": "one-column",
+          "label": "t:blocks._promotion_tile.settings.layout.width.options.one_column"
+        },
+        {
+          "value": "two-column",
+          "label": "t:blocks._promotion_tile.settings.layout.width.options.two_columns"
+        },
+        {
+          "value": "three-column",
+          "label": "t:blocks._promotion_tile.settings.layout.width.options.three_columns"
+        },
+        {
+          "value": "full",
+          "label": "t:blocks._promotion_tile.settings.layout.width.options.full_width"
+        }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "width_mobile",
+      "label": "t:blocks._promotion_tile.settings.layout.mobile_width.label",
+      "options": [
+        {
+          "value": "one-column",
+          "label": "t:blocks._promotion_tile.settings.layout.width.options.one_column"
+        },
+        {
+          "value": "full",
+          "label": "t:blocks._promotion_tile.settings.layout.width.options.full_width"
+        }
+      ],
+      "default": "full"
+    },
+    {
+      "type": "range",
+      "id": "min_height_desktop",
+      "label": "t:blocks._promotion_tile.settings.layout.min_height.label",
+      "info": "t:blocks._promotion_tile.settings.layout.min_height.info",
+      "min": 300,
+      "max": 800,
+      "step": 20,
+      "unit": "px",
+      "default": 460
+    },
+    {
+      "type": "range",
+      "id": "min_height_mobile",
+      "label": "t:blocks._promotion_tile.settings.layout.min_height_mobile.label",
+      "min": 300,
+      "max": 800,
+      "step": 20,
+      "unit": "px",
+      "default": 400
+    },
+    {
+      "type": "text_alignment",
+      "id": "alignment",
+      "label": "t:shared.settings.alignment_horizontal.default.label"
+    },
+    {
+      "type": "url",
+      "id": "tile_link",
+      "label": "t:blocks._promotion_tile.settings.layout.tile_link.label",
+      "info": "t:blocks._promotion_tile.settings.layout.tile_link.info"
+    },
+    {
+      "type": "header",
+      "content": "t:shared.settings.media_type.header.content"
+    },
+    {
+      "type": "select",
+      "id": "media_type",
+      "label": "t:shared.settings.media_type.media_type.label",
+      "options": [
+        {
+          "value": "color",
+          "label": "t:shared.settings.media_type.media_type.options.color"
+        },
+        {
+          "value": "image",
+          "label": "t:shared.settings.media_type.media_type.options.image"
+        },
+        {
+          "value": "video",
+          "label": "t:shared.settings.media_type.media_type.options.video"
+        }
+      ],
+      "default": "image"
+    },
+    {
+      "type": "color_scheme",
+      "id": "media_color_scheme",
+      "label": "t:shared.settings.color_scheme.label",
+      "default": "scheme_2",
+      "visible_if": "{{ block.settings.media_type == 'color' }}"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:shared.settings.background_image.image.label",
+      "visible_if": "{{ block.settings.media_type == 'image' }}"
+    },
+    {
+      "type": "image_picker",
+      "id": "mobile_image",
+      "label": "t:shared.settings.background_image.mobile_image.label",
+      "visible_if": "{{ block.settings.media_type == 'image' }}"
+    },
+    {
+      "type": "paragraph",
+      "content": "t:shared.settings.background_image.image_sizes_note.content",
+      "visible_if": "{{ block.settings.media_type == 'image' }}"
+    },
+    {
+      "type": "select",
+      "id": "focal_point",
+      "label": "t:shared.settings.focal_point.image.default.label",
+      "options": [
+        {
+          "value": "image_presentation",
+          "label": "t:shared.options.focal_point.image_presentation"
+        },
+        {
+          "value": "center",
+          "label": "t:shared.options.focal_point.center"
+        },
+        {
+          "value": "top",
+          "label": "t:shared.options.focal_point.top"
+        },
+        {
+          "value": "bottom",
+          "label": "t:shared.options.focal_point.bottom"
+        },
+        {
+          "value": "left",
+          "label": "t:shared.options.focal_point.left"
+        },
+        {
+          "value": "right",
+          "label": "t:shared.options.focal_point.right"
+        }
+      ],
+      "default": "image_presentation",
+      "visible_if": "{{ block.settings.media_type == 'image' }}"
+    },
+    {
+      "type": "select",
+      "id": "mobile_focal_point",
+      "label": "t:shared.settings.focal_point.image.mobile.label",
+      "options": [
+        {
+          "value": "image_presentation",
+          "label": "t:shared.options.focal_point.image_presentation"
+        },
+        {
+          "value": "center",
+          "label": "t:shared.options.focal_point.center"
+        },
+        {
+          "value": "top",
+          "label": "t:shared.options.focal_point.top"
+        },
+        {
+          "value": "bottom",
+          "label": "t:shared.options.focal_point.bottom"
+        },
+        {
+          "value": "left",
+          "label": "t:shared.options.focal_point.left"
+        },
+        {
+          "value": "right",
+          "label": "t:shared.options.focal_point.right"
+        }
+      ],
+      "default": "image_presentation",
+      "visible_if": "{{ block.settings.media_type == 'image' }}"
+    },
+    {
+      "type": "video",
+      "id": "background_video",
+      "label": "t:shared.settings.background_video.video.label",
+      "visible_if": "{{ block.settings.media_type == 'video' }}"
+    },
+    {
+      "type": "video",
+      "id": "mobile_background_video",
+      "label": "t:shared.settings.background_video.video_mobile.label",
+      "visible_if": "{{ block.settings.media_type == 'video' }}",
+      "info": "t:shared.settings.background_video.video_mobile.info"
+    },
+    {
+      "type": "select",
+      "id": "video_focal_point",
+      "label": "t:shared.settings.focal_point.video.default.label",
+      "options": [
+        {
+          "value": "center",
+          "label": "t:shared.options.focal_point.center"
+        },
+        {
+          "value": "top",
+          "label": "t:shared.options.focal_point.top"
+        },
+        {
+          "value": "bottom",
+          "label": "t:shared.options.focal_point.bottom"
+        },
+        {
+          "value": "left",
+          "label": "t:shared.options.focal_point.left"
+        },
+        {
+          "value": "right",
+          "label": "t:shared.options.focal_point.right"
+        }
+      ],
+      "default": "center",
+      "visible_if": "{{ block.settings.media_type == 'video' }}"
+    },
+    {
+      "type": "select",
+      "id": "mobile_video_focal_point",
+      "label": "t:shared.settings.focal_point.video.mobile.label",
+      "options": [
+        {
+          "value": "center",
+          "label": "t:shared.options.focal_point.center"
+        },
+        {
+          "value": "top",
+          "label": "t:shared.options.focal_point.top"
+        },
+        {
+          "value": "bottom",
+          "label": "t:shared.options.focal_point.bottom"
+        },
+        {
+          "value": "left",
+          "label": "t:shared.options.focal_point.left"
+        },
+        {
+          "value": "right",
+          "label": "t:shared.options.focal_point.right"
+        }
+      ],
+      "default": "center",
+      "visible_if": "{{ block.settings.media_type == 'video' }}"
+    },
+    {
+      "type": "radio",
+      "id": "media_fit",
+      "label": "t:shared.settings.media_fit.label",
+      "options": [
+        {
+          "value": "cover",
+          "label": "t:shared.settings.media_fit.option_cover"
+        },
+        {
+          "value": "contain",
+          "label": "t:shared.settings.media_fit.option_contain"
+        }
+      ],
+      "default": "cover",
+      "visible_if": "{{ block.settings.media_type == 'video' or block.settings.media_type == 'image'}}"
+    },
+    {
+      "type": "color",
+      "id": "color_media_background",
+      "label": "t:shared.settings.media_type.color_media_background.label",
+      "visible_if": "{{ block.settings.media_fit == 'contain' and block.settings.media_type == 'video' or block.settings.media_type == 'image'}}"
+    },
+    {
+      "type": "header",
+      "content": "t:blocks._promotion_tile.settings.background_media_overlay.header.content",
+      "visible_if": "{{ block.settings.media_type != 'color' }}"
+    },
+    {
+      "type": "color_scheme",
+      "id": "overlay_color_scheme",
+      "label": "t:shared.settings.color_scheme.label",
+      "default": "scheme_5",
+      "visible_if": "{{ block.settings.media_type != 'color' }}"
+    },
+    {
+      "type": "range",
+      "id": "overlay_opacity",
+      "label": "t:shared.settings.overlay.overlay_opacity.label",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 30,
+      "info": "t:shared.settings.overlay.overlay_opacity.info",
+      "visible_if": "{{ block.settings.media_type != 'color' }}"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "@app"
+    },
+    {
+      "type": "_content-accent"
+    },
+    {
+      "type": "_content-heading-responsive"
+    },
+    {
+      "type": "_content-subheading-responsive"
+    },
+    {
+      "type": "_content-text"
+    },
+    {
+      "type": "_content-button-with-full-width"
+    },
+    {
+      "type": "_content-spacer-flexible"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:blocks._promotion_tile.name",
+      "blocks": [
+        {
+          "type": "_content-heading-responsive",
+          "settings": {
+            "heading": "t:blocks._promotion_tile.settings.content.title.default",
+            "heading_size_desktop": "--font-size-heading-4-base",
+            "heading_size_mobile": "--font-size-heading-3-base"
+          }
+        },
+        {
+          "type": "_content-subheading-responsive",
+          "settings": {
+            "text": "t:blocks._promotion_tile.settings.content.subheading.default",
+            "subheading_size_desktop": "--font-size-heading-6-base",
+            "subheading_size_mobile": "--font-size-heading-5-base"
+          }
+        },
+        {
+          "type": "_content-spacer-flexible"
+        },
+        {
+          "type": "_content-button-with-full-width",
+          "settings": {
+            "link_text": "Shop now",
+            "button_style": "btn--primary",
+            "enable_full_width": false
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,14 @@
+{%- doc -%}
+  Renders an icon button.
+
+  @param {string} icon - The icon to be rendered in the button.
+  @param {boolean} [small] - Whether the icon should be small.
+{%- enddoc -%}
+
+{%- assign small = small | default: false, allow_false: true -%}
+
+<span class="icon-button icon-button-{{ icon }} {%- if small %} icon-button--small{%- endif -%}">
+  <span class="icon-button__icon">
+    {%- render 'icon', icon: icon -%}
+  </span>
+</span>

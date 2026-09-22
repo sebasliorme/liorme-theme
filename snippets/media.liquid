@@ -1,0 +1,131 @@
+{%- doc -%}
+  Renders a product media item.
+
+  @param {object} media - The media to display.
+  @param {boolean} enable_product_lightbox - Whether the media is set to display in a lightbox.
+  @param {boolean} loop_video - Whether videos should loop.
+  @param {string} aspect_ratio - The media's aspect ratio.
+  @param {string} sizes - A list of responsive image sizes (for the 'sizes' attributes).
+  @param {boolean} [prioritize_loading] - Whether the media should be lazy-loaded.
+  @param {string} fallback_alt - Alt text to use if the media doesn't have any.
+  @param {boolean} within_carousel - Whether the media is displayed within a carousel.
+  @param {boolean} [animate] - Whether the media item should animate.
+  @param {string} [link] - The parent product's link.
+{%- enddoc -%}
+
+{%- liquid
+  assign prioritize_loading = prioritize_loading | default: false, allow_false: true
+  assign animate = animate | default: false, allow_false: true
+-%}
+
+<div
+  class="
+    media
+    {% if enable_product_lightbox -%}
+      media--has-lightbox
+    {%- endif %}
+    {% if animate and media.media_type != 'image' -%}
+      animation animation--media
+    {%- endif -%}
+  "
+  data-media-id="{{ media.id }}"
+  data-media-type="{{ media.media_type }}"
+  data-has-mobile-video-modal="{{ within_carousel | default: false, allow_false: true }}"
+  {% if media.media_type == 'video' -%}
+    data-loop="{{ loop_video }}"
+    style="--video-aspect-ratio: {{ media.preview_image.width }} / {{ media.preview_image.height }};"
+  {%- endif %}
+  {% if media.media_type != 'image' -%}
+    data-interactive
+  {%- endif -%}
+>
+  {%- case media.media_type -%}
+    {%- when 'image' -%}
+      {%- liquid
+        capture media_link_element
+          if enable_product_lightbox or link
+            echo 'a'
+          else
+            echo 'div'
+          endif
+        endcapture
+
+        capture media_atributes
+          if enable_product_lightbox
+            assign media_image_url = media.src | image_url
+
+            echo 'href="[[miu]]"' | replace: '[[miu]]', media_image_url
+            echo 'class="lightbox-image no-transition"'
+            echo 'data-pswp-src="[[miu]]"' | replace: '[[miu]]', media_image_url
+            echo 'data-pswp-width="[[mw]]"' | replace: '[[mw]]', media.width
+            echo 'data-pswp-height="[[mh]]"' | replace: '[[mh]]', media.height
+            echo 'data-cropped="true"'
+          elsif link
+            echo 'href="[[link]]"' | replace: '[[link]]', link
+          endif
+        endcapture
+      -%}
+
+      <{{ media_link_element }} {{ media_atributes }}>
+        {%- render 'image',
+          image: media,
+          aspect_ratio: aspect_ratio,
+          sizes: sizes,
+          focal_point: 'image_presentation',
+          prioritize_loading: prioritize_loading,
+          fallback_alt: fallback_alt,
+          no_crop: enable_product_lightbox,
+          animate: animate
+        -%}
+      </{{ media_link_element }}>
+
+    {%- when 'video' -%}
+      {{ media | video_tag: image_size: '1024x' }}
+
+    {%- when 'external_video' -%}
+      {%- liquid
+        if loop_video
+          assign loop_binary = '1'
+        else
+          assign loop_binary = '0'
+        endif
+
+        # The 'external_video_tag' includes the wrong origin parameter when viewing a Shopify preview
+        # URL, so we need to replace it
+        assign shop_domain = shop.secure_url | replace: 'https://', ''
+        assign video_url = media | external_video_url: playlist: media.external_id, loop: loop_binary, controls: true
+        assign video_tag = video_url | external_video_tag | replace: shop_domain, request.host
+      -%}
+
+      {%- if within_carousel -%}
+        <div class="mobile-media-carousel__external-video-modal pswp--product-video-modal">
+          {{- video_tag -}}
+        </div>
+
+        <div
+          class="mobile-media-carousel__poster"
+          style="background-image: url({{ media.preview_image | image_url }})"
+        >
+          <button class="mobile-media-carousel__play-icon" aria-label="{{ 'general.accessibility.open_modal' | t }}">
+            {%- render 'icon', icon: 'play-badge' -%}
+          </button>
+        </div>
+      {%- else -%}
+        {{- video_tag -}}
+      {%- endif -%}
+
+    {%- when 'model' -%}
+      {{- media | model_viewer_tag: reveal: 'interaction', toggleable: true -}}
+
+      <a
+        href="#"
+        class="model-poster"
+        style="background-image: url({{ media | image_url: width: 1000 }})"
+        title="{{ 'general.accessibility.view_3d_model' | t }}"
+      >
+        <span class="media-badge model in-poster">
+          {%- render 'icon', icon: '3d-button-control' -%}
+        </span>
+      </a>
+  {%- endcase -%}
+</div>

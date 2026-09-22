@@ -1,0 +1,44 @@
+{%- doc -%}
+  Renders the 'Text' section block.
+
+  @param {string} text - The text to display.
+  @param {string} [text_font_class] - The font class to apply.
+  @param {boolean} [is_section_introduction] - Whether the content is being rendered as part of a section introduction.
+  @param {string} [class_prefix] - A class prefix used for creating a scoped class.
+  @param {string} [custom_class] - A custom class to apply.
+  @param {object} [shopify_attributes] - The block's shopify attributes.
+{%- enddoc -%}
+
+{%- unless text == blank -%}
+  {%- liquid
+    assign is_section_introduction = is_section_introduction | default: false, allow_false: true
+
+    capture class
+      if is_section_introduction
+        echo 'section-introduction__text'
+      else
+        echo 'section-blocks__text'
+      endif
+
+      echo ' rte ff-body'
+
+      if text_font_class != blank
+        echo ' '
+        echo text_font_class
+      endif
+
+      if class_prefix != blank
+        echo ' [[cp]]-text' | replace: '[[cp]]', class_prefix
+      endif
+
+      if custom_class != blank
+        echo ' '
+        echo custom_class
+      endif
+    endcapture
+  -%}
+
+  <div class="{{ class }}" {{ shopify_attributes }}>
+    {{- text -}}
+  </div>
+{%- endunless -%}

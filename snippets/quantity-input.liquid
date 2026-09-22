@@ -1,0 +1,58 @@
+{%- doc -%}
+  Renders a quantity input.
+
+  @param {object} prod - The associated product.
+  @param {string} id - A unique ID to be used for the input.
+  @param {number} initial_value - The initial value of the input
+  @param {object} [variant] - The specific variant to use (for cart items), if not provided uses selected_or_first_available_variant
+{%- enddoc -%}
+
+{% liquid
+  assign variant = variant | default: prod.selected_or_first_available_variant
+  assign initial_value = initial_value | default: variant.quantity_rule.min | default: 1
+  assign min_value = variant.quantity_rule.min | default: 1
+%}
+
+<div class="quantity-input">
+  <button
+    type="button"
+    class="quantity-input__button product__quantity-subtract-item"
+    data-subtract-quantity
+    aria-label="{{ 'general.accessibility.quantity_subtract' | t }}"
+    {% if initial_value == min_value -%}
+      disabled
+    {%- endif %}
+  >
+    {%- render 'icon', icon: 'minus-small' -%}
+  </button>
+
+  <label class="visually-hidden" for="Quantity-Input-{{ id }}">{{ 'products.product.quantity' | t }}</label>
+
+  <input
+    type="number"
+    id="Quantity-Input-{{ id }}"
+    class="quantity-input__input"
+    name="updates[]"
+    value="{{ initial_value }}"
+    min="{{ min_value }}"
+    step="{{ variant.quantity_rule.increment | default: 1 }}"
+    {% if variant.quantity_rule.max -%}
+      max="{{ variant.quantity_rule.max }}"
+    {%- endif %}
+    pattern="[0-9]*"
+    data-quantity-input
+    aria-label="{{ 'general.accessibility.quantity' | t }}"
+  >
+
+  <button
+    type="button"
+    class="quantity-input__button product__quantity-add-item"
+    data-add-quantity
+    aria-label="{{ 'general.accessibility.quantity_add' | t }}"
+    {% if initial_value == variant.quantity_rule.max -%}
+      disabled
+    {%- endif %}
+  >
+    {%- render 'icon', icon: 'plus-small' -%}
+  </button>
+</div>

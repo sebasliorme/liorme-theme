@@ -1,0 +1,26 @@
+{%- doc -%}
+  Renders a scroll container navigation button.
+
+  @param {string} type - The button type (ie. 'previous', or 'next').
+{%- enddoc -%}
+
+{%- liquid
+  if type == 'previous'
+    assign position = 'start'
+    assign direction = 'backwards'
+  else
+    assign position = 'end'
+    assign direction = 'forwards'
+  endif
+
+  assign translation_key = 'general.accessibility.[[type]]' | replace: '[[type]]', type
+-%}
+
+<button
+  class="scroll-button"
+  data-position="{{ position }}"
+  data-direction="{{  direction }}"
+  title="{{ translation_key | t }}"
+>
+  {%- render 'icon', icon: 'chevron' -%}
+</button>

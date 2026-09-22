@@ -1,0 +1,532 @@
+{%- doc -%}
+  Renders a product item.
+
+  @param {object} prod - The product object. We use 'prod' to avoid collision with the global 'product' object.
+  @param {string} product_columns_desktop - The number of columns in the product grid on desktop.
+  @param {string} product_columns_mobile - The number of columns in the product grid on mobile.
+  @param {string} aspect_ratio - The image aspect ratio.
+  @param {string} [image_sizes] - The exact 'sizes' attribute for the card image, for grids whose real card width differs from the default page-width estimate (e.g. an edge-to-edge grid).
+  @param {boolean} [has_grid_reveal] - Whether the item should animate.
+  @param {string} custom_color_key_map - A list of custom color names for swatches.
+  @param {string} custom_color_value_map - A list of custom color values for swatches.
+  @param {boolean} [quick_view_is_beneath] - Whether the quick view displays below the product info (instead of overlayed on the image).
+  @param {boolean} [placeholder] - Whether the item is being rendered as a placeholder.
+{%- enddoc -%}
+
+{%- liquid
+  assign has_grid_reveal = has_grid_reveal | default: false, allow_false: true
+  assign quick_view_is_beneath = quick_view_is_beneath | default: false, allow_false: true
+  assign placeholder = placeholder | default: false, allow_false: true
+
+  # Portada: an optional photo of its own for listings (grids, search results...), when the merchant wants a
+  # different shot there than the product's own first/featured photo (set without reordering its real gallery).
+  # Metafield `custom.cover_image` (type File, restricted to images), created in the admin (the theme cannot).
+  assign cover_image = prod.metafields.custom.cover_image.value
+  assign card_image = cover_image | default: prod.featured_media
+
+  if settings.product_listing_show_second_image_on_hover and prod.media.size > 1
+    assign show_multiple_images = true
+  else
+    assign show_multiple_images = false
+  endif
+
+  assign mobile_column_count = product_columns_mobile | plus: 0
+
+  # The old flat px fallback (used for any viewport over 1400px) assumed a much
+  # narrower page than this theme's actual max_page_width, so on ordinary wide
+  # desktop screens the browser was told each image would show much smaller
+  # than it really does — and fetched an undersized, blurry srcset candidate
+  # for it. min(93.4vw, max-page-width) keeps it scaling correctly instead of
+  # capping out at that wrong fixed number.
+  assign max_page_width = settings.max_page_width | default: 1400
+
+  case product_columns_desktop
+    when '5'
+      assign sizes = '(max-width: 720px) calc((90vw - 12px) /[[mcc]]), calc((min(93.4vw, [[mpw]]px) - (12px * 3)) / 5)' | replace: '[[mcc]]', mobile_column_count | replace: '[[mpw]]', max_page_width
+    when '3'
+      assign sizes = '(max-width: 720px) calc((90vw - 12px) /[[mcc]]), calc((min(93.4vw, [[mpw]]px) - (12px * 3)) / 3)' | replace: '[[mcc]]', mobile_column_count | replace: '[[mpw]]', max_page_width
+    when '2'
+      assign sizes = '(max-width: 720px) calc((90vw - 12px) /[[mcc]]), calc((min(93.4vw, [[mpw]]px) - (12px * 3)) / 2)' | replace: '[[mcc]]', mobile_column_count | replace: '[[mpw]]', max_page_width
+    else
+      # Using a 4 item grid as default for sizes
+      assign sizes = '(max-width: 720px) calc((90vw - 12px) /[[mcc]]), calc((min(93.4vw, [[mpw]]px) - (12px * 3)) / 4)' | replace: '[[mcc]]', mobile_column_count | replace: '[[mpw]]', max_page_width
+  endcase
+
+  if image_sizes != blank
+    assign sizes = image_sizes
+  endif
+
+  assign has_hover_swatches = false
+  assign has_hover_chips = false
+  assign show_sibling_swatches = false
+  assign sibling_products = prod.metafields.stiletto.sibling_collection.value.products | default: prod.metafields.stiletto.siblings_collection.value.products
+
+  # Sibling swatches will override other swatches if these conditions are met
+  if settings.enable_product_card_sibling_swatches and settings.siblings_option_name != blank and sibling_products.size > 0
+    assign has_hover_swatches = true
+    assign show_sibling_swatches = true
+    assign first_swatchified_option = settings.siblings_option_name | downcase
+    assign displayed_swatch_count = sibling_products.size
+  elsif settings.enable_product_card_swatches
+    capture first_swatchified_option
+      render 'get-first-styled-option', prod: prod, styled_options: settings.swatch_options
+    endcapture
+
+    # Explicit request: material options (Oro / Plata) also show as swatches on the cards, with the same rule the
+    # product page uses (any option whose name contains "material", e.g. "Material de joyería"). The global
+    # swatch_options setting only lists "Color", which none of the store's products use.
+    if first_swatchified_option == blank
+      for option_name in prod.options
+        assign option_name_downcased = option_name | downcase
+
+        if option_name_downcased contains 'material'
+          assign first_swatchified_option = option_name_downcased
+          break
+        endif
+      endfor
+    endif
+
+    assign displayed_swatch_count = prod.options_by_name[first_swatchified_option].values.size
+
+    if displayed_swatch_count > 0
+      assign has_hover_swatches = true
+    endif
+  endif
+
+  if settings.show_product_card_chips
+    capture first_chipped_option
+      render 'get-first-styled-option', prod: prod, styled_options: settings.product_card_chip_options
+    endcapture
+
+    assign displayed_chip_count = prod.options_by_name[first_chipped_option].values.size
+
+    if displayed_chip_count > 0
+      assign has_hover_chips = true
+    endif
+  endif
+
+  if quick_view_is_beneath
+    assign has_hover_swatches = false
+    assign has_hover_chips = false
+  endif
+
+  if prod.has_only_default_variant
+    assign product_has_variants = false
+  else
+    assign product_has_variants = true
+  endif
+
+  # Letter/gem personalization products get their own picker overlay on the
+  # card instead of the normal quick-add/quick-view button (see
+  # snippets/product-item-letter-picker.liquid and
+  # snippets/product-item-gem-picker.liquid). If a product somehow has both
+  # trigger tags, the letter picker wins to keep the card UI to one widget.
+  #
+  # Explicit request (2026-09-22): the letter-picker overlay ("Elegir opciones" + A-Z grid, seen on
+  # Recomendaciones de productos) removed - cards for 'personalizable-letra' products now fall through to the
+  # normal quick-add/quick-view button below, like every other product. Left the snippet and tag check in place
+  # (just forced off) rather than deleting them, in case this is wanted back later.
+  assign show_letter_picker = false
+
+  # Explicit request (2026-09-22): same removal as the letter picker above - the gem-picker overlay ("Elegir
+  # opciones" / "Añadir a la cesta" black bar) also removed. Left the snippet and tag check in place, just forced
+  # off.
+  assign show_gem_picker = false
+
+  # Size picker (real variant sizes shown directly on the card) — manually
+  # opted into per product via the "talla-en-card" tag. Letter/gem pickers
+  # still win if a product somehow has more than one of these tags.
+  assign show_size_picker = false
+  unless show_letter_picker or show_gem_picker
+    if prod.tags contains 'talla-en-card' and prod.available
+      assign show_size_picker = true
+    endif
+  endunless
+
+  # Quick add takes precedence over quick view
+  # Use quick view for products with variants and sold out products
+  if show_letter_picker or show_gem_picker or show_size_picker
+    assign quick_shop_type = 'none'
+  elsif settings.enable_quick_add and prod.available
+    if product_has_variants
+      assign quick_shop_type = 'quick-view'
+      assign quick_shop_button_text = 'products.product.choose_options' | t
+    else
+      assign quick_shop_type = 'quick-add'
+      assign quick_shop_button_text = 'products.product.add_to_cart' | t
+    endif
+
+    capture quick_shop_button_hoverless_icon
+      render 'icon', icon: 'quick-add'
+    endcapture
+  elsif settings.enable_quick_view
+    assign quick_shop_type = 'quick-view'
+    assign quick_shop_button_text = 'products.product.quick_view' | t
+
+    capture quick_shop_button_hoverless_icon
+      render 'icon', icon: 'quick-view'
+    endcapture
+  else
+    assign quick_shop_type = 'none'
+  endif
+-%}
+
+{%- if quick_shop_type != 'none' -%}
+  {%- liquid
+    capture quick_shop_button_attributes
+      echo 'data-quick-shop-trigger="[[qst]]"' | replace: '[[qst]]', quick_shop_type
+
+      if quick_shop_type == 'quick-add'
+        echo 'data-product-id="[[pid]]"' | replace: '[[pid]]', prod.variants[0].id
+      else
+        echo 'data-product-url="[[pu]]"' | replace: '[[pu]]', prod.url
+      endif
+    endcapture
+  -%}
+
+  {%- capture quick_shop_button -%}
+    <button
+      class="product-item__quick-view btn btn--tertiary btn--x-small"
+      {{ quick_shop_button_attributes }}
+      tabindex="0"
+    >
+      <span>{{ quick_shop_button_text }}</span>
+
+      <div class="btn__loading-wrap">
+        <div class="btn__loading-bar"></div>
+      </div>
+    </button>
+  {%- endcapture -%}
+
+  {%- capture quick_shop_button_hoverless -%}
+    <button
+      class="product-item__quick-view--hoverless btn btn--rounded"
+      {{ quick_shop_button_attributes }}
+      tabindex="0"
+      title="{{ quick_shop_button_text }}"
+    >
+      {{ quick_shop_button_hoverless_icon }}
+    </button>
+  {%- endcapture -%}
+{%- endif -%}
+
+{%- liquid
+  # Wrap add to cart buttons in a product form for no-js, or if purchase confirmation and quick cart are disabled
+  if quick_shop_type == 'quick-add'
+    capture product_form_tags
+      echo '<input class="product-item__product-form-variant-input" name="id" type="hidden" value="[[vi]]">' | replace: '[[vi]]', prod.variants[0].id
+    endcapture
+
+    capture quick_shop_button
+      form 'product', prod, class: 'product-item__product-form'
+        echo product_form_tags
+        echo quick_shop_button
+      endform
+    endcapture
+
+    capture quick_shop_button_hoverless
+      form 'product', prod, class: 'product-item__product-form'
+        echo product_form_tags
+        echo quick_shop_button_hoverless
+      endform
+    endcapture
+  endif
+
+  capture product_item_class
+    echo 'product-item'
+
+    if has_hover_swatches
+      echo ' product-item--with-hover-swatches'
+    endif
+
+    if has_hover_chips
+      echo ' product-item--with-hover-chips'
+    endif
+
+    if settings.enable_border_on_hover
+      echo ' product-item--border-on-hover'
+    endif
+
+    echo ' animation animation--item'
+
+    if has_grid_reveal
+      echo ' animation--item-initial'
+    endif
+  endcapture
+-%}
+
+<div
+  class="{{ product_item_class }}"
+  style="--z-index-item: {{ forloop.index }};"
+>
+  <div class="product-item__inner">
+    <div class="product-item__media {%- if show_multiple_images %} product-item__media--multiple-images{%- endif %}">
+      <a
+        class="product-item__image-link"
+        href="{{ prod.url | within: collection }}"
+        aria-label="{{ prod.title }}"
+      >
+        {%- liquid
+          assign image_wrapper_class = 'product-item__image'
+
+          if show_multiple_images
+            assign image_wrapper_class = image_wrapper_class | append: ' product-item__image--one'
+
+            if cover_image != blank
+              # The cover replaces the front photo, so hovering reveals the product's own real featured photo
+              # instead (its real front photo, not a second one from the card's normal front/hover pair).
+              assign second_image = prod.featured_media
+            else
+              assign second_image = prod.media[1]
+
+              if prod.featured_media != prod.media[0]
+                assign second_image = prod.media[0]
+              endif
+            endif
+          endif
+        -%}
+
+        {%- render 'image',
+          image: card_image,
+          wrapper_class: image_wrapper_class,
+          aspect_ratio: aspect_ratio | default: settings.product_listing_aspect_ratio,
+          focal_point: 'image_presentation',
+          object_fit: settings.product_listing_media_fit,
+          include_placeholder: true,
+          sizes: sizes,
+          src_set_type: 'grid',
+          prioritize_loading: prioritize_loading
+        -%}
+
+        {%- if show_multiple_images -%}
+          {%- render 'image',
+            image: second_image,
+            wrapper_class: 'product-item__image product-item__image--two',
+            aspect_ratio: aspect_ratio | default: settings.product_listing_aspect_ratio,
+            focal_point: 'image_presentation',
+            object_fit: settings.product_listing_media_fit,
+            include_placeholder: true,
+            sizes: sizes,
+            no_lazy_load: true,
+            src_set_type: 'grid'
+          -%}
+        {%- endif -%}
+      </a>
+
+      {%- unless placeholder -%}
+        {%- render 'product-badges',
+          prod: prod,
+          show_sale_badge: settings.product_listing_show_sale_badge,
+          show_custom_badges: settings.product_listing_show_custom_badges,
+          show_sold_out_badge: settings.product_listing_show_sold_out_badge
+        -%}
+
+        {%- comment -%}
+          Small label over the top-left corner of the photo (e.g. "Personalizar"). Its text comes from the
+          product metafield "Etiqueta de la tarjeta" (Single line text, created in Settings > Custom data > Products),
+          key custom.etiqueta_de_la_tarjeta; custom.card_label is also read, in case it was created with that key.
+          A product without a value shows nothing.
+        {%- endcomment -%}
+        {%- assign card_label = prod.metafields.custom.etiqueta_de_la_tarjeta.value | default: prod.metafields.custom.card_label.value | strip -%}
+        {%- if card_label != blank -%}
+          <span class="product-item__card-label">{{ card_label | escape }}</span>
+        {%- endif -%}
+      {%- endunless -%}
+
+      {%- if quick_shop_type != 'none' and quick_view_is_beneath != true -%}
+        <div class="product-item__hover-action-wrap">
+          {{- quick_shop_button -}}
+        </div>
+      {%- endif -%}
+
+      {%- if show_letter_picker -%}
+        {%- render 'product-item-letter-picker', prod: prod -%}
+      {%- elsif show_gem_picker -%}
+        {%- render 'product-item-gem-picker', prod: prod -%}
+      {%- elsif show_size_picker -%}
+        {%- render 'product-item-size-picker', prod: prod -%}
+      {%- endif -%}
+
+      {%- if quick_shop_type != 'none' -%}
+        {{- quick_shop_button_hoverless -}}
+      {%- endif -%}
+    </div>
+
+    <div class="product-item__meta">
+      <div class="product-item__text ta-c">
+        <h4 class="ff-body product-item__product-title ff-product-listing-title">
+          {%- if placeholder -%}
+            {{- 'homepage.onboarding.product_title' | t -}}
+          {%- else -%}
+            <a href="{{ prod.url | within: collection }}">{{ prod.title }}</a>
+          {%- endif -%}
+        </h4>
+
+
+        {%- if settings.product_listing_show_vendor and prod.vendor -%}
+          <h5 class="ff-body fs-body-60 product-item__product-vendor">
+            {{- prod.vendor -}}
+          </h5>
+        {%- endif -%}
+
+        {%- liquid
+          if settings.product_listing_show_rating
+            render 'product-rating', prod: prod
+          endif
+
+          assign price_content_type = 'price'
+
+          if prod.available
+            if prod.price == 0 and prod.price_varies == false
+              if settings.zero_dollar_listing_price_display == 'replace'
+                assign price_content_type = 'custom'
+                assign custom_price_content = 'products.inventory.zero_price_custom_label' | t
+              elsif settings.zero_dollar_listing_price_display == 'hide'
+                assign price_content_type = 'hide'
+                assign custom_price_content = blank
+              endif
+            endif
+          else
+            if settings.sold_out_listing_price_display == 'hide'
+              assign price_content_type = 'hide'
+              assign custom_price_content = blank
+            elsif settings.sold_out_listing_price_display == 'replace'
+              assign price_content_type = 'custom'
+              assign custom_price_content = 'products.inventory.sold_out_price_custom_label' | t
+            endif
+          endif
+        -%}
+
+        {%- if price_content_type == 'price' -%}
+          <p class="product-item__price">
+            {%- if placeholder -%}
+              {{- 9999 | money_without_trailing_zeros | replace: '.00', '' -}}
+            {%- elsif prod.compare_at_price > prod.price -%}
+              <span class="visually-hidden">{{ 'products.product.regular_price' | t }}</span>
+
+              {%- liquid
+                # Extend Shopify's detection for varied compare_at_price
+                assign has_null_compare_at_price = false
+
+                for variant in prod.variants
+                  if variant.compare_at_price == null
+                    assign has_null_compare_at_price = true
+                    break
+                  endif
+                endfor
+              -%}
+
+              {%- unless prod.compare_at_price_varies or has_null_compare_at_price -%}
+                <s class="t-subdued">{{ prod.compare_at_price | money_without_trailing_zeros | replace: '.00', '' }}</s>
+              {%- endunless -%}
+
+              {%- if prod.price_varies or prod.compare_at_price_varies or has_null_compare_at_price -%}
+                {%- assign sale_price = prod.price | money_without_trailing_zeros | replace: '.00', '' -%}
+
+                <span class="sale">
+                  {{- 'products.product.on_sale_from_html' | t: price: sale_price -}}
+                </span>
+              {%- else -%}
+                <span class="sale">{{ prod.price | money_without_trailing_zeros | replace: '.00', '' }}</span>
+              {%- endif -%}
+            {%- else -%}
+              {%- if prod.price_varies -%}
+                {%- assign price = prod.price | money_without_trailing_zeros | replace: '.00', '' -%}
+
+                {{- 'products.product.from_lowest_price_html' | t: lowest_price: price -}}
+              {%- else -%}
+                <span class="product-item__price">{{ prod.price | money_without_trailing_zeros | replace: '.00', '' }}</span>
+              {%- endif -%}
+            {%- endif -%}
+
+            {%- if settings.product_listing_show_discount -%}
+              <span class="displayed-discount fs-body-50">
+                {%- render 'get-display-discount', prod: prod, format: settings.product_listing_discount_format -%}
+              </span>
+            {%- endif -%}
+
+            {%- render 'unit-price', item: prod.selected_or_first_available_variant -%}
+          </p>
+        {%- elsif price_content_type == 'custom' -%}
+          {%- if prod.price_varies and prod.price == 0 -%}
+            {%- assign price = prod.price | money_without_trailing_zeros | replace: '.00', '' -%}
+            {%- assign custom_price_content = 'products.inventory.zero_price_custom_label' | t -%}
+
+            <p class="product-item__price">
+              {%- liquid
+                capture from_lowest_price_html
+                  echo 'products.product.from_lowest_price_html' | t: lowest_price: custom_price_content
+                endcapture
+
+                if prod.compare_at_price > prod.price
+                  echo '<span class="sale">[[flph]]</span>' | replace: '[[flph]]', from_lowest_price_html
+                else
+                  echo from_lowest_price_html
+                endif
+              -%}
+            </p>
+          {%- else -%}
+            {%- if custom_price_content != blank -%}
+              <p class="product-item__price">{{ custom_price_content }}</p>
+            {%- endif -%}
+          {%- endif -%}
+        {%- endif -%}
+
+        {%- if has_hover_swatches or has_hover_chips -%}
+          {%- liquid
+            assign option_string = blank
+
+            if has_hover_swatches
+              assign swatch_string = 'products.product.swatch_count' | t: count: displayed_swatch_count, swatch_name: first_swatchified_option
+              assign option_string = option_string | append: swatch_string
+            endif
+
+            if has_hover_swatches and has_hover_chips
+              assign delimiter_string = 'products.product.swatch_and_chip_delimiter' | t
+              assign option_string = option_string | append: delimiter_string
+            endif
+
+            if has_hover_chips
+              assign chip_string = 'products.product.chip_count' | t: count: displayed_chip_count, chip_name: first_chipped_option
+              assign option_string = option_string | append: chip_string
+            endif
+          %}
+
+          {% comment %} <h5 class="ff-body fs-body-50 product-item__swatch-count">
+            {{- option_string -}}
+          </h5> {% endcomment %}
+        {%- endif -%}
+        {%- comment -%}
+          Explicit request: the swatches sit inside the text block, under the price, so they line up with the
+          card's text wherever the card is used (collection grid, home slider, recommended products).
+        {%- endcomment -%}
+        {%- if has_hover_swatches or has_hover_chips -%}
+          <div class="product-item__variant-info">
+            {%- if has_hover_swatches -%}
+              {%- render 'product-item-swatches',
+                prod: prod,
+                option_name: first_swatchified_option,
+                show_sibling_swatches: show_sibling_swatches,
+                sibling_products: sibling_products,
+                custom_color_key_map: custom_color_key_map,
+                custom_color_value_map: custom_color_value_map
+              -%}
+            {%- endif -%}
+
+            {%- if has_hover_chips -%}
+              {%- render 'product-item-chips', prod: prod, option_name: first_chipped_option -%}
+            {%- endif -%}
+          </div>
+        {%- endif -%}
+      </div>
+
+      {%- liquid
+        if quick_shop_type != 'none' and quick_view_is_beneath
+          echo quick_shop_button
+        endif
+      -%}
+    </div>
+
+    <div class="product-item__hover-container"></div>
+  </div>
+</div>

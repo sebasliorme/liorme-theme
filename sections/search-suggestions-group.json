@@ -1,0 +1,27 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "type": "custom.search_suggestions",
+  "name": "t:groups.search_suggestions_group.name",
+  "sections": {
+    "search-suggestions": {
+      "type": "search-suggestions",
+      "blocks": {
+        "test_1": { "type": "link", "settings": { "title": "Novedades", "url": "/collections/all", "column": "1" } },
+        "test_2": { "type": "link", "settings": { "title": "Anillos", "url": "/collections/all", "column": "1" } },
+        "test_3": { "type": "link", "settings": { "title": "Tendencias", "url": "/collections/all", "column": "2" } },
+        "test_4": { "type": "link", "settings": { "title": "Más vendidos", "url": "/collections/all", "column": "2" } }
+      },
+      "block_order": ["test_1", "test_2", "test_3", "test_4"],
+      "settings": {}
+    }
+  },
+  "order": ["search-suggestions"]
+}

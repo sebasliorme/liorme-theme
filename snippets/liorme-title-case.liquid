@@ -1,0 +1,20 @@
+{%- doc -%}
+  Title Case for a category / menu name: every word starts with a capital and the rest is lowercase
+  ("JOYAS" -> "Joyas", "ver todo" -> "Ver Todo", "cadenas y collares" -> "Cadenas Y Collares").
+  Names must always read Capitalized, whatever way they were typed in the admin (a CSS text-transform
+  cannot lower-case what was typed in capitals, so this does it in the markup; the CSS rule
+  "CATEGORY AND SUB-CATEGORY NAMES" in theme.css is the second lock).
+
+  @param {string} text - The name to format.
+{%- enddoc -%}
+{%- liquid
+  assign title_case_words = text | strip | downcase | split: ' '
+
+  for title_case_word in title_case_words
+    unless forloop.first
+      echo ' '
+    endunless
+
+    echo title_case_word | capitalize
+  endfor
+-%}

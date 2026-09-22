@@ -1,0 +1,39 @@
+{%- doc -%}
+  Renders a placeholder image.
+
+  @param {string} aspect_ratio - The image's aspect ratio.
+  @param {string} [wrapper_class] - A class to apply to the wrapper container.
+  @param {string} [placeholder_name] - The name of the Shopify placeholder SVG to use.
+  @param {string} [natural_fallback_ratio] - A fallback aspect ratio to use if the aspect ratio is 'natural'.
+{%- enddoc -%}
+
+{%- liquid
+  assign placeholder_tag = placeholder_name | default: 'image'
+
+  if aspect_ratio == blank or aspect_ratio == 'natural'
+    if natural_fallback_ratio != blank
+      assign placeholder_aspect_ratio = natural_fallback_ratio
+    else
+      assign placeholder_aspect_ratio = 'square'
+    endif
+  else
+    assign placeholder_aspect_ratio = aspect_ratio
+  endif
+
+  capture placeholder_image_class
+    echo 'placeholder-image placeholder-image--[[par]]' | replace: '[[par]]', placeholder_aspect_ratio
+
+    if wrapper_class
+      echo ' '
+      echo wrapper_class
+    endif
+
+    echo ' image aspect-ratio--[[par]]' | replace: '[[par]]', placeholder_aspect_ratio
+  endcapture
+-%}
+
+<div
+  class="{{ placeholder_image_class }}"
+>
+  {{ placeholder_tag | placeholder_svg_tag: 'placeholder-svg' }}
+</div>

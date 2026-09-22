@@ -1,0 +1,73 @@
+{%- doc -%}
+  Renders the 'Subheading' section block.
+
+  @param {string} subheading_tag - The HTML tag to use.
+  @param {string} subheading - The subheading text to display.
+  @param {string} [subheading_font_family] - The font family to apply.
+  @param {string} subheading_font_class - The font class to apply.
+  @param {boolean} is_section_introduction - Whether the content is being rendered as part of a section introduction.
+  @param {string} [class_prefix] - A class prefix used for creating a scoped class.
+  @param {string} [custom_class] - A custom class to apply.
+  @param {object} [shopify_attributes] - The block's shopify attributes.
+{%- enddoc -%}
+
+{%- unless subheading == blank -%}
+  {%- liquid
+    assign is_section_introduction = is_section_introduction | default: false, allow_false: true
+    assign subheading_font_family = subheading_font_family | default: 'ff-subheading'
+
+    if font_size_var_desktop != blank
+      assign has_font_size_var_desktop = true
+    else
+      assign has_font_size_var_desktop = false
+    endif
+
+    if font_size_var_mobile != blank
+      assign has_font_size_var_mobile = true
+    else
+      assign has_font_size_var_mobile = false
+    endif
+
+    capture class
+      if is_section_introduction
+        echo 'section-introduction__subheading'
+      else
+        echo 'section-blocks__subheading'
+      endif
+
+      echo ' '
+      echo subheading_font_family
+      echo ' '
+      echo subheading_font_class
+
+      if class_prefix != blank
+        echo ' [[cp]]-subheading' | replace: '[[cp]]', class_prefix
+      endif
+
+      if custom_class != blank
+        echo ' '
+        echo custom_class
+      endif
+    endcapture
+  -%}
+
+  {%- # whitespace: normal -%}
+  {%- capture style -%}
+    {% if font_size_var_desktop != blank -%}
+      --subheading-size-desktop: var({{ font_size_var_desktop }});
+    {%- endif %}
+    {% if font_size_var_mobile != blank -%}
+      --subheading-size-mobile: var({{ font_size_var_mobile }});
+    {%- endif %}
+  {%- endcapture -%}
+
+  <{{ subheading_tag }}
+    class="{{ class }}"
+    data-has-font-size-var-desktop="{{ has_font_size_var_desktop }}"
+    data-has-font-size-var-mobile="{{ has_font_size_var_mobile }}"
+    style="{{ style }}"
+    {{ shopify_attributes }}
+  >
+    {{- subheading -}}
+  </{{ subheading_tag }}>
+{%- endunless -%}

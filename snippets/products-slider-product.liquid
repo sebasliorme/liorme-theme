@@ -1,0 +1,176 @@
+{% doc %}
+  @param {object} local_settings
+  @param {boolean} is_slide - Whether to internally apply the `swiper-slide` class and attribute.
+  @param {object} [shopify_attributes]
+{% enddoc %}
+
+{%- liquid
+  assign is_slide = is_slide | default: true, allow_false: true
+
+  if local_settings.custom_product_image != blank
+    assign product_image = local_settings.custom_product_image
+  else
+    assign product_image = local_settings.product.featured_media
+  endif
+
+  assign image_sizes = '(min-width: 720px) 400px, 140px'
+  assign alt_text = local_settings.product.title | escape
+
+  # Quick add takes precedence over quick view
+  # Use quick view for products with variants and sold out products
+  if settings.enable_quick_add and local_settings.product.available
+    if local_settings.product.has_only_default_variant == false
+      assign quick_shop_type = 'quick-view'
+      assign quick_shop_button_text = 'products.product.choose_options' | t
+    else
+      assign quick_shop_type = 'quick-add'
+      assign quick_shop_button_text = 'products.product.add_to_cart' | t
+    endif
+  elsif settings.enable_quick_view
+    assign quick_shop_type = 'quick-view'
+    assign quick_shop_button_text = 'products.product.quick_view' | t
+  else
+    assign quick_shop_type = 'none'
+  endif
+-%}
+
+{%- if quick_shop_type != 'none' -%}
+  {%- liquid
+    assign min_value = local_settings.product.variants[0].quantity_rule.min | default: 1
+
+    capture quick_shop_button_attributes
+      echo 'data-quick-shop-trigger="[[qst]]"' | replace: '[[qst]]', quick_shop_type
+      echo 'data-quantity-minimum="[[value]]"' | replace: '[[value]]', min_value
+
+      if quick_shop_type == 'quick-add'
+        echo 'data-product-id="[[pid]]"' | replace: '[[pid]]', local_settings.product.variants[0].id
+      else
+        echo 'data-product-url="[[pu]]"' | replace: '[[pu]]', local_settings.product.url
+      endif
+    endcapture
+  -%}
+
+  {%- capture quick_shop_button -%}
+    <button
+      class="products-slider-product__button btn btn--base btn--x-small"
+      {{ quick_shop_button_attributes }}
+      {% if local_settings.product == blank -%}
+        tabindex="-1"
+      {%- endif %}
+    >
+      <span>{{ quick_shop_button_text }}</span>
+
+      <div class="btn__loading-wrap">
+        <div class="btn__loading-bar"></div>
+      </div>
+    </button>
+  {%- endcapture -%}
+{%- endif -%}
+
+{%- liquid
+  # Wrap add to cart buttons in a product form for no-js, or if purchase confirmation and quick cart are disabled
+  if quick_shop_type == 'quick-add'
+    capture product_form_tags
+      echo '<input class="products-slider-product__product-form-variant-input" name="id" type="hidden" value="[[vi]]">' | replace: '[[vi]]', local_settings.product.variants[0].id
+    endcapture
+
+    capture quick_shop_button
+      form 'product', local_settings.product, class: 'product-item__product-form'
+        echo product_form_tags
+        echo quick_shop_button
+      endform
+    endcapture
+  endif
+-%}
+
+<div
+  class="products-slider-product {%- if is_slide %} swiper-slide {%- endif %}"
+  {%- if is_slide %}
+    js-swiper-slide
+  {% endif -%}
+  {{ shopify_attributes }}
+>
+  <div class="products-slider-product__inner">
+    <div class="products-slider-product__meta fs-body-75">
+      <div class="products-slider-product__text ff-body">
+        <h4 class="products-slider-product__product-title">
+          {%- if local_settings.product == blank -%}
+            {{- 'homepage.onboarding.product_title' | t -}}
+          {%- else -%}
+            <a href="{{ local_settings.product.url }}">{{ local_settings.product.title }}</a>
+          {%- endif -%}
+        </h4>
+
+        {%- if local_settings.subtitle != blank -%}
+          <h5 class="products-slider-product__product-subtitle ff-body fs-body-50">
+            {{- local_settings.subtitle -}}
+          </h5>
+        {%- endif -%}
+
+        <h5 class="products-slider-product__product-vendor ff-body fs-body-50">
+          {%- if local_settings.product == blank -%}
+            {{- 'products.product.vendor' | t -}}
+          {%- elsif local_settings.product.vendor != blank -%}
+            {{- local_settings.product.vendor | link_to_vendor -}}
+          {%- endif -%}
+        </h5>
+
+        <span class="products-slider-product__product-price-wrapper fs-body-100">
+          {% render 'products-slider-product-price', block_settings: local_settings %}
+        </span>
+      </div>
+
+      {% if quick_shop_type != 'none' %}
+        {{ quick_shop_button }}
+      {% else %}
+        <a
+          class="products-slider-product__button btn btn--base btn--x-small"
+          href="{{ local_settings.product.url }}"
+          aria-label="{{ alt_text }}"
+        >
+          <span class="products-slider-product__button-text">
+            {{ 'blocks.products_slider.view_product' | t }}
+          </span>
+        </a>
+      {% endif %}
+    </div>
+
+    <div class="products-slider-product__image-wrapper">
+      {%- if product_image != blank -%}
+        {% liquid
+          if settings.product_listing_media_fit == 'cover'
+            assign image_focal_point = 'image_presentation'
+          endif
+        %}
+
+        <a
+          class="products-slider-product__image-link"
+          {% if local_settings.product -%}
+            href="{{ local_settings.product.url }}"
+            aria-label="{{ alt_text }}"
+          {%- endif -%}
+          tabindex="-1"
+        >
+          {%- render 'image',
+            image: product_image,
+            aspect_ratio: settings.product_listing_aspect_ratio,
+            object_fit: settings.product_listing_media_fit,
+            focal_point: image_focal_point,
+            wrapper_class: 'products-slider-product__image',
+            sizes: image_sizes,
+            fallback_alt: alt_text,
+            animate: true
+          -%}
+        </a>
+      {%- else -%}
+        <div class="products-slider-product__image-link">
+          {%- render 'placeholder-image',
+            wrapper_class: 'products-slider-product__image',
+            aspect_ratio: settings.product_listing_aspect_ratio,
+            placeholder_name: 'product-1'
+          -%}
+        </div>
+      {%- endif -%}
+    </div>
+  </div>
+</div>

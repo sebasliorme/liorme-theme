@@ -1,0 +1,295 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "product-grid-editorial": {
+      "type": "collection-editorial-grid",
+      "blocks": {
+        "g1": {
+          "type": "mosaic_slide",
+          "settings": {
+            "show_in_collections": [],
+            "column_span": 1,
+            "row_span": 1,
+            "row_start": 2,
+            "column_start": 0,
+            "focal_point": "image_presentation",
+            "focal_x": 50,
+            "focal_y": 50,
+            "mobile_focal_point": "image_presentation",
+            "mobile_focal_x": 50,
+            "mobile_focal_y": 50,
+            "background_color": "",
+            "label": "New in",
+            "label_color": "dark",
+            "heading": "",
+            "text": "",
+            "button_label": "",
+            "link": "",
+            "text_position": "top_left",
+            "text_color": "white",
+            "image": "shopify://shop_images/card_2_DT.avif"
+          }
+        },
+        "g2": {
+          "type": "mosaic_slide",
+          "settings": {
+            "show_in_collections": [],
+            "column_span": 1,
+            "row_span": 1,
+            "row_start": 2,
+            "column_start": 0,
+            "focal_point": "image_presentation",
+            "focal_x": 50,
+            "focal_y": 50,
+            "mobile_focal_point": "image_presentation",
+            "mobile_focal_x": 50,
+            "mobile_focal_y": 50,
+            "background_color": "",
+            "label": "",
+            "label_color": "dark",
+            "heading": "",
+            "text": "",
+            "button_label": "",
+            "link": "",
+            "text_position": "top_left",
+            "text_color": "white",
+            "image": "shopify://shop_images/card_3_DT.webp"
+          }
+        },
+        "g3": {
+          "type": "mosaic_slide",
+          "settings": {
+            "show_in_collections": [],
+            "column_span": 2,
+            "row_span": 2,
+            "row_start": 2,
+            "column_start": 0,
+            "focal_point": "image_presentation",
+            "focal_x": 50,
+            "focal_y": 50,
+            "mobile_focal_point": "image_presentation",
+            "mobile_focal_x": 50,
+            "mobile_focal_y": 50,
+            "background_color": "",
+            "label": "From the runway",
+            "label_color": "dark",
+            "heading": "Fw26 collection",
+            "text": "",
+            "button_label": "Shop",
+            "link": "/collections/all",
+            "text_position": "top_left",
+            "text_color": "white",
+            "image": "shopify://shop_images/card_1_DT.avif"
+          }
+        },
+        "g4": {
+          "type": "mosaic_slide",
+          "settings": {
+            "show_in_collections": [],
+            "column_span": 1,
+            "row_span": 1,
+            "row_start": 4,
+            "column_start": 0,
+            "focal_point": "image_presentation",
+            "focal_x": 50,
+            "focal_y": 50,
+            "mobile_focal_point": "image_presentation",
+            "mobile_focal_x": 50,
+            "mobile_focal_y": 50,
+            "background_color": "",
+            "label": "From the runway",
+            "label_color": "dark",
+            "heading": "",
+            "text": "",
+            "button_label": "",
+            "link": "/collections/all",
+            "text_position": "top_left",
+            "text_color": "white",
+            "image": "shopify://shop_images/bags.avif"
+          }
+        },
+        "g5": {
+          "type": "mosaic_slide",
+          "settings": {
+            "show_in_collections": [],
+            "column_span": 1,
+            "row_span": 1,
+            "row_start": 4,
+            "column_start": 0,
+            "focal_point": "image_presentation",
+            "focal_x": 50,
+            "focal_y": 50,
+            "mobile_focal_point": "image_presentation",
+            "mobile_focal_x": 50,
+            "mobile_focal_y": 50,
+            "background_color": "",
+            "label": "From the runway",
+            "label_color": "dark",
+            "heading": "",
+            "text": "",
+            "button_label": "",
+            "link": "/collections/all",
+            "text_position": "top_left",
+            "text_color": "white",
+            "image": "shopify://shop_images/dresses.avif"
+          }
+        },
+        "g6": {
+          "type": "mosaic_slide",
+          "settings": {
+            "show_in_collections": [],
+            "column_span": 2,
+            "row_span": 1,
+            "row_start": 4,
+            "column_start": 0,
+            "focal_point": "image_presentation",
+            "focal_x": 50,
+            "focal_y": 50,
+            "mobile_focal_point": "image_presentation",
+            "mobile_focal_x": 50,
+            "mobile_focal_y": 50,
+            "background_color": "#1d0805",
+            "label": "",
+            "label_color": "dark",
+            "heading": "Eyewear",
+            "text": "Bold shapes, tinted lenses.",
+            "button_label": "Shop",
+            "link": "/collections/all",
+            "text_position": "center_left",
+            "text_color": "white"
+          }
+        }
+      },
+      "block_order": [
+        "g1",
+        "g2",
+        "g3",
+        "g4",
+        "g5",
+        "g6"
+      ],
+      "custom_css": [
+        ".product-item__quick-view--hoverless {display: none !important;}"
+      ],
+      "settings": {
+        "enable_custom_subnav": true,
+        "subnav_collections": [
+          "liorme",
+          "anillos",
+          "aretes",
+          "dijes",
+          "pulseras",
+          "cadenas-y-collares-1"
+        ],
+        "columns_desktop": "4",
+        "columns_mobile": "2",
+        "rows": "4",
+        "card_gap": 1,
+        "card_gap_mobile": 6,
+        "product_aspect_ratio": "portrait_alt",
+        "enable_filter_bar_border": true,
+        "filter_bar_border_color": "#1111112e",
+        "enable_custom_section_padding": true,
+        "section_padding_left": 0,
+        "section_padding_right": 0,
+        "section_padding_left_mobile": 0,
+        "section_padding_right_mobile": 0,
+        "show_item_count": true,
+        "show_sort": true,
+        "show_filters": true,
+        "enable_sticky_filter_bar": false,
+        "desktop_filter_location": "filter_bar",
+        "collapse_filter_bar": true,
+        "enable_sticky_filter_sidebar": true,
+        "collapse_filter_groups_desktop": true,
+        "collapse_filter_groups_mobile": true,
+        "show_swatch_filters": true,
+        "show_chip_filters": true,
+        "chip_layout": "3col",
+        "pagination": "infinite",
+        "color_scheme": "scheme_3",
+        "section_width": "full-width-padded",
+        "section_padding_top": 0,
+        "section_padding_bottom": 40,
+        "divider_style": "none",
+        "enable_full_width_divider": true,
+        "enable_animation": true,
+        "use_collection_slides": false,
+        "show_collection_slide_text": false,
+        "mosaic_tile_ratio": "1.5"
+      }
+    },
+    "banner_eyewear": {
+      "type": "split-banner",
+      "blocks": {
+        "t_foto": {
+          "type": "tile",
+          "settings": {
+            "image": "shopify://shop_images/eyewear_DT.avif",
+            "image_mobile": "",
+            "focal_point": "image_presentation",
+            "focal_x": 50,
+            "focal_y": 50,
+            "mobile_focal_point": "image_presentation",
+            "mobile_focal_x": 50,
+            "mobile_focal_y": 50,
+            "background_color": "",
+            "label": "",
+            "label_color": "dark",
+            "heading": "",
+            "text": "",
+            "button_label": "",
+            "link": "/collections/all",
+            "text_position": "top_left",
+            "text_color": "white"
+          }
+        },
+        "t_panel": {
+          "type": "tile",
+          "settings": {
+            "image": "",
+            "image_mobile": "",
+            "focal_point": "image_presentation",
+            "focal_x": 50,
+            "focal_y": 50,
+            "mobile_focal_point": "image_presentation",
+            "mobile_focal_x": 50,
+            "mobile_focal_y": 50,
+            "background_color": "#1a0502",
+            "label": "",
+            "label_color": "dark",
+            "heading": "Eyewear",
+            "text": "New volumes and refined transparencies",
+            "button_label": "Shop",
+            "link": "/collections/all",
+            "text_position": "center_left",
+            "text_color": "white"
+          }
+        }
+      },
+      "block_order": [
+        "t_foto",
+        "t_panel"
+      ],
+      "settings": {
+        "aspect_ratio": "square",
+        "gap": "0",
+        "padding_top": 0,
+        "padding_bottom": 0,
+        "show_in_collections": []
+      }
+    }
+  },
+  "order": [
+    "product-grid-editorial",
+    "banner_eyewear"
+  ]
+}

@@ -1,0 +1,93 @@
+{%- doc -%}
+  Renders the standard section blocks (eg. 'accent', 'heading', text', 'image', etc.).
+
+  @param {object} blocks - The blocks to be rendered.
+  @param {string} block_class_prefix - A class prefix used for creating a custom class for each block.
+  @param {string} align - The horizontal alignment of the blocks.
+  @param {string} [align_mobile] - The horizontal alignment of the blocks on mobile.
+  @param {string} [image_break_to_mobile_at] - A number (represented as a string) that notes the screen width pixel value where we should break to mobile for the image block.
+  @param {string} [button_break_to_mobile_at] - A number (represented as a string) that notes the screen width pixel value where we should break to mobile for the button block.
+{%- enddoc -%}
+
+{%- for block in blocks -%}
+  {%- case block.type -%}
+    {%- when 'accent' -%}
+      {%- render 'section-block-accent', accent: block.settings.accent, class_prefix: block_class_prefix -%}
+
+    {%- when 'heading' -%}
+      {%- render 'section-block-heading',
+        heading_tag: block.settings.heading_tag,
+        heading: block.settings.title,
+        heading_font_class: block.settings.heading_font_class,
+        class_prefix: block_class_prefix
+      -%}
+
+    {%- when 'subheading' -%}
+      {%- render 'section-block-subheading',
+        subheading_tag: block.settings.subheading_tag,
+        subheading: block.settings.subheading,
+        subheading_font_class: block.settings.subheading_font_class,
+        class_prefix: block_class_prefix
+      -%}
+
+    {%- when 'text' -%}
+      {%- render 'section-block-text',
+        text: block.settings.text,
+        text_font_class: block.settings.text_font_class,
+        class_prefix: block_class_prefix
+      -%}
+
+    {%- when 'image' -%}
+      {%- liquid
+        assign image_wrapper_class = 'section-blocks__image [[bcp]]-image' | replace: '[[bcp]]', block_class_prefix
+        assign image_break_to_mobile_at = image_break_to_mobile_at | default: '720'
+      -%}
+
+      {%- render 'image-block',
+        image: block.settings.image,
+        width: block.settings.image_size,
+        mobile_width: block.settings.image_size_mobile,
+        break_to_mobile_at: image_break_to_mobile_at,
+        align: align,
+        align_mobile: align_mobile,
+        wrapper_class: image_wrapper_class,
+        enable_corner_rounding: block.settings.enable_corner_rounding,
+        shopify_attributes: block.shopify_attributes
+      -%}
+
+    {%- when 'button' -%}
+      {%- assign button_wrapper_class = 'section-blocks__button [[bcp]]-button'
+        | replace: '[[bcp]]', block_class_prefix
+      -%}
+
+      {%- render 'button-block',
+        link: block.settings.link,
+        label: block.settings.link_text,
+        button_style: block.settings.button_style,
+        button_alignment: align,
+        button_alignment_mobile: align_mobile,
+        break_to_mobile_at: button_break_to_mobile_at,
+        buttons_can_inline: true,
+        forloop: forloop,
+        wrapper_class: button_wrapper_class
+      -%}
+
+    {%- when 'play-button' -%}
+      {%- assign play_button_wrapper_class = 'section-blocks__video-button [[bcp]]-play-button'
+        | replace: '[[bcp]]', block_class_prefix
+      -%}
+
+      {%- render 'play-button-block',
+        block: block,
+        button_alignment: align,
+        button_alignment_mobile: align_mobile,
+        wrapper_class: play_button_wrapper_class
+      -%}
+
+    {%- when 'border' -%}
+      {%- render 'border-block' -%}
+
+    {%- when 'spacer' -%}
+      {%- render 'spacer-block', space: block.settings.space -%}
+  {%- endcase -%}
+{%- endfor -%}

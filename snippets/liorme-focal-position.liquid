@@ -1,0 +1,29 @@
+{%- doc -%}
+  CSS object-position for a photo, from a "focal point" choice.
+
+  @param {string} mode - image_presentation (the focal point saved on the image itself, centre if it has none), center, top, bottom, left, right or custom.
+  @param {object} [image] - The image, for image_presentation.
+  @param {number} [x] - Horizontal position in %, for custom (0 = left edge, 100 = right edge).
+  @param {number} [y] - Vertical position in %, for custom (0 = top edge, 100 = bottom edge).
+{%- enddoc -%}
+{%- liquid
+  case mode
+    when 'top'
+      echo 'center top'
+    when 'bottom'
+      echo 'center bottom'
+    when 'left'
+      echo 'left center'
+    when 'right'
+      echo 'right center'
+    when 'custom'
+      echo x | default: 50
+      echo '% '
+      echo y | default: 50
+      echo '%'
+    when 'image_presentation'
+      echo image.presentation.focal_point | default: 'center'
+    else
+      echo 'center'
+  endcase
+-%}
