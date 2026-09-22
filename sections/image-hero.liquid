@@ -154,6 +154,35 @@
         </div>
       </div>
     </div>
+
+    {%- comment -%}
+      Explicit request (2026-09-22): like the first screen of the Miu Miu home, a "Search" line near the bottom (it
+      opens the header's own quick search, or goes to the search page without it) and "Scroll to explore" under it.
+      Toggle: "Buscador y Scroll to explore" in this section.
+    {%- endcomment -%}
+    {%- if section.settings.show_search_hint -%}
+      <div class="image-hero__explore">
+        <a class="image-hero__search" href="{{ routes.search_url }}" data-hero-search>
+          <span class="image-hero__search-label">Search</span>
+          {%- render 'icon', icon: 'header-search' -%}
+        </a>
+        <div class="image-hero__scroll-hint"><span>Scroll to explore</span></div>
+      </div>
+      <script>
+        (function () {
+          if (window.__heroSearchBound) return;
+          window.__heroSearchBound = true;
+          document.addEventListener('click', function (e) {
+            var link = e.target.closest && e.target.closest('[data-hero-search]');
+            if (!link) return;
+            var toggle = document.querySelector('header [data-search]');
+            if (!toggle) return;
+            e.preventDefault();
+            toggle.click();
+          });
+        })();
+      </script>
+    {%- endif -%}
   </div>
 </div>
 
@@ -169,6 +198,12 @@
     ]
   },
   "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_search_hint",
+      "label": "Buscador y \"Scroll to explore\" abajo",
+      "default": false
+    },
     {
       "type": "radio",
       "id": "image_aspect",

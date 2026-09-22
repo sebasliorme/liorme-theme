@@ -53,8 +53,8 @@
         "mobile_focal_x": 88,
         "mobile_focal_y": 50,
         "media_link": "",
-        "text_position": "center_flex-end",
-        "text_position_mobile": "center_flex-end",
+        "text_position": "center_center",
+        "text_position_mobile": "center_center",
         "overlay_color_scheme": "",
         "overlay_opacity": 0,
         "enable_transparent_header": true,
@@ -67,7 +67,8 @@
         "section_padding_bottom": 0,
         "divider_style": "none",
         "enable_full_width_divider": false,
-        "enable_animation": true
+        "enable_animation": true,
+        "show_search_hint": true
       }
     },
     "featured_collection_slider_YAGeak": {
@@ -206,7 +207,7 @@
             "text_font_class": "fs-body-100",
             "link": "",
             "link_text": "Shop",
-            "button_style": "btn--secondary"
+            "button_style": "btn--callout"
           }
         },
         "image_LVUTXx": {
@@ -221,8 +222,8 @@
             "text": "<p>New expression of iconic volumes</p>",
             "text_font_class": "fs-body-100",
             "link": "",
-            "link_text": "shop",
-            "button_style": "btn--secondary"
+            "link_text": "Shop",
+            "button_style": "btn--callout"
           }
         }
       },
