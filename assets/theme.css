@@ -28104,3 +28104,244 @@ textarea.input,
 [data-product-option] .product__label [data-selected-value-for-option] {
   font-size: 11px;
 }
+
+/* Explicit request (2026-09-22, "aplicar tal cual"): the product page measured against the Miu Miu reference
+   (miumiu.com/us/en/p/leather-backpack/5BZ043_2CRW_F0046_V_OOO) at 1440px and 390px, and every difference
+   copied: a wider details column, the title as typed (no Title Case, no tracking), uppercase option labels with
+   the value at the same size in black, 24px colour swatches 40px apart, the Customize / Add pair at the
+   reference's 275:301 split, square photos on desktop, the header's 32px margins and 48px icon pitch, and on
+   mobile a 14px title, a Customize pill over the photo and a full-width buy button. Appended last and
+   specific enough to win over the earlier product rules and liorme-typography's !important sizes. */
+
+/* ---- Title, price, option labels (every width) ---- */
+html body .product .product__title{
+  text-transform:none !important;
+  letter-spacing:normal !important;
+}
+html body .product [data-product-option] .product__label{
+  font-size:14px !important;
+  line-height:21px;
+  font-weight:500;
+  letter-spacing:normal;
+  text-transform:uppercase;
+  color:#191B1C;
+}
+html body .product [data-product-option] .product__label [data-selected-value-for-option],
+html body .product [data-product-option] .product__label .t-opacity-70{
+  margin-left:4px;
+  font-size:14px !important;
+  line-height:20px;
+  font-weight:400;
+  letter-spacing:normal;
+  text-transform:none;
+  color:#191B1C;
+  opacity:1;
+}
+
+/* ---- Colour swatches: a 24px colour in a 40px button, no gap between buttons, a thin ring 2px out when
+   selected ---- */
+html body .product .product__option--swatches .product__color-swatches .product__color-swatch{
+  width:40px;
+  height:40px;
+  margin:4px 0 0;
+  padding:8px;
+  box-shadow:none !important;
+}
+html body .product .product__option--swatches .product__color-swatches .product__color-swatch::before{
+  top:6px;
+  right:6px;
+  bottom:6px;
+  left:6px;
+  box-shadow:none !important;
+}
+html body .product .product__option--swatches .product__color-swatches .product__color-swatch.selected::before{
+  box-shadow:0 0 0 1px #191B1C inset !important;
+}
+html body .product .product__option--swatches .product__color-swatches{
+  margin-left:-6px;
+}
+
+/* ---- Customize + Add: 16px apart, 275:301, both 6px corners, no tracking. product-customizer.liquid sets
+   this row as a 1fr 1fr grid with !important, so these carry it too. ---- */
+html body .product .product-form__submit-row--split{
+  grid-template-columns:275fr 301fr !important;
+  gap:16px !important;
+}
+html body .product .product-form__submit-row--split > .product-form__customize-trigger.btn,
+html body .product .product-form__submit-row--split > .product-form__cart-submit.btn{
+  border-radius:6px !important;
+  letter-spacing:normal !important;
+  font-size:14px !important;
+}
+html body .product .product-form__customize-trigger .product-form__customize-trigger-thumb{
+  left:8px;
+  top:8px;
+}
+html body .product .product-form__cart-submit.btn [data-add-to-cart-text]{
+  letter-spacing:normal;
+}
+
+/* ---- Find in store / Product details / Shipping: 14px on 16px lines, 40px apart, 32px under the buttons ---- */
+html body .product .info-links{
+  margin-top:4px;
+}
+html body .product .info-links__list li{
+  line-height:16px;
+}
+html body .product .info-links__link{
+  line-height:16px;
+  vertical-align:top;
+}
+html body .product .info-links__list li + li{
+  margin-top:24px;
+}
+
+@media (min-width: 960px){
+  /* Details column: 64px from the photo and from the window edge at 1440 (the reference's 592px column) */
+  .product[data-gallery-width="half"] .product__primary-right{
+    padding-left:clamp(24px, 4.445vw, 96px);
+    padding-right:clamp(24px, 4.445vw, 96px);
+  }
+  html body .product .product__title{
+    line-height:28px !important;
+  }
+  /* Square photos (as wide as the gallery column), 4px apart */
+  .product[data-full-height-photos="true"] .product__media-container.above-mobile .product__media-item{
+    height:auto;
+    aspect-ratio:1 / 1;
+  }
+  .product[data-full-height-photos="true"] .product__media-container.above-mobile .product__media{
+    gap:4px;
+  }
+
+  /* Vertical rhythm of the details, from the reference: title, 8px, price, 24px, rule, 25px, first option;
+     its label, 8px, the swatches, 16px, rule, 25px, next option; 33px to the buttons; 32px to the links */
+  html body .product .product__block--product-header-inner .product__title{
+    margin-bottom:0;
+  }
+  html body .product .product__price-and-ratings{
+    margin-top:8px;
+  }
+  html body .product .product__block--product-header.product__block--with-divider{
+    padding-bottom:24px;
+    margin-bottom:24px;
+  }
+  html body .product .product__variants-wrapper > .product__option--swatches{
+    margin-bottom:24px;
+  }
+  html body .product .product__variants-wrapper{
+    margin-bottom:0;
+  }
+  html body .product .product-form .product-form__controls-group--submit{
+    margin-top:33px;
+  }
+
+  /* Header: 32px side margins, 72px tall, 24px icons 48px apart, each label 8px from its icon, untracked */
+  header.header{
+    padding-top:15px !important;
+    padding-left:32px !important;
+    padding-right:32px !important;
+  }
+  header.header .header__row-desktop .header__icon-touch-label{
+    margin-left:0;
+    letter-spacing:normal;
+  }
+  header.header .header__row-segment-desktop.left{
+    gap:14px !important;
+  }
+  header.header .header__row-segment-desktop.right{
+    gap:6px !important;
+  }
+  header.header .header__row-desktop .header__contact-link{
+    margin-right:8px !important;
+  }
+}
+
+/* ---- Mobile ---- */
+@media (max-width: 959px){
+  /* Header: 56px tall, 24px icons 40px apart, 16px from the edges (not on the home page, whose large logo
+     sets its own height) */
+  body:not(.template-index) header.header .header__row-mobile{
+    height:55px;
+    min-height:55px;
+  }
+  header.header .header__row-mobile .header__icon-touch .icon,
+  header.header .header__row-mobile .header__icon-touch .icon svg{
+    width:24px;
+    height:24px;
+  }
+  header.header .header__row-mobile .header__icon-touch--search{
+    margin-left:-3px;
+  }
+  html body .product[data-gallery-snap-mobile="true"] .product__title{
+    font-size:14px !important;
+    line-height:16px !important;
+    padding-right:36px;
+  }
+  /* The colours on the price row, at the right (the reference's two 40px buttons end 8px past the text edge) */
+  .product[data-gallery-snap-mobile="true"] .product__variants-wrapper .product__option--swatches{
+    top:27px;
+    right:-8px;
+  }
+  html body .product[data-gallery-snap-mobile="true"] .product__variants-wrapper .product__option--swatches .product__color-swatches{
+    margin-left:0;
+  }
+  html body .product[data-gallery-snap-mobile="true"] .product__option--swatches .product__color-swatches .product__color-swatch{
+    margin:0;
+  }
+  /* Add to bag: the whole width, 14px semibold like the reference */
+  html body .product[data-gallery-snap-mobile="true"] .product-form__submit-row--split{
+    grid-template-columns:1fr !important;
+  }
+  html body .product[data-gallery-snap-mobile="true"] .product-form__submit-row--split > .product-form__cart-submit.btn{
+    font-size:14px !important;
+  }
+  .product[data-gallery-snap-mobile="true"].pdp-needs-size .product-form .product-form__cart-submit [data-add-to-cart-text]::after{
+    font-size:14px;
+    font-weight:600;
+    letter-spacing:normal;
+  }
+  /* Customize: a white pill over the bottom-right corner of the photo, 16px from the edge and 17px above the
+     panel. It is placed from the panel's content box (.product__meta, 27px under the panel's top edge). */
+  html body .product[data-gallery-snap-mobile="true"] .product-form__submit-row--split > .product-form__customize-trigger.btn{
+    position:absolute !important;
+    top:-84px;
+    right:0;
+    left:auto;
+    z-index:2;
+    width:auto !important;
+    height:40px;
+    min-height:0 !important;
+    padding:4px 12px 4px 44px !important;
+    border:0 !important;
+    border-radius:4px !important;
+    background:#FFFFFF !important;
+    font-size:14px !important;
+    line-height:15px;
+    font-weight:600 !important;
+  }
+  html body .product[data-gallery-snap-mobile="true"] .product-form__customize-trigger .product-form__customize-trigger-thumb{
+    left:4px;
+    top:4px;
+    width:32px;
+    height:32px;
+    border-radius:3px;
+  }
+  html body .product[data-gallery-snap-mobile="true"] .product-form__customize-trigger .product-form__customize-trigger-track img{
+    width:32px !important;
+    height:32px !important;
+  }
+  /* Find in store / Product details / Shipping: 12px, 47px apart */
+  html body .product .info-links__link{
+    font-size:12px !important;
+    line-height:15px;
+    font-weight:400 !important;
+    padding-bottom:2px;
+  }
+  html body .product .info-links__list li{
+    line-height:17px;
+  }
+  html body .product .info-links__list li + li{
+    margin-top:30px;
+  }
+}
