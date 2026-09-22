@@ -1,0 +1,76 @@
+{%- doc -%}
+  Explicit request (2026-09-22, menu analysed against the Miu Miu reference): the links at the foot of the menu's first
+  column, each with a small icon, like the reference's Wishlist / Login or create an account / language / Contact us.
+  Replaces the photo carousel that sat there. Rendered as a plain <li> inside .drawer-menu__primary-links (see
+  drawer-menu.liquid) so on phones it slides away with the categories when a sub-menu opens.
+{%- enddoc -%}
+<li class="drawer-menu__item drawer-menu__item--utility">
+  <ul class="drawer-menu__utility">
+    <li class="drawer-menu__utility-item">
+      <button type="button" class="drawer-menu__utility-link" data-menu-wishlist>
+        {%- render 'icon', icon: 'header-wishlist' -%}
+        <span>Wishlist</span>
+      </button>
+    </li>
+
+    {%- if shop.customer_accounts_enabled -%}
+      <li class="drawer-menu__utility-item">
+        <a class="drawer-menu__utility-link" href="{{ routes.account_url }}">
+          {%- render 'icon', icon: 'header-account' -%}
+          <span>{% if customer %}My account{% else %}Login or create an account{% endif %}</span>
+        </a>
+      </li>
+    {%- endif -%}
+
+    {%- if localization.available_languages.size > 1 -%}
+      <li class="drawer-menu__utility-item">
+        <details class="drawer-menu__utility-language">
+          <summary class="drawer-menu__utility-link">
+            {%- render 'icon', icon: 'globe' -%}
+            <span>{{ localization.language.endonym_name | capitalize }}</span>
+          </summary>
+          <div class="drawer-menu__utility-languages">
+            {%- for language in localization.available_languages -%}
+              {%- unless language.iso_code == localization.language.iso_code -%}
+                {%- form 'localization', class: 'drawer-menu__utility-language-form' -%}
+                  <input type="hidden" name="locale_code" value="{{ language.iso_code }}">
+                  <button type="submit" class="drawer-menu__utility-language-option">
+                    {{- language.endonym_name | capitalize -}}
+                  </button>
+                {%- endform -%}
+              {%- endunless -%}
+            {%- endfor -%}
+          </div>
+        </details>
+      </li>
+    {%- endif -%}
+
+    <li class="drawer-menu__utility-item">
+      <a class="drawer-menu__utility-link" href="{{ pages.contact.url | default: '/pages/contact' }}">
+        <span class="icon drawer-menu__utility-phone" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8.3 3.5H5.6c-.8 0-1.5.7-1.4 1.5.5 7.7 6.7 13.9 14.4 14.4.8.1 1.5-.6 1.5-1.4v-2.7c0-.5-.4-1-.9-1.1l-3.2-.7c-.4-.1-.8 0-1.1.3l-1.4 1.4c-2.3-1.1-4.2-3-5.3-5.3l1.4-1.4c.3-.3.4-.7.3-1.1l-.7-3.2c-.1-.4-.5-.7-.9-.7Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span>Contact us</span>
+      </a>
+    </li>
+  </ul>
+</li>
+
+<script>
+  (function () {
+    if (window.__menuWishlistBound) return;
+    window.__menuWishlistBound = true;
+    // Wishlist: close the menu, then open the header's own wishlist (the same button the header shows)
+    document.addEventListener('click', function (e) {
+      var item = e.target.closest && e.target.closest('[data-menu-wishlist]');
+      if (!item) return;
+      e.preventDefault();
+      var menuButton = document.querySelector('header [data-js-menu-button]');
+      var wishlist = document.querySelector('header [data-js-wishlist-button]');
+      if (menuButton && document.body.getAttribute('mobile-menu-open') === 'true') menuButton.click();
+      if (wishlist) setTimeout(function () { wishlist.click(); }, 60);
+    });
+  })();
+</script>

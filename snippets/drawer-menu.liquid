@@ -101,11 +101,14 @@
                   cover its own height. Being a child of the same <ul> makes
                   the carousel inherit that exact same slide for free.
                 {%- endcomment -%}
-                {%- if promo_carousel_blocks != blank -%}
-                  <li class="drawer-menu__item drawer-menu__item--promo-carousel" aria-hidden="true">
-                    {%- render 'drawer-menu-promo-carousel', blocks: promo_carousel_blocks -%}
-                  </li>
-                {%- endif -%}
+                {%- comment -%}
+                  Explicit request (2026-09-22): the photo carousel that sat here is replaced by the reference's
+                  utility links (Wishlist, account, language, Contact us). To bring the carousel back, render
+                  'drawer-menu-promo-carousel', blocks: promo_carousel_blocks inside a
+                  <li class="drawer-menu__item drawer-menu__item--promo-carousel" aria-hidden="true"> here again;
+                  its blocks are still in the header's settings.
+                {%- endcomment -%}
+                {%- render 'drawer-menu-utility' -%}
               </ul>
             </div>
 

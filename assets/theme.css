@@ -28515,3 +28515,208 @@ body.header-transparent #main > .shopify-section:first-child .image-hero:has(.im
 .image-hero:has(.image-hero__explore) .image-hero__text-container{
   padding-top:0;
 }
+
+/* Explicit request (2026-09-22, "analiza el header menu megamenu" -> "aplicar"): the menu matched to the Miu Miu
+   reference, measured at 1920px and 390px. Desktop: three 500px columns, categories 16px / 20px untracked in black one
+   every 48px (the others fade while one is open), the category's images at the top of column 3 with 14px captions,
+   and the utility links (snippets/drawer-menu-utility.liquid) at the foot of column 1. Phones: 14px categories, the
+   utility links right under them, a 500-weight sub-menu title and the account icon kept in the header. */
+
+/* ---- Utility links (every width) ---- */
+.drawer-menu__item--utility{
+  margin:0;
+  padding:0;
+  border:0;
+  letter-spacing:normal;
+}
+.drawer-menu__utility{
+  list-style:none;
+  margin:0;
+  padding:0;
+}
+.drawer-menu__utility-link{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin:0;
+  padding:0;
+  border:0;
+  background:none;
+  color:#000000;
+  font-family:inherit;
+  font-size:14px;
+  line-height:20px;
+  font-weight:400;
+  letter-spacing:normal;
+  text-transform:none;
+  text-decoration:none;
+  cursor:pointer;
+  list-style:none;
+}
+.drawer-menu__utility-link::-webkit-details-marker{
+  display:none;
+}
+.drawer-menu__utility-link:hover span{
+  text-decoration:underline;
+  text-underline-offset:3px;
+}
+.drawer-menu__utility-link .icon{
+  flex:0 0 auto;
+  width:20px;
+  height:20px;
+}
+.drawer-menu__utility-link .icon svg{
+  width:20px;
+  height:20px;
+}
+.drawer-menu__utility-link .icon svg[viewBox="0 0 1024 1024"] path{
+  fill:currentColor;
+  stroke:none;
+}
+.drawer-menu__utility-item + .drawer-menu__utility-item{
+  margin-top:21px;
+}
+.drawer-menu__utility-languages{
+  padding:12px 0 0 32px;
+}
+.drawer-menu__utility-language-form{
+  margin:0;
+}
+.drawer-menu__utility-language-option{
+  padding:0;
+  border:0;
+  background:none;
+  color:#000000;
+  font-family:inherit;
+  font-size:14px;
+  line-height:20px;
+  text-decoration:underline;
+  text-underline-offset:3px;
+  cursor:pointer;
+}
+/* the old account row under the categories (now part of the utility links) */
+.drawer-menu__secondary-links{
+  display:none !important;
+}
+
+@media (min-width: 960px){
+  /* three 500px columns (the panel was 80% of the window, 512px columns at 1920) */
+  .drawer-menu__panel{
+    width:min(1500px, 100vw);
+  }
+  .drawer-menu__all-links .drawer-menu__primary-links,
+  .drawer-menu__all-links .drawer-menu__list--sub{
+    padding:0 40px;
+  }
+  /* categories and sub-categories: 16px / 20px, untracked, black, one every 48px, the first 107px from the top */
+  .drawer-menu{
+    --item-height:48px !important;
+  }
+  .drawer-menu__primary-links > .drawer-menu__item,
+  .drawer-menu__list--sub > .drawer-menu__item:not(.drawer-menu__item--category-image):not(.drawer-menu__item--heading){
+    height:48px;
+    min-height:0;
+    letter-spacing:normal;
+  }
+  .drawer-menu__primary-links > .drawer-menu__item > .drawer-menu__link,
+  .drawer-menu__list--sub > .drawer-menu__item > .drawer-menu__link,
+  .drawer-menu__primary-links > .drawer-menu__item > .drawer-menu__link .drawer-menu__link-title span,
+  .drawer-menu__list--sub > .drawer-menu__item > .drawer-menu__link .drawer-menu__link-title span{
+    font-size:16px !important;
+    line-height:20px;
+    letter-spacing:normal;
+    color:#000000;
+  }
+  /* the first category / sub-category 107px from the top (it was 121px): both lists start 14px higher, and column
+     3's box (which reaches back up to the window's top edge) is lifted by the same 14px, so its padding grows by it */
+  .drawer-menu__all-links{
+    padding-top:calc(var(--height-header) - 14px);
+  }
+  /* while a category is open the others fade, the open one stays black and underlined */
+  .drawer-menu__panel:has(.drawer-menu__list--sub.visible) .drawer-menu__primary-links > .drawer-menu__item:not(.drawer-menu__item--utility) > .drawer-menu__link:not([aria-expanded="true"]){
+    opacity:0.45;
+  }
+  .drawer-menu__primary-links > .drawer-menu__item > .drawer-menu__link[aria-expanded="true"] .drawer-menu__link-title span{
+    text-decoration:underline;
+    text-decoration-thickness:1px;
+    text-underline-offset:4px;
+  }
+  /* utility links at the foot of column 1, 43px above the bottom edge */
+  .drawer-menu__primary-links > .drawer-menu__item--utility{
+    position:absolute;
+    left:40px;
+    right:40px;
+    bottom:43px;
+    height:auto;
+  }
+  /* column 3: the images at the top (level with the lists), 41px from the column's sides, each caption 14px */
+  .drawer-menu__item--category-image{
+    justify-content:flex-start;
+    padding:119px 41px 0;
+  }
+  .drawer-menu__category-images{
+    gap:16px 17px;
+  }
+  .drawer-menu__category-image-caption{
+    margin-top:16px;
+    font-size:14px !important;
+    line-height:18px;
+    letter-spacing:normal;
+    color:#191B1C;
+    text-transform:none;
+  }
+}
+
+@media (max-width: 959px){
+  /* categories 14px / 20px, untracked, black */
+  .drawer-menu__primary-links > .drawer-menu__item > .drawer-menu__link,
+  .drawer-menu__list--sub > .drawer-menu__item > .drawer-menu__link,
+  .drawer-menu__primary-links > .drawer-menu__item > .drawer-menu__link .drawer-menu__link-title span,
+  .drawer-menu__list--sub > .drawer-menu__item:not(.drawer-menu__item--heading) > .drawer-menu__link .drawer-menu__link-title span{
+    font-size:14px !important;
+    line-height:20px;
+    letter-spacing:normal;
+    color:#000000;
+  }
+  .drawer-menu__primary-links .drawer-menu__item{
+    letter-spacing:normal;
+  }
+  /* utility links right under the categories: 12px, one every 40px */
+  .drawer-menu__primary-links > .drawer-menu__item--utility{
+    height:auto;
+    margin-top:24px;
+    padding:0 16px;
+  }
+  .drawer-menu__utility-link{
+    font-size:12px;
+    line-height:18px;
+    gap:16px;
+  }
+  .drawer-menu__utility-link .icon,
+  .drawer-menu__utility-link .icon svg{
+    width:16px;
+    height:16px;
+  }
+  .drawer-menu__utility-item + .drawer-menu__utility-item{
+    margin-top:22px;
+  }
+  .drawer-menu__utility-language-option{
+    font-size:12px;
+  }
+  /* sub-menu title ("< Joyas"): 500 weight, like the reference */
+  .drawer-menu__item--heading .drawer-menu__link-text,
+  .drawer-menu__item--heading .drawer-menu__link-text *{
+    font-weight:500 !important;
+    letter-spacing:normal !important;
+  }
+  /* header while the menu is open: the account icon stays (it was covered by the white bar), and the search icon
+     comes back inside a sub-menu, where the search field is no longer shown */
+  body[mobile-menu-open="true"] .header .header__icon-touch--account{
+    position:relative;
+    z-index:153;
+    color:#111111 !important;
+  }
+  body[mobile-menu-open="true"]:has(.drawer-menu__list--sub.visible) .header .header__icon-touch--search{
+    display:flex;
+  }
+}
