@@ -1379,10 +1379,10 @@
     {{ '//cdn.shopify.com/shopifycloud/shopify-plyr/v1.0/shopify-plyr.css' | stylesheet_tag }}
 
     {%- comment -%}
-      Smooth wheel scrolling on desktop (mouse or trackpad on a wide window). Off on touch devices, with reduced
-      motion, on the home page and in the theme editor. See the header of assets/smooth-scroll.js.
+      Smooth wheel scrolling (assets/smooth-scroll.js) is switched off site-wide: each wheel notch took 0.6–1.1s to
+      settle, which felt heavy. The page scrolls natively, like miumiu.com (explicit request, 2026-09-22).
+      To bring it back: <script src="{{ 'smooth-scroll.js' | asset_url }}" defer></script>
     {%- endcomment -%}
-    <script src="{{ 'smooth-scroll.js' | asset_url }}" defer></script>
   </body>
   <link
     rel="preload"
