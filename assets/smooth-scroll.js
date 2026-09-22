@@ -50,8 +50,12 @@
   var last = 0;
   var raf = 0;
 
+  // Collection pages scroll natively: with the glide one wheel notch took ~0.5s to cover 90% of its distance and
+  // ~1.1s to settle, which read as heavy/laggy while browsing a product grid (explicit request, 2026-09-22).
   function active() {
-    return fine.matches && wide.matches && !reduce.matches && !document.body.classList.contains("template-index");
+    var body = document.body;
+    return fine.matches && wide.matches && !reduce.matches &&
+      !body.classList.contains("template-index") && !body.classList.contains("template-collection");
   }
 
   function locked() {
