@@ -28347,3 +28347,40 @@ html body .product .info-links__list li + li{
     margin-top:30px;
   }
 }
+
+/* Explicit request (2026-09-22, "esto no se parece"): the trail under the recommended products copies the
+   reference's: it starts right under the slider's progress bar (no space below the bar), 32px above and below
+   the text, 14px / 21px medium in near-black, "/" 8px from each name. The bar takes the reference's colours. */
+.shopify-section:has(.recommended-products__progress:not([hidden])) > .section{
+  padding-bottom:0;
+}
+.recommended-products__progress{
+  margin-bottom:0;
+  background-color:#E9E9E9;
+}
+.recommended-products__progress-thumb{
+  background-color:#191B1C;
+}
+.product-breadcrumbs{
+  padding:32px 16px;
+}
+.product-breadcrumbs__list{
+  font-size:14px;
+  line-height:21px;
+  font-weight:500;
+  color:#191B1C;
+}
+.product-breadcrumbs__link{
+  font-size:14px !important;
+  line-height:21px;
+  font-weight:500;
+  color:#191B1C;
+}
+.product-breadcrumbs__item + .product-breadcrumbs__item::before{
+  margin:0 8px;
+}
+/* the white space in the markup around each link added ~4px next to every "/" */
+.product-breadcrumbs__item{
+  display:flex;
+  align-items:baseline;
+}
