@@ -1120,6 +1120,10 @@ main#main{
   display:flex;
   flex-direction:column;
 }
+/* Full-screen footer only on the home page; everywhere else it is as tall as its content (2026-09-22). */
+body:not(.template-index) .shopify-section.footer__parent{
+  min-height:0;
+}
 /* The bottom-anchoring lives on the actual footer SECTION (this element,
    .section.footer — the one with the merchant's own configured
    color_scheme, scoped locally via color-scheme-to-vars in
