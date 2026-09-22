@@ -198,6 +198,167 @@
       display: block;
     }
   }
+  /*
+    Explicit request (2026-09-22, "footer no se parece"): on a desktop window (1200px and wider) the footer copies
+    the Miu Miu reference as it is today, measured at 1920px: 40px side margins; the newsletter a 400px column,
+    80px before four equal link columns 40px apart; every heading 12px bold uppercase grey (#4B4B4B); links 12px
+    uppercase grey, 42px apart; a slim 24px e-mail line in 14px; the consent text 12/16 black; a "Follow us"
+    heading over 24px black round icons 48px apart; the big logo edge to edge (16px from the window); then the
+    copyright on the left and the language on the right on one line, and the legal note under a rule.
+    This replaces, on desktop only, the earlier centred language/copyright stack, the hidden "Follow us" and
+    the 32px icons; the 960-1199px accordion layout and mobile are untouched.
+  */
+  @media (min-width: 1200px) {
+    #shopify-section-{{ section.id }} .footer.section {
+      padding-left: 40px;
+      padding-right: 40px;
+    }
+    #shopify-section-{{ section.id }} .footer__groups {
+      display: grid;
+      grid-template-columns: 440px repeat(4, minmax(0, 1fr));
+      column-gap: 40px;
+    }
+    #shopify-section-{{ section.id }} .footer__group {
+      width: auto;
+      margin: 0;
+      padding-bottom: 0;
+    }
+    /* 400px of newsletter + 40px, so the first link column starts 80px after it */
+    #shopify-section-{{ section.id }} .footer__group--newsletter {
+      padding-right: 40px;
+    }
+    /* headings */
+    #shopify-section-{{ section.id }} .footer__newsletter .footer__text {
+      margin: 0;
+    }
+    #shopify-section-{{ section.id }} .footer__newsletter .footer__text h2,
+    #shopify-section-{{ section.id }} .footer__header,
+    #shopify-section-{{ section.id }} .footer__heading,
+    #shopify-section-{{ section.id }} .footer__newsletter-follow {
+      font-size: 12px !important;
+      line-height: 13px;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: uppercase;
+      color: #4B4B4B;
+    }
+    #shopify-section-{{ section.id }} .footer__newsletter .footer__text h2 {
+      letter-spacing: 0.2px;
+    }
+    #shopify-section-{{ section.id }} .footer__header {
+      margin: 0 0 24px;
+    }
+    /* links */
+    #shopify-section-{{ section.id }} .footer__links,
+    #shopify-section-{{ section.id }} .footer__links a {
+      font-size: 12px !important;
+      line-height: 18px;
+      font-weight: 400;
+      text-transform: uppercase;
+      color: #4B4B4B;
+    }
+    #shopify-section-{{ section.id }} .footer__links li + li {
+      margin-top: 24px;
+    }
+    /* newsletter */
+    #shopify-section-{{ section.id }} .footer__newsletter-form {
+      margin-top: 41px;
+    }
+    #shopify-section-{{ section.id }} .footer__newsletter .input[type="email"],
+    #shopify-section-{{ section.id }} .footer__newsletter .input[type="text"] {
+      height: 24px;
+      padding: 0 0 6px;
+      font-size: 14px !important;
+      line-height: 18px;
+      border-bottom-color: #191B1C;
+    }
+    #shopify-section-{{ section.id }} .footer__newsletter-consent {
+      margin-top: 32px;
+    }
+    #shopify-section-{{ section.id }} .footer__newsletter-consent p {
+      padding-bottom: 18px;
+      font-size: 12px !important;
+      line-height: 16px;
+      color: #000000;
+    }
+    #shopify-section-{{ section.id }} .footer__newsletter-follow {
+      display: block;
+      margin: 6px 0 0;
+      color: #000000;
+    }
+    #shopify-section-{{ section.id }} .social-icons {
+      margin-top: 9px;
+      gap: 24px;
+    }
+    #shopify-section-{{ section.id }} .social-icons li {
+      width: 24px;
+      height: 24px;
+      margin: 0;
+    }
+    #shopify-section-{{ section.id }} .social-icons .icon {
+      width: 12px;
+      height: 12px;
+    }
+    /* big logo: edge to edge, 16px from the window */
+    #shopify-section-{{ section.id }} .footer__big-logo {
+      margin: 52px -24px 0;
+      line-height: 0;
+    }
+    #shopify-section-{{ section.id }} .footer__big-logo-image {
+      display: block;
+      width: 100%;
+    }
+    /* copyright left, language right, one line */
+    #shopify-section-{{ section.id }} .footer__bottom {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      margin: 2px -24px 0;
+      text-align: left;
+    }
+    #shopify-section-{{ section.id }} .footer__bottom-left,
+    #shopify-section-{{ section.id }} .footer__bottom-right {
+      order: 0;
+      width: auto;
+      margin: 0;
+    }
+    #shopify-section-{{ section.id }} .footer__credits p {
+      font-size: 9px !important;
+      line-height: 14px;
+      color: #191B1C;
+    }
+    #shopify-section-{{ section.id }} .disclosure__toggle {
+      height: 24px;
+      font-size: 12px !important;
+      line-height: 14px;
+      font-weight: 500;
+      text-transform: uppercase;
+      color: #4B4B4B;
+    }
+    #shopify-section-{{ section.id }} .disclosure__toggle .icon:first-child {
+      width: 18px;
+      height: 18px;
+      margin-right: 10px;
+    }
+    #shopify-section-{{ section.id }} .disclosure__toggle .icon:first-child svg {
+      width: 18px;
+      height: 18px;
+    }
+    #shopify-section-{{ section.id }} .disclosure__toggle .icon:last-child:not(:first-child) {
+      display: none;
+    }
+    /* legal note under a rule 16px from the window edges */
+    #shopify-section-{{ section.id }} .footer__legal-disclosure {
+      margin: 3px -24px 0;
+      padding: 16px 0 0;
+    }
+    #shopify-section-{{ section.id }} .footer__legal-disclosure p,
+    #shopify-section-{{ section.id }} .footer__legal-disclosure a {
+      font-size: 12px !important;
+      line-height: 16px;
+      color: #000000;
+    }
+  }
 </style>
 
 <div
