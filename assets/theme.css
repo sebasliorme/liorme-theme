@@ -28197,10 +28197,12 @@ html body .product .info-links__list li + li{
 }
 
 @media (min-width: 960px){
-  /* Details column: 64px from the photo and from the window edge at 1440 (the reference's 592px column) */
+  /* Details column, like the reference at every width: at most 592px wide, centred in its half, never
+     closer than 64px to the photo or the window edge (184px each side at 1920, 64px at 1440 and below).
+     The percentage is of the column itself (half the page), so 50% - 296px centres a 592px box. */
   .product[data-gallery-width="half"] .product__primary-right{
-    padding-left:clamp(24px, 4.445vw, 96px);
-    padding-right:clamp(24px, 4.445vw, 96px);
+    padding-left:max(64px, calc(50% - 296px));
+    padding-right:max(64px, calc(50% - 296px));
   }
   html body .product .product__title{
     line-height:28px !important;
