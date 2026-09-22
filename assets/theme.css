@@ -28497,17 +28497,25 @@ body.template-index .btn.btn--callout > span::after{
   background-color:#FFFFFF;
 }
 
-/* Phones, over the first photo: the header icons drawn solid (the same shapes, filled), like the reference's white
-   icons, instead of the 0.55px outline that reads grey on the photo */
-@media (max-width: 959px){
-  body.template-index header.header .header__icon-touch .icon svg[viewBox="0 0 1024 1024"] path{
-    fill:currentColor;
-    stroke:none;
-  }
-  /* the bag is drawn as a line (not a filled shape): a thicker line instead */
-  body.template-index header.header .header__icon-touch .icon svg[viewBox="0 0 24 24"] path{
-    stroke-width:1.3;
-  }
+/* Explicit request (2026-09-22, "noto una gran diferencia en los iconos"): the header icons like the reference's (an
+   icon font, 24px, drawn as one solid thin line). Ours are the same shapes as closed outlines, and drawing that outline
+   with a 0.55px stroke (the earlier "thinner" request) showed every line as a hollow double line (account, heart,
+   bag) at 21px. Now the shapes are filled (one solid ~1px line, like the reference) at 24px, on every page and width,
+   also inside the menu. The bag, drawn as a line rather than a shape, gets a 1px line to match. */
+.header__icon-touch .icon svg,
+.header .icon-button__icon .icon,
+.drawer-menu .icon-button__icon .icon{
+  width:24px;
+  height:24px;
+}
+.header__icon-touch .icon svg[viewBox="0 0 1024 1024"] path,
+.header__icon-touch .icon svg[viewBox="0 0 1024 1024"] circle{
+  fill:currentColor;
+  stroke:none;
+}
+.header__icon-touch .icon-header-shopping-bag svg path,
+.header__icon-touch .icon svg[viewBox="0 0 24 24"] path{
+  stroke-width:1;
 }
 /* The hero with the search line centres its text on the whole screen, like the reference: the theme's room for the
    transparent header above the text (107px of top padding) pushed it ~55px low */
