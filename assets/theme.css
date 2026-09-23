@@ -28744,3 +28744,43 @@ body.header-transparent #main > .shopify-section:first-child .image-hero:has(.im
     color:#111111 !important;
   }
 }
+
+/* Explicit request (2026-09-22, "search no se parece"): the quick search panel's type copied from the Miu Miu
+   reference (1920px): what is typed 18px / 20px medium, the placeholder 16px grey (#888); "Cerrar", the column
+   headings and the suggestions with 0.2px tracking in the reference's #333 / #191B1C; 167px columns; no rule under
+   the panel. */
+.quick-search .quick-search__input{
+  min-width:0;
+  font-size:18px !important;
+  line-height:20px;
+  font-weight:500;
+  letter-spacing:0.2px;
+  color:#000000;
+}
+.quick-search .quick-search__input::placeholder{
+  font-size:16px;
+  font-weight:400;
+  letter-spacing:0.2px;
+  color:#888888;
+  opacity:1;
+}
+.quick-search .quick-search__close{
+  letter-spacing:0.2px;
+  color:#191B1C;
+}
+.quick-search .quick-search__suggested-header{
+  letter-spacing:0.2px;
+  color:#333333;
+}
+.quick-search .quick-search__result-heading{
+  letter-spacing:0.2px;
+  color:#333333;
+}
+@media (min-width: 960px){
+  .quick-search .quick-search__suggested-column{
+    width:167px;
+  }
+  .quick-search .quick-search__container{
+    border-bottom:0;
+  }
+}
