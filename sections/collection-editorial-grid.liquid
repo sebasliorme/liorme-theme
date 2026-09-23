@@ -2716,7 +2716,7 @@
 </style>
 
 <style>
-  #shopify-section-{{ section.id }} .collection__products .product-item::after { border: 0 !important; }
+  {%- comment -%} Explicit request (2026-09-22, "los productos deberia de tener border"): the "border: 0 !important" that sat here hid the 1px hover outline defined near the top of this section; removed. {%- endcomment -%}
   #shopify-section-{{ section.id }} .product-item-size-picker,
   #shopify-section-{{ section.id }} .product-item__quick-view--hoverless { display: none !important; }
 </style>
