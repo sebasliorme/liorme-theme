@@ -28728,3 +28728,19 @@ body.header-transparent #main > .shopify-section:first-child .image-hero:has(.im
     display:flex;
   }
 }
+
+/* Explicit request (2026-09-22, "se desaparecen algunos iconos, solo deben de desaparecer cuando el menu esta por
+   encima"): with the menu open on a desktop window, the header's right side (Contact us, account, wishlist, bag) stays
+   visible under the dark overlay, like the reference, and only the white panel covers what it is actually over. They
+   were under the header's white bar (z-index 150) and so vanished; the bag alone sat above everything (153), even above
+   the overlay and the panel. All four now sit where the logo does (151): above the bar, below the menu (152). */
+@media (min-width: 960px){
+  body[mobile-menu-open="true"] .header .header__contact-link,
+  body[mobile-menu-open="true"] .header .header__icon-touch--account,
+  body[mobile-menu-open="true"] .header .header__icon-touch--wishlist,
+  body[mobile-menu-open="true"] .header [data-js-cart-icon]{
+    position:relative;
+    z-index:151;
+    color:#111111 !important;
+  }
+}
