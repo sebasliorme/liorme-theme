@@ -28851,3 +28851,14 @@ html body .product .find-size__icon{
   width:20px;
   height:20px;
 }
+
+/* Explicit request (2026-09-22): in the recommended slider, cards without colour dots were shorter (677px vs 706px),
+   so their hover outline stopped short of the others'. Every slide now stretches to the row's tallest card, and the
+   card fills its slide, so all outlines share one height. */
+.recommended-products .recommended-products__slide{
+  height:auto;
+}
+.recommended-products .recommended-products__slide > .product-item,
+.recommended-products .recommended-products__slide > .product-item > .product-item__inner{
+  height:100%;
+}
