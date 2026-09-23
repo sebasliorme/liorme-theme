@@ -67,7 +67,7 @@
         "section_padding_bottom": 0,
         "divider_style": "none",
         "enable_full_width_divider": false,
-        "enable_animation": true,
+        "enable_animation": false,
         "show_search_hint": true
       }
     },
@@ -249,7 +249,7 @@
         "section_padding_bottom": 0,
         "divider_style": "none",
         "enable_full_width_divider": false,
-        "enable_animation": true
+        "enable_animation": false
       }
     },
     "image_hero_K6HMGM": {
@@ -310,7 +310,7 @@
         "section_padding_bottom": 0,
         "divider_style": "none",
         "enable_full_width_divider": false,
-        "enable_animation": true
+        "enable_animation": false
       }
     },
     "image_hero_DQBnwz": {
@@ -371,7 +371,7 @@
         "section_padding_bottom": 0,
         "divider_style": "none",
         "enable_full_width_divider": false,
-        "enable_animation": true
+        "enable_animation": false
       }
     }
   },
