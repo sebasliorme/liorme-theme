@@ -28862,3 +28862,45 @@ html body .product .find-size__icon{
 .recommended-products .recommended-products__slide > .product-item > .product-item__inner{
   height:100%;
 }
+
+/* Explicit request (2026-09-22, "el titulo y las flechas tampoco"): the recommended slider's header like the
+   reference's "You may also like": the title 20px / 30px semibold in #191B1C, 24px above it and 16px below; the
+   arrows 24px, 16px from the window's edges, the one that cannot move grey (#888) instead of faded; on phones a
+   16px / 24px title (24px above, 20px below) and no arrows, like the reference. */
+.recommended-products__meta .section-introduction__heading{
+  padding:24px 0 16px !important;
+  font-size:20px !important;
+  line-height:30px !important;
+  font-weight:600 !important;
+  letter-spacing:normal !important;
+  color:#191B1C;
+}
+.recommended-products__meta .carousel__navigation-button{
+  width:24px;
+  height:24px;
+  padding:0;
+  color:#191B1C;
+  opacity:1;
+  /* level with the title's text (the row has 24px above the title and 16px below, so its middle is 4px higher) */
+  position:relative;
+  top:4px;
+}
+.recommended-products__meta .carousel__navigation-button svg{
+  width:24px;
+  height:24px;
+}
+.recommended-products__meta .carousel__navigation-button.swiper-button-disabled,
+.recommended-products__meta .carousel__navigation-button:disabled{
+  color:#888888;
+  opacity:1;
+}
+@media (max-width: 959px){
+  .recommended-products__meta .section-introduction__heading{
+    padding:24px 0 20px !important;
+    font-size:16px !important;
+    line-height:24px !important;
+  }
+  .recommended-products__meta .carousel__navigation-button{
+    display:none;
+  }
+}
