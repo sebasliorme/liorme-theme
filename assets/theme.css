@@ -28904,3 +28904,34 @@ html body .product .find-size__icon{
     display:none;
   }
 }
+
+/* Explicit request (2026-09-22): hovering a header item underlines it like the reference: a 1px #191B1C line 3px
+   under the 24px icon, as wide as what the item shows (icon + word for Menu / Search, the word for Contact us, the
+   icon alone for account / wishlist / bag). Each item is a 40px box with its 24px icon 8px in from the top and left,
+   so the line sits 4px above the box's bottom edge and starts 8px in (0 for Contact us, which has no icon). Only
+   with a mouse, on desktop. */
+@media (hover: hover) and (min-width: 960px){
+  header.header .header__row-desktop .header__icon-touch{
+    position:relative;
+  }
+  header.header .header__row-desktop .header__icon-touch::after{
+    content:"";
+    position:absolute;
+    left:8px;
+    right:8px;
+    bottom:4px;
+    height:1px;
+    background-color:currentColor;
+    opacity:0;
+    pointer-events:none;
+  }
+  header.header .header__row-desktop .header__icon-touch--with-label::after{
+    right:0;
+  }
+  header.header .header__row-desktop .header__contact-link::after{
+    left:0;
+  }
+  header.header .header__row-desktop .header__icon-touch:hover::after{
+    opacity:1;
+  }
+}
