@@ -206,7 +206,8 @@
             aria-expanded="false"
             aria-controls="filter-bar-sort"
           >
-            <span data-sort-label>{{ 'filters.sort_title' | t }}</span>
+            {%- comment -%} Explicit request (2026-09-22): "ORDENAR POR: <current order>", like the reference's "SORT BY: SUGGESTED" {%- endcomment -%}
+            <span data-sort-label>{{ 'filters.sort_title' | t }} por: {{ sort_by }}</span>
             {%- render 'icon', icon: 'chevron-small' -%}
           </button>
 
@@ -218,6 +219,7 @@
             aria-hidden="true"
           >
             <ul class="filter-group__list filter-group__list--sort">
+              <li class="filter-item filter-item--sort-heading" aria-hidden="true">{{ 'filters.sort_title' | t }} por</li>
               {%- for option in resource.sort_options -%}
                 {%- liquid
                   assign is_active = false

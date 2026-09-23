@@ -28935,3 +28935,275 @@ html body .product .find-size__icon{
     opacity:1;
   }
 }
+
+/* Explicit request (2026-09-22, "no se parece", collection page): the category bar, the filters / sort row, the sort
+   list and the filter panel copied from the Miu Miu reference (bags/backpacks, 1920px).
+   Category bar, 54px: the parent category (setting "Titulo de la barra") 14px medium capitals 16px from the edge, 40px
+   before the categories; categories 12px / 16px regular black 32px apart, the current one bold with its product count
+   raised beside it. */
+html body .collection-sticky-bar .custom-subnav-bar{
+  min-height:54px;
+  padding:0 16px;
+}
+html body .collection-sticky-bar .custom-subnav-bar__collections{
+  gap:32px;
+}
+html body .collection-sticky-bar .custom-subnav-bar__title{
+  margin-right:8px;
+  font-size:14px;
+  line-height:21px;
+  font-weight:500;
+  letter-spacing:normal;
+  text-transform:uppercase;
+  color:#000000;
+  white-space:nowrap;
+}
+html body .collection-sticky-bar .custom-subnav-link{
+  font-size:12px !important;
+  line-height:16px;
+  font-weight:400;
+  letter-spacing:normal !important;
+  color:#000000;
+  opacity:1;
+}
+html body .collection-sticky-bar .custom-subnav-link:hover{
+  opacity:1;
+  text-decoration:underline;
+  text-underline-offset:3px;
+}
+html body .collection-sticky-bar .custom-subnav-link.is-active{
+  font-weight:700;
+  text-transform:capitalize;
+}
+.custom-subnav-link__count{
+  margin-left:2px;
+  font-size:8px;
+  line-height:0;
+  font-weight:700;
+  vertical-align:super;
+}
+
+/* Filters / sort row, 50px: "FILTROS | ORDENAR POR: ..." 11px / 16px capitals in #191B1C, 16px from the right edge. */
+@media (min-width: 960px){
+  html body .collection-sticky-bar .filter-bar__inner{
+    min-height:50px;
+    padding-right:16px;
+  }
+}
+html body .collection-sticky-bar .filter-bar__button,
+html body .collection-sticky-bar .filter-bar__button span{
+  font-size:11px !important;
+  line-height:16px;
+  font-weight:400;
+  letter-spacing:normal !important;
+  text-transform:uppercase !important;
+  color:#191B1C;
+}
+html body .collection-sticky-bar .filter-bar__button--sort .icon{
+  width:16px;
+  height:16px;
+  margin-left:8px;
+}
+
+/* The sort list: a plain white box with a grey edge, like the reference's; a grey "ORDENAR POR" heading, the orders in
+   11px capitals, the current one (and the one under the pointer) highlighted blue. */
+html body .collection-sticky-bar #filter-bar-sort{
+  width:max-content;
+  min-width:100%;
+  padding:0;
+  border:1px solid #767676;
+  border-radius:0;
+  box-shadow:none;
+  background:#FFFFFF;
+}
+html body .collection-sticky-bar #filter-bar-sort .filter-group__list--sort{
+  padding:0;
+}
+html body .collection-sticky-bar #filter-bar-sort .filter-item{
+  margin:0;
+}
+html body .collection-sticky-bar #filter-bar-sort .filter-item--sort-heading{
+  padding:4px 6px;
+  font-size:11px;
+  line-height:16px;
+  text-transform:uppercase;
+  color:#888888;
+}
+html body .collection-sticky-bar #filter-bar-sort .filter-item__content{
+  display:block;
+  padding:4px 6px;
+  cursor:pointer;
+}
+html body .collection-sticky-bar #filter-bar-sort .filter-input__input{
+  display:none;
+}
+html body .collection-sticky-bar #filter-bar-sort .filter-item__label{
+  font-size:11px !important;
+  line-height:16px;
+  letter-spacing:normal;
+  text-transform:uppercase !important;
+  color:#191B1C;
+}
+html body .collection-sticky-bar #filter-bar-sort .filter-item__content:hover,
+html body .collection-sticky-bar #filter-bar-sort .filter-item__content:has(input:checked){
+  background-color:#1967D2;
+}
+html body .collection-sticky-bar #filter-bar-sort .filter-item__content:hover .filter-item__label,
+html body .collection-sticky-bar #filter-bar-sort .filter-item__content:has(input:checked) .filter-item__label{
+  color:#FFFFFF;
+}
+
+/* Filter panel: 400px, a hairline on its left; header "Borrar todo" (12px grey) / "FILTROS" (16px capitals, centred)
+   / X; every group open with no arrow; group titles 14px / 21px capitals, 24px square boxes with a 1px near-black edge
+   one every 40px, 14px labels, a colour dot for colour filters; no Apply / Clear buttons (it applies on tick). */
+html body #FilterDrawer.filter-drawer{
+  max-width:400px !important;
+  border-left:1px solid #D9DCE0;
+  box-shadow:none !important;
+}
+html body #FilterDrawer .filter-drawer__header{
+  position:relative;
+  justify-content:center;
+  height:56px;
+  padding:0 17px;
+  border-bottom:0;
+}
+html body #FilterDrawer .filter-drawer__reset{
+  position:absolute;
+  left:17px;
+  top:19px;
+  font-size:12px;
+  line-height:18px;
+  color:#888888;
+  text-decoration:none;
+}
+html body #FilterDrawer .filter-drawer__reset:hover{
+  text-decoration:underline;
+}
+html body #FilterDrawer .filter-drawer__title{
+  font-size:16px !important;
+  line-height:20px;
+  font-weight:400;
+  letter-spacing:normal;
+  text-transform:uppercase;
+  color:#191B1C;
+}
+html body #FilterDrawer .filter-drawer__close{
+  position:absolute;
+  right:17px;
+  top:16px;
+  width:24px;
+  height:24px;
+  padding:0;
+}
+html body #FilterDrawer .filter-drawer__close svg{
+  width:16px;
+  height:16px;
+}
+html body #FilterDrawer .filter-drawer__close svg path{
+  stroke-width:1.2;
+}
+html body #FilterDrawer .filter-drawer__content{
+  padding:24px 17px 40px;
+}
+html body #FilterDrawer .filter-group--drawer-accordion{
+  margin:0 0 32px !important;
+  padding:0;
+  border:0;
+}
+html body #FilterDrawer .filter-group__header-accordion{
+  display:block;
+  padding:0;
+  margin:0 0 16px;
+  list-style:none;
+  pointer-events:none;
+  border:0;
+}
+html body #FilterDrawer .filter-group__header-accordion::-webkit-details-marker{
+  display:none;
+}
+html body #FilterDrawer .filter-group__header-right{
+  display:none;
+}
+html body #FilterDrawer .filter-group__drawer-title{
+  font-size:14px !important;
+  line-height:21px;
+  font-weight:400;
+  letter-spacing:normal;
+  text-transform:uppercase;
+  color:#191B1C;
+}
+html body #FilterDrawer .filter-group__values-drawer{
+  padding:0;
+}
+html body #FilterDrawer .filter-group__list{
+  margin:0;
+  padding:0;
+}
+html body #FilterDrawer .filter-item{
+  margin:0;
+}
+html body #FilterDrawer .filter-item + .filter-item{
+  margin-top:16px;
+}
+html body #FilterDrawer .filter-item__content{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  cursor:pointer;
+}
+html body #FilterDrawer .filter-item__checkbox{
+  -webkit-appearance:none;
+  appearance:none;
+  flex:0 0 auto;
+  width:24px;
+  height:24px;
+  margin:0;
+  border:1px solid #191B1C;
+  border-radius:0;
+  background:#FFFFFF;
+  cursor:pointer;
+}
+html body #FilterDrawer .filter-item__checkbox:checked{
+  background:#191B1C;
+  box-shadow:inset 0 0 0 4px #FFFFFF;
+}
+html body #FilterDrawer .filter-item__checkbox:disabled{
+  border-color:#C8C8C8;
+  cursor:default;
+}
+html body #FilterDrawer .filter-item__checkbox:disabled ~ .filter-item__label{
+  color:#AAAAAA;
+}
+html body #FilterDrawer .filter-item__dot{
+  flex:0 0 auto;
+  width:8px;
+  height:8px;
+  margin-right:-4px;
+  border-radius:50%;
+  box-shadow:inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+html body #FilterDrawer .filter-item__label{
+  padding:0 !important;
+  font-size:14px !important;
+  line-height:20px;
+  font-weight:400;
+  letter-spacing:normal;
+  text-transform:capitalize;
+  color:#191B1C;
+}
+html body #FilterDrawer .filter-drawer__price-range-input input.input{
+  height:40px !important;
+  min-height:0 !important;
+  font-size:14px;
+}
+/* the orders line up with the "ORDENAR POR" heading */
+html body .collection-sticky-bar #filter-bar-sort .filter-item__content-inner,
+html body .collection-sticky-bar #filter-bar-sort .filter-item__label{
+  margin:0 !important;
+  padding:0 !important;
+}
+html body .collection-sticky-bar .filter-bar__button--sort,
+html body .collection-sticky-bar .filter-bar__button--sort span{
+  white-space:nowrap;
+}

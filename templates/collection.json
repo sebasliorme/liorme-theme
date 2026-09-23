@@ -283,7 +283,8 @@
         "enable_full_width_divider": true,
         "enable_animation": false,
         "use_collection_slides": true,
-        "show_collection_slide_text": false
+        "show_collection_slide_text": false,
+        "subnav_title": "Joyas"
       }
     },
     "banner_eyewear": {

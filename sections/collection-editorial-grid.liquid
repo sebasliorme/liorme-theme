@@ -1051,12 +1051,16 @@
               {%- if section.settings.enable_custom_subnav -%}
                 <div class="custom-subnav-bar section-inner section-inner--width-{{ section.settings.section_width }}">
                   <div class="custom-subnav-bar__collections">
+                    {%- comment -%} Explicit request (2026-09-22): the parent category first, in capitals, like the reference's "BAGS" {%- endcomment -%}
+                    {%- if section.settings.subnav_title != blank -%}
+                      <span class="custom-subnav-bar__title">{{ section.settings.subnav_title }}</span>
+                    {%- endif -%}
                     {%- if section.settings.subnav_collections != blank -%}
                       {%- comment -%} Current collection always renders first, so it's the one closest to the logo/left edge; the rest keep their configured order. {%- endcomment -%}
                       {%- for sub_collection in section.settings.subnav_collections -%}
                         {%- if collection.handle == sub_collection.handle -%}
                           <a href="{{ sub_collection.url }}" class="custom-subnav-link is-active">
-                            {% render 'liorme-title-case', text: sub_collection.title %}
+                            {% render 'liorme-title-case', text: sub_collection.title %}<sup class="custom-subnav-link__count">{{ sub_collection.products_count }}</sup>
                           </a>
                         {%- endif -%}
                       {%- endfor -%}
@@ -1413,6 +1417,8 @@
       {%- comment -%} Integrated Custom Accordion Filter Drawer {%- endcomment -%}
       <div id="FilterDrawer" class="filter-drawer" data-drawer="filter" aria-hidden="true">
         <div class="filter-drawer__header">
+          {%- comment -%} Explicit request (2026-09-22): like the reference, "reset" on the left, the title centred, the X on the right; every group open; no Apply button (a filter applies as soon as it is ticked, see the script below) {%- endcomment -%}
+          <a href="{{ collection.url }}?sort_by={{ collection.sort_by }}" class="filter-drawer__reset">{{ 'filters.clear_all' | t | default: 'Reset' }}</a>
           <h3 class="filter-drawer__title">{{ 'filters.title' | t | default: 'Filters' }}</h3>
           <button type="button" class="filter-drawer__close js-close-drawer" data-action="close-drawer" aria-label="Close">
             <svg aria-hidden="true" focusable="false" role="presentation" class="icon icon-close" viewBox="0 0 16 16"><path d="M14 2L2 14M2 2l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -1457,8 +1463,8 @@
 
                 <details 
                   class="filter-group filter-group--drawer-accordion" 
-                  data-filter-group 
-                  {% if group_active_count > 0 or price_range_changed %}open{% endif %}
+                  data-filter-group
+                  open
                 >
                   <summary class="filter-group__header-accordion">
                     <span class="filter-group__drawer-title">{{ filter.label }}</span>
@@ -1503,8 +1509,11 @@
                                   {% if filter_value.active %}checked{% endif %}
                                   {% if filter_value.count == 0 and filter_value.active == false %}disabled{% endif %}
                                 >
+                                {%- if filter_value.swatch.color != blank -%}
+                                  <span class="filter-item__dot" style="background-color: {{ filter_value.swatch.color }};"></span>
+                                {%- endif -%}
                                 <span class="filter-item__label">
-                                  {{ filter_value.label }} ({{ filter_value.count }})
+                                  {{ filter_value.label }}
                                 </span>
                               </label>
                             </li>
@@ -1551,14 +1560,11 @@
               {%- endfor -%}
             </div>
 
-            <div class="filter-drawer__footer">
+            <noscript>
               <button type="submit" class="btn btn--primary filter-drawer__apply">
                 {{ 'filters.apply' | t | default: 'Apply Filters' }}
               </button>
-              <a href="{{ collection.url }}?sort_by={{ collection.sort_by }}" class="btn btn--secondary filter-drawer__clear">
-                {{ 'filters.clear_all' | t | default: 'Clear All' }}
-              </a>
-            </div>
+            </noscript>
           </form>
         </div>
       </div>
@@ -1631,7 +1637,8 @@
     }
 
     document.addEventListener('click', function(e) {
-      const trigger = e.target.closest('.js-custom-filter-btn, .filter-bar__button, .filter-bar__button--filters, .filter-bar__filter-trigger, .mobile-filters__trigger, [aria-controls="FilterDrawer"]');
+      // The sort button is a .filter-bar__button too: it opens its own list, never the filter drawer
+      const trigger = e.target.closest('.js-custom-filter-btn, .filter-bar__button:not(.filter-bar__button--sort), .filter-bar__filter-trigger, .mobile-filters__trigger, [aria-controls="FilterDrawer"]');
       if (trigger) {
         e.preventDefault();
         e.stopPropagation();
@@ -1646,6 +1653,15 @@
 
     if (overlay) {
       overlay.addEventListener('click', closeDrawer);
+    }
+
+    // No Apply button (like the reference): ticking a box applies it at once; a price applies when the field is left
+    // or Enter is pressed
+    const filterForm = drawer && drawer.querySelector('form[data-filter-form]');
+    if (filterForm) {
+      filterForm.addEventListener('change', function () {
+        filterForm.requestSubmit ? filterForm.requestSubmit() : filterForm.submit();
+      });
     }
   });
 </script>
@@ -1695,6 +1711,12 @@
       "id": "enable_custom_subnav",
       "label": "Enable Custom Collection Sub-Navigation Bar",
       "default": true
+    },
+    {
+      "type": "text",
+      "id": "subnav_title",
+      "label": "Título de la barra (ej. JOYAS)",
+      "default": "Joyas"
     },
     {
       "type": "collection_list",

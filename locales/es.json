@@ -232,7 +232,7 @@
     "no_results": "No se encontraron resultados",
     "one_result_html": "{{ value }} Resultado",
     "sort_title": "Ordenar",
-    "title": "filtro",
+    "title": "Filtros",
     "to": "a",
     "zero_selected": "0 eleccionado"
   },
