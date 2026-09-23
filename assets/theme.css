@@ -28784,3 +28784,16 @@ body.header-transparent #main > .shopify-section:first-child .image-hero:has(.im
     border-bottom:0;
   }
 }
+
+/* Explicit request (2026-09-22, "el icono de corazon en el nombre no se parece"): the product page's heart like the
+   reference's: 24px (it was 21px), its top level with the title's and its right edge on the column's, drawn as one
+   solid line. Its outline is the same closed shape as the header icons, which a 0.55px stroke turned into a hollow
+   double line; filled instead, like the header's. The inner shape (.product__wishlist-fill) still fills in when saved. */
+.product__wishlist .icon{
+  width:24px;
+  height:24px;
+}
+.product__wishlist svg path:not(.product__wishlist-fill){
+  fill:currentColor;
+  stroke:none;
+}
