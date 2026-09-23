@@ -28797,3 +28797,57 @@ body.header-transparent #main > .shopify-section:first-child .image-hero:has(.im
   fill:currentColor;
   stroke:none;
 }
+
+/* Explicit request (2026-09-22, "las tallas no se parecen"): the size picker copied from the Miu Miu reference: each
+   size a 40 x 20 button, 14px / 20px regular near-black, starting at the label's left edge, 64px apart (24px gaps) and
+   22px between rows, 18px under the label; sold-out sizes grey (#888) and struck through; "Find your size" 12px under
+   the sizes, 36px tall, 13px medium with a light grey edge (sizes measured on the reference's page, the button on its
+   screenshot). */
+html body .product .product__color-chips[data-layout="natural"]{
+  display:flex;
+  flex-wrap:wrap;
+  column-gap:24px;
+  row-gap:22px;
+  margin:18px 0 0;
+}
+html body .product .product__color-chips[data-layout="natural"] .product__chip{
+  width:40px;
+  min-width:0;
+  height:20px;
+  justify-content:flex-start;
+  margin:0;
+  padding:0;
+  font-size:14px !important;
+  line-height:20px;
+  font-weight:400;
+  letter-spacing:normal !important;
+  color:#191B1C;
+  text-underline-offset:4px;
+}
+html body .product .product__color-chips[data-layout="natural"] .dynamic-variant-button.product__chip.disabled{
+  color:#888888;
+  text-decoration:line-through;
+}
+html body .product .find-size{
+  margin-top:12px;
+}
+html body .product .find-size__trigger{
+  height:36px;
+  gap:8px;
+  padding:0 12px;
+  font-size:13px !important;
+  line-height:1;
+  font-weight:500;
+  letter-spacing:normal !important;
+  color:#191B1C;
+  border-color:#E0E0E0;
+}
+html body .product .find-size__trigger span{
+  font-size:13px !important;
+  font-weight:500;
+  letter-spacing:normal !important;
+}
+html body .product .find-size__icon{
+  width:20px;
+  height:20px;
+}
